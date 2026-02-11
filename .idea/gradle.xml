@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="GradleMigrationSettings" migrationVersion="1" />
+  <component name="GradleSettings">
+    <option name="linkedExternalProjectsSettings">
+      <GradleProjectSettings>
+        <compositeConfiguration>
+          <compositeBuild compositeDefinitionSource="SCRIPT">
+            <builds>
+              <build path="$PROJECT_DIR$/../arend-lang-new/Arend" name="Arend">
+                <projects>
+                  <project path="$PROJECT_DIR$/../arend-lang-new/Arend" />
+                  <project path="$PROJECT_DIR$/../arend-lang-new/Arend/api" />
+                  <project path="$PROJECT_DIR$/../arend-lang-new/Arend/arend-lib" />
+                  <project path="$PROJECT_DIR$/../arend-lang-new/Arend/arend-lib/meta" />
+                  <project path="$PROJECT_DIR$/../arend-lang-new/Arend/base" />
+                  <project path="$PROJECT_DIR$/../arend-lang-new/Arend/cli" />
+                  <project path="$PROJECT_DIR$/../arend-lang-new/Arend/intellij" />
+                  <project path="$PROJECT_DIR$/../arend-lang-new/Arend/parser" />
+                  <project path="$PROJECT_DIR$/../arend-lang-new/Arend/proto" />
+                </projects>
+              </build>
+              <build path="$PROJECT_DIR$/../arend-lang-new/Arend/buildSrc" name="buildSrc">
+                <projects>
+                  <project path="$PROJECT_DIR$/../arend-lang-new/Arend/buildSrc" />
+                </projects>
+              </build>
+            </builds>
+          </compositeBuild>
+        </compositeConfiguration>
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/../arend-lang-new/Arend" />
+            <option value="$PROJECT_DIR$/../arend-lang-new/Arend/api" />
+            <option value="$PROJECT_DIR$/../arend-lang-new/Arend/arend-lib" />
+            <option value="$PROJECT_DIR$/../arend-lang-new/Arend/arend-lib/meta" />
+            <option value="$PROJECT_DIR$/../arend-lang-new/Arend/base" />
+            <option value="$PROJECT_DIR$/../arend-lang-new/Arend/buildSrc" />
+            <option value="$PROJECT_DIR$/../arend-lang-new/Arend/cli" />
+            <option value="$PROJECT_DIR$/../arend-lang-new/Arend/intellij" />
+            <option value="$PROJECT_DIR$/../arend-lang-new/Arend/parser" />
+            <option value="$PROJECT_DIR$/../arend-lang-new/Arend/proto" />
+          </set>
+        </option>
+      </GradleProjectSettings>
+    </option>
+  </component>
+</project>
