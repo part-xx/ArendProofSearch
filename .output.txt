@@ -1,355 +1,424 @@
-2026-01-20 02:07:22
-Full thread dump OpenJDK 64-Bit Server VM (21.0.8+9-b1038.68 mixed mode, sharing):
-Threads class SMR info:
-_java_thread_list=0x0000600002631080, length=24, elements={
-0x00007fa8e4808800, 0x00007fa8e480b200, 0x00007fa8e6012800, 0x00007fa8e6016600,
-0x00007fa8e6016e00, 0x00007fa8e6017600, 0x00007fa8c480aa00, 0x00007fa8e7023c00,
-0x00007fa8e681f800, 0x00007fa8c4883a00, 0x00007fa8e4809000, 0x00007fa8e7828400,
-0x00007fa8e4831800, 0x00007fa8c48af000, 0x00007fa87483a400, 0x00007fa8c4b27400,
-0x00007fa8e5933200, 0x00007fa8e596aa00, 0x00007fa8c4d6a400, 0x00007fa8c487d200,
-0x00007fa8e591f600, 0x00007fa8e6b3f400, 0x00007fa8e7ead000, 0x00007fa8e6413000
-}
-"Common-Cleaner" #5 [23299] daemon prio=8 os_prio=31 cpu=11.64ms elapsed=1883.47s tid=0x00007fa8e4808800 nid=23299 waiting on condition  [0x000070000df9c000]
-   java.lang.Thread.State: TIMED_WAITING (parking)
-        at jdk.internal.misc.Unsafe.park(java.base@21.0.8/Native Method)
-        - parking to wait for  <0x00000007e0292f60> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
-        at java.util.concurrent.locks.LockSupport.parkNanos(java.base@21.0.8/LockSupport.java:269)
-        at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(java.base@21.0.8/AbstractQueuedSynchronizer.java:1852)
-        at java.lang.ref.ReferenceQueue.await(java.base@21.0.8/ReferenceQueue.java:71)
-        at java.lang.ref.ReferenceQueue.remove0(java.base@21.0.8/ReferenceQueue.java:143)
-        at java.lang.ref.ReferenceQueue.remove(java.base@21.0.8/ReferenceQueue.java:218)
-        at jdk.internal.ref.CleanerImpl.run(java.base@21.0.8/CleanerImpl.java:140)
-        at java.lang.Thread.runWith(java.base@21.0.8/Thread.java:1596)
-        at java.lang.Thread.run(java.base@21.0.8/Thread.java:1583)
-        at jdk.internal.misc.InnocuousThread.run(java.base@21.0.8/InnocuousThread.java:186)
-"Reference Handler" #6 [23555] daemon prio=10 os_prio=31 cpu=45.89ms elapsed=1883.47s tid=0x00007fa8e480b200 nid=23555 waiting on condition  [0x000070000e09f000]
-   java.lang.Thread.State: RUNNABLE
-        at java.lang.ref.Reference.waitForReferencePendingList(java.base@21.0.8/Native Method)
-        at java.lang.ref.Reference.processPendingReferences(java.base@21.0.8/Reference.java:246)
-        at java.lang.ref.Reference$ReferenceHandler.run(java.base@21.0.8/Reference.java:208)
-"Finalizer" #7 [23811] daemon prio=8 os_prio=31 cpu=0.20ms elapsed=1883.47s tid=0x00007fa8e6012800 nid=23811 in Object.wait()  [0x000070000e1a2000]
-   java.lang.Thread.State: WAITING (on object monitor)
-        at java.lang.Object.wait0(java.base@21.0.8/Native Method)
-        - waiting on <0x00000007e0371878> (a java.lang.ref.NativeReferenceQueue$Lock)
-        at java.lang.Object.wait(java.base@21.0.8/Object.java:366)
-        at java.lang.Object.wait(java.base@21.0.8/Object.java:339)
-        at java.lang.ref.NativeReferenceQueue.await(java.base@21.0.8/NativeReferenceQueue.java:48)
-        at java.lang.ref.ReferenceQueue.remove0(java.base@21.0.8/ReferenceQueue.java:158)
-        at java.lang.ref.NativeReferenceQueue.remove(java.base@21.0.8/NativeReferenceQueue.java:89)
-        - locked <0x00000007e0371878> (a java.lang.ref.NativeReferenceQueue$Lock)
-        at java.lang.ref.Finalizer$FinalizerThread.run(java.base@21.0.8/Finalizer.java:173)
-"Signal Dispatcher" #8 [30723] daemon prio=9 os_prio=31 cpu=0.53ms elapsed=1883.47s tid=0x00007fa8e6016600 nid=30723 waiting on condition  [0x0000000000000000]
-   java.lang.Thread.State: RUNNABLE
-"Service Thread" #9 [24323] daemon prio=9 os_prio=31 cpu=459.76ms elapsed=1883.47s tid=0x00007fa8e6016e00 nid=24323 runnable  [0x0000000000000000]
-   java.lang.Thread.State: RUNNABLE
-"Monitor Deflation Thread" #10 [30211] daemon prio=9 os_prio=31 cpu=193.00ms elapsed=1883.47s tid=0x00007fa8e6017600 nid=30211 runnable  [0x0000000000000000]
-   java.lang.Thread.State: RUNNABLE
-"C2 CompilerThread0" #11 [29955] daemon prio=9 os_prio=31 cpu=40976.01ms elapsed=1883.47s tid=0x00007fa8c480aa00 nid=29955 waiting on condition  [0x0000000000000000]
-   java.lang.Thread.State: RUNNABLE
-   No compile task
-"C1 CompilerThread0" #14 [24835] daemon prio=9 os_prio=31 cpu=14363.90ms elapsed=1883.47s tid=0x00007fa8e7023c00 nid=24835 waiting on condition  [0x0000000000000000]
-   java.lang.Thread.State: RUNNABLE
-   No compile task
-"Notification Thread" #15 [29187] daemon prio=9 os_prio=31 cpu=0.08ms elapsed=1883.45s tid=0x00007fa8e681f800 nid=29187 runnable  [0x0000000000000000]
-   java.lang.Thread.State: RUNNABLE
-"Timer-0" #17 [28931] daemon prio=5 os_prio=31 cpu=978.74ms elapsed=1883.17s tid=0x00007fa8c4883a00 nid=28931 runnable  [0x000070000e8b6000]
-   java.lang.Thread.State: RUNNABLE
-        at java.io.FilterInputStream.read(java.base@21.0.8/FilterInputStream.java:95)
-        at org.jetbrains.kotlin.daemon.LazyClasspathWatcherKt.md5Digest(LazyClasspathWatcher.kt:123)
-        at org.jetbrains.kotlin.daemon.LazyClasspathWatcher.isChanged(LazyClasspathWatcher.kt:98)
-        at org.jetbrains.kotlin.daemon.CompileServiceImpl.periodicSeldomCheck(CompileServiceImpl.kt:965)
-        at org.jetbrains.kotlin.daemon.CompileServiceImplBase$configurePeriodicActivities$$inlined$schedule$2.run(Timer.kt:149)
-        at java.util.TimerThread.mainLoop(java.base@21.0.8/Timer.java:566)
-        at java.util.TimerThread.run(java.base@21.0.8/Timer.java:516)
-"RMI TCP Accept-17385" #18 [25347] daemon prio=5 os_prio=31 cpu=12.42ms elapsed=1883.10s tid=0x00007fa8e4809000 nid=25347 runnable  [0x000070000e9ba000]
-   java.lang.Thread.State: RUNNABLE
-        at java.net.ServerSocket.accept(java.base@21.0.8/ServerSocket.java:542)
-        at sun.rmi.transport.tcp.TCPTransport$AcceptLoop.executeAcceptLoop(java.rmi@21.0.8/TCPTransport.java:424)
-        at sun.rmi.transport.tcp.TCPTransport$AcceptLoop.run(java.rmi@21.0.8/TCPTransport.java:388)
-        at java.lang.Thread.runWith(java.base@21.0.8/Thread.java:1596)
-        at java.lang.Thread.run(java.base@21.0.8/Thread.java:1583)
-"RMI Reaper" #20 [28163] prio=5 os_prio=31 cpu=0.90ms elapsed=1883.06s tid=0x00007fa8e7828400 nid=28163 waiting on condition  [0x000070000ebc0000]
-   java.lang.Thread.State: WAITING (parking)
-        at jdk.internal.misc.Unsafe.park(java.base@21.0.8/Native Method)
-        - parking to wait for  <0x00000007e0713830> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
-        at java.util.concurrent.locks.LockSupport.park(java.base@21.0.8/LockSupport.java:371)
-        at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionNode.block(java.base@21.0.8/AbstractQueuedSynchronizer.java:519)
-        at java.util.concurrent.ForkJoinPool.unmanagedBlock(java.base@21.0.8/ForkJoinPool.java:4013)
-        at java.util.concurrent.ForkJoinPool.managedBlock(java.base@21.0.8/ForkJoinPool.java:3961)
-        at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(java.base@21.0.8/AbstractQueuedSynchronizer.java:1712)
-        at java.lang.ref.ReferenceQueue.await(java.base@21.0.8/ReferenceQueue.java:67)
-        at java.lang.ref.ReferenceQueue.remove0(java.base@21.0.8/ReferenceQueue.java:158)
-        at java.lang.ref.ReferenceQueue.remove(java.base@21.0.8/ReferenceQueue.java:234)
-        at sun.rmi.transport.ObjectTable$Reaper.run(java.rmi@21.0.8/ObjectTable.java:352)
-        at java.lang.Thread.runWith(java.base@21.0.8/Thread.java:1596)
-        at java.lang.Thread.run(java.base@21.0.8/Thread.java:1583)
-"RMI GC Daemon" #21 [27651] daemon prio=2 os_prio=31 cpu=0.93ms elapsed=1883.06s tid=0x00007fa8e4831800 nid=27651 in Object.wait()  [0x000070000ecc3000]
-   java.lang.Thread.State: TIMED_WAITING (on object monitor)
-        at java.lang.Object.wait0(java.base@21.0.8/Native Method)
-        - waiting on <0x00000007e0713a48> (a sun.rmi.transport.GC$LatencyLock)
-        at java.lang.Object.wait(java.base@21.0.8/Object.java:366)
-        at sun.rmi.transport.GC$Daemon.run(java.rmi@21.0.8/GC.java:127)
-        - locked <0x00000007e0713a48> (a sun.rmi.transport.GC$LatencyLock)
-        at java.lang.Thread.runWith(java.base@21.0.8/Thread.java:1596)
-        at java.lang.Thread.run(java.base@21.0.8/Thread.java:1583)
-        at jdk.internal.misc.InnocuousThread.run(java.base@21.0.8/InnocuousThread.java:186)
-"DestroyJavaVM" #22 [5379] prio=5 os_prio=31 cpu=471.28ms elapsed=1883.05s tid=0x00007fa8c48af000 nid=5379 waiting on condition  [0x0000000000000000]
-   java.lang.Thread.State: RUNNABLE
-"RMI Scheduler(0)" #24 [27139] daemon prio=5 os_prio=31 cpu=6.16ms elapsed=1882.99s tid=0x00007fa87483a400 nid=27139 waiting on condition  [0x000070000eec9000]
-   java.lang.Thread.State: TIMED_WAITING (parking)
-        at jdk.internal.misc.Unsafe.park(java.base@21.0.8/Native Method)
-        - parking to wait for  <0x00000007e0756ae0> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
-        at java.util.concurrent.locks.LockSupport.parkNanos(java.base@21.0.8/LockSupport.java:269)
-        at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(java.base@21.0.8/AbstractQueuedSynchronizer.java:1763)
-        at java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(java.base@21.0.8/ScheduledThreadPoolExecutor.java:1182)
-        at java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(java.base@21.0.8/ScheduledThreadPoolExecutor.java:899)
-        at java.util.concurrent.ThreadPoolExecutor.getTask(java.base@21.0.8/ThreadPoolExecutor.java:1070)
-        at java.util.concurrent.ThreadPoolExecutor.runWorker(java.base@21.0.8/ThreadPoolExecutor.java:1130)
-        at java.util.concurrent.ThreadPoolExecutor$Worker.run(java.base@21.0.8/ThreadPoolExecutor.java:642)
-        at java.lang.Thread.runWith(java.base@21.0.8/Thread.java:1596)
-        at java.lang.Thread.run(java.base@21.0.8/Thread.java:1583)
-"RMI TCP Connection(5)-127.0.0.1" #38 [36867] daemon prio=5 os_prio=31 cpu=31412.42ms elapsed=1866.21s tid=0x00007fa8c4b27400 nid=36867 runnable  [0x000070000fae8000]
-   java.lang.Thread.State: RUNNABLE
-        at org.jetbrains.kotlin.resolve.calls.NewCommonSuperTypeCalculator.filterSupertypes(NewCommonSuperTypeCalculator.kt:158)
-        at org.jetbrains.kotlin.resolve.calls.NewCommonSuperTypeCalculator.commonSuperTypeForNotNullTypes(NewCommonSuperTypeCalculator.kt:232)
-        at org.jetbrains.kotlin.resolve.calls.NewCommonSuperTypeCalculator.commonSuperTypeForSimpleTypes(NewCommonSuperTypeCalculator.kt:103)
-        at org.jetbrains.kotlin.resolve.calls.NewCommonSuperTypeCalculator.commonSuperType(NewCommonSuperTypeCalculator.kt:62)
-        at org.jetbrains.kotlin.resolve.calls.NewCommonSuperTypeCalculator.commonSuperType(NewCommonSuperTypeCalculator.kt:27)
-        at org.jetbrains.kotlin.fir.types.TypeUtilsKt.commonSuperTypeOrNull(TypeUtils.kt:55)
-        at org.jetbrains.kotlin.fir.resolve.dfa.LogicSystem.or(LogicSystem.kt:349)
-        at org.jetbrains.kotlin.fir.resolve.dfa.LogicSystem.copyStatements(LogicSystem.kt:186)
-        at org.jetbrains.kotlin.fir.resolve.dfa.LogicSystem.joinFlow(LogicSystem.kt:51)
-        at org.jetbrains.kotlin.fir.resolve.dfa.FirDataFlowAnalyzer.buildDefaultFlow(FirDataFlowAnalyzer.kt:1418)
-        at org.jetbrains.kotlin.fir.resolve.dfa.FirDataFlowAnalyzer.mergeIncomingFlow(FirDataFlowAnalyzer.kt:1476)
-        at org.jetbrains.kotlin.fir.resolve.dfa.FirDataFlowAnalyzer.mergeIncomingFlow$default(FirDataFlowAnalyzer.kt:1471)
-        at org.jetbrains.kotlin.fir.resolve.dfa.FirDataFlowAnalyzer.exitWhenExpression(FirDataFlowAnalyzer.kt:700)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirControlFlowStatementsResolveTransformer.transformWhenExpression$lambda$9(FirControlFlowStatementsResolveTransformer.kt:114)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirControlFlowStatementsResolveTransformer$$Lambda/0x000000012161e5e0.invoke(Unknown Source)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.BodyResolveContext.withWhenExpression(BodyResolveContext.kt:1036)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirControlFlowStatementsResolveTransformer.transformWhenExpression(FirControlFlowStatementsResolveTransformer.kt:63)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirAbstractBodyResolveTransformerDispatcher.transformWhenExpression(FirAbstractBodyResolveTransformerDispatcher.kt:683)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirAbstractBodyResolveTransformerDispatcher.transformWhenExpression(FirAbstractBodyResolveTransformerDispatcher.kt:27)
-        at org.jetbrains.kotlin.fir.expressions.FirWhenExpression.transform(FirWhenExpression.kt:38)
-        at org.jetbrains.kotlin.fir.declarations.impl.FirPropertyImpl.transformInitializer(FirPropertyImpl.kt:122)
-        at org.jetbrains.kotlin.fir.declarations.impl.FirPropertyImpl.transformInitializer(FirPropertyImpl.kt:33)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirDeclarationsResolveTransformer.transformProperty(FirDeclarationsResolveTransformer.kt:197)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirAbstractBodyResolveTransformerDispatcher.transformProperty(FirAbstractBodyResolveTransformerDispatcher.kt:498)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirAbstractBodyResolveTransformerDispatcher.transformProperty(FirAbstractBodyResolveTransformerDispatcher.kt:27)
-        at org.jetbrains.kotlin.fir.declarations.FirProperty.transform(FirProperty.kt:62)
-        at org.jetbrains.kotlin.fir.visitors.FirTransformerUtilKt.transformInplace(FirTransformerUtil.kt:20)
-        at org.jetbrains.kotlin.fir.declarations.impl.FirRegularClassImpl.transformDeclarations(FirRegularClassImpl.kt:92)
-        at org.jetbrains.kotlin.fir.declarations.impl.FirRegularClassImpl.transformChildren(FirRegularClassImpl.kt:74)
-        at org.jetbrains.kotlin.fir.declarations.impl.FirRegularClassImpl.transformChildren(FirRegularClassImpl.kt:30)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirAbstractBodyResolveTransformerDispatcher.transformElement(FirAbstractBodyResolveTransformerDispatcher.kt:92)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirAbstractBodyResolveTransformerDispatcher.transformDeclarationContent(FirAbstractBodyResolveTransformerDispatcher.kt:462)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirDeclarationsResolveTransformer.transformDeclarationContent(FirDeclarationsResolveTransformer.kt:84)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirDeclarationsResolveTransformer.doTransformRegularClass$lambda$59(FirDeclarationsResolveTransformer.kt:906)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirDeclarationsResolveTransformer$$Lambda/0x00000001215bf1c0.invoke(Unknown Source)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirDeclarationsResolveTransformer.withRegularClass$lambda$60(FirDeclarationsResolveTransformer.kt:915)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirDeclarationsResolveTransformer$$Lambda/0x00000001215bf418.invoke(Unknown Source)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.BodyResolveContext.withRegularClass$lambda$18$lambda$17(BodyResolveContext.kt:1749)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.BodyResolveContext$$Lambda/0x00000001215bb118.invoke(Unknown Source)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.BodyResolveContext.withScopesForClass(BodyResolveContext.kt:591)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.BodyResolveContext.withRegularClass(BodyResolveContext.kt:467)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirDeclarationsResolveTransformer.withRegularClass(FirDeclarationsResolveTransformer.kt:914)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirDeclarationsResolveTransformer.doTransformRegularClass(FirDeclarationsResolveTransformer.kt:905)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirDeclarationsResolveTransformer.transformRegularClass(FirDeclarationsResolveTransformer.kt:806)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirAbstractBodyResolveTransformerDispatcher.transformRegularClass(FirAbstractBodyResolveTransformerDispatcher.kt:547)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirAbstractBodyResolveTransformerDispatcher.transformRegularClass(FirAbstractBodyResolveTransformerDispatcher.kt:27)
-        at org.jetbrains.kotlin.fir.declarations.FirRegularClass.transform(FirRegularClass.kt:53)
-        at org.jetbrains.kotlin.fir.visitors.FirTransformerUtilKt.transformInplace(FirTransformerUtil.kt:20)
-        at org.jetbrains.kotlin.fir.declarations.impl.FirFileImpl.transformDeclarations(FirFileImpl.kt:81)
-        at org.jetbrains.kotlin.fir.declarations.impl.FirFileImpl.transformChildren(FirFileImpl.kt:66)
-        at org.jetbrains.kotlin.fir.declarations.impl.FirFileImpl.transformChildren(FirFileImpl.kt:29)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirAbstractBodyResolveTransformerDispatcher.transformElement(FirAbstractBodyResolveTransformerDispatcher.kt:92)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirAbstractBodyResolveTransformerDispatcher.transformDeclarationContent(FirAbstractBodyResolveTransformerDispatcher.kt:462)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirDeclarationsResolveTransformer.transformDeclarationContent(FirDeclarationsResolveTransformer.kt:84)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirDeclarationsResolveTransformer.doTransformFile$lambda$57(FirDeclarationsResolveTransformer.kt:878)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirDeclarationsResolveTransformer$$Lambda/0x00000001215baa10.invoke(Unknown Source)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirDeclarationsResolveTransformer.withFile(FirDeclarationsResolveTransformer.kt:891)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirDeclarationsResolveTransformer.doTransformFile(FirDeclarationsResolveTransformer.kt:877)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirDeclarationsResolveTransformer.transformFile(FirDeclarationsResolveTransformer.kt:784)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirAbstractBodyResolveTransformerDispatcher.transformFile(FirAbstractBodyResolveTransformerDispatcher.kt:60)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirAbstractBodyResolveTransformerDispatcher.transformFile(FirAbstractBodyResolveTransformerDispatcher.kt:27)
-        at org.jetbrains.kotlin.fir.declarations.FirFile.transform(FirFile.kt:47)
-        at org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirBodyResolveTransformerAdapter.transformFile(FirBodyResolveTransformerAdapters.kt:41)
-        at org.jetbrains.kotlin.fir.declarations.FirFile.transform(FirFile.kt:47)
-        at org.jetbrains.kotlin.fir.resolve.transformers.FirTransformerBasedResolveProcessor.processFile(FirResolveProcessor.kt:48)
-        at org.jetbrains.kotlin.fir.resolve.transformers.FirTotalResolveProcessor.process(FirTotalResolveProcessor.kt:36)
-        at org.jetbrains.kotlin.fir.pipeline.AnalyseKt.runResolution(analyse.kt:24)
-        at org.jetbrains.kotlin.fir.pipeline.FirUtilsKt.resolveAndCheckFir(firUtils.kt:76)
-        at org.jetbrains.kotlin.cli.pipeline.jvm.JvmFrontendPipelinePhase.executePhase(JvmFrontendPipelinePhase.kt:174)
-        at org.jetbrains.kotlin.cli.pipeline.jvm.JvmFrontendPipelinePhase.executePhase(JvmFrontendPipelinePhase.kt:56)
-        at org.jetbrains.kotlin.cli.pipeline.PipelinePhase.phaseBody(PipelinePhase.kt:68)
-        at org.jetbrains.kotlin.cli.pipeline.PipelinePhase.phaseBody(PipelinePhase.kt:58)
-        at org.jetbrains.kotlin.config.phaser.NamedCompilerPhase.invoke(CompilerPhase.kt:102)
-        at org.jetbrains.kotlin.backend.common.phaser.CompositePhase.invoke(PhaseBuilders.kt:22)
-        at org.jetbrains.kotlin.config.phaser.CompilerPhaseKt.invokeToplevel(CompilerPhase.kt:53)
-        at org.jetbrains.kotlin.cli.pipeline.AbstractCliPipeline.runPhasedPipeline(AbstractCliPipeline.kt:109)
-        at org.jetbrains.kotlin.cli.pipeline.AbstractCliPipeline.execute(AbstractCliPipeline.kt:68)
-        at org.jetbrains.kotlin.cli.jvm.K2JVMCompiler.doExecutePhased(K2JVMCompiler.kt:78)
-        at org.jetbrains.kotlin.cli.jvm.K2JVMCompiler.doExecutePhased(K2JVMCompiler.kt:44)
-        at org.jetbrains.kotlin.cli.common.CLICompiler.execImpl(CLICompiler.kt:90)
-        at org.jetbrains.kotlin.cli.common.CLICompiler.exec(CLICompiler.kt:352)
-        at org.jetbrains.kotlin.incremental.IncrementalJvmCompilerRunnerBase.runCompiler(IncrementalJvmCompilerRunnerBase.kt:175)
-        at org.jetbrains.kotlin.incremental.IncrementalJvmCompilerRunnerBase.runCompiler(IncrementalJvmCompilerRunnerBase.kt:38)
-        at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.doCompile(IncrementalCompilerRunner.kt:504)
-        at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.compileImpl(IncrementalCompilerRunner.kt:421)
-        at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.compileNonIncrementally(IncrementalCompilerRunner.kt:306)
-        at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.compile(IncrementalCompilerRunner.kt:133)
-        at org.jetbrains.kotlin.daemon.CompileServiceImplBase.execIncrementalCompiler(CompileServiceImpl.kt:679)
-        at org.jetbrains.kotlin.daemon.CompileServiceImplBase.access$execIncrementalCompiler(CompileServiceImpl.kt:93)
-        at org.jetbrains.kotlin.daemon.CompileServiceImpl.compile(CompileServiceImpl.kt:1806)
-        at java.lang.invoke.LambdaForm$DMH/0x0000000121095400.invokeInterface(java.base@21.0.8/LambdaForm$DMH)
-        at java.lang.invoke.LambdaForm$MH/0x0000000121098800.invoke(java.base@21.0.8/LambdaForm$MH)
-        at java.lang.invoke.Invokers$Holder.invokeExact_MT(java.base@21.0.8/Invokers$Holder)
-        at jdk.internal.reflect.DirectMethodHandleAccessor.invokeImpl(java.base@21.0.8/DirectMethodHandleAccessor.java:157)
-        at jdk.internal.reflect.DirectMethodHandleAccessor.invoke(java.base@21.0.8/DirectMethodHandleAccessor.java:103)
-        at java.lang.reflect.Method.invoke(java.base@21.0.8/Method.java:580)
-        at sun.rmi.server.UnicastServerRef.dispatch(java.rmi@21.0.8/UnicastServerRef.java:360)
-        at sun.rmi.transport.Transport$1.run(java.rmi@21.0.8/Transport.java:200)
-        at sun.rmi.transport.Transport$1.run(java.rmi@21.0.8/Transport.java:197)
-        at java.security.AccessController.executePrivileged(java.base@21.0.8/AccessController.java:809)
-        at java.security.AccessController.doPrivileged(java.base@21.0.8/AccessController.java:714)
-        at sun.rmi.transport.Transport.serviceCall(java.rmi@21.0.8/Transport.java:196)
-        at sun.rmi.transport.tcp.TCPTransport.handleMessages(java.rmi@21.0.8/TCPTransport.java:598)
-        at sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run0(java.rmi@21.0.8/TCPTransport.java:844)
-        at sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.lambda$run$0(java.rmi@21.0.8/TCPTransport.java:721)
-        at sun.rmi.transport.tcp.TCPTransport$ConnectionHandler$$Lambda/0x000000012106bbe0.run(java.rmi@21.0.8/Unknown Source)
-        at java.security.AccessController.executePrivileged(java.base@21.0.8/AccessController.java:778)
-        at java.security.AccessController.doPrivileged(java.base@21.0.8/AccessController.java:400)
-        at sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run(java.rmi@21.0.8/TCPTransport.java:720)
-        at java.util.concurrent.ThreadPoolExecutor.runWorker(java.base@21.0.8/ThreadPoolExecutor.java:1144)
-        at java.util.concurrent.ThreadPoolExecutor$Worker.run(java.base@21.0.8/ThreadPoolExecutor.java:642)
-        at java.lang.Thread.runWith(java.base@21.0.8/Thread.java:1596)
-        at java.lang.Thread.run(java.base@21.0.8/Thread.java:1583)
-"RMI RenewClean-[127.0.0.1:55348,org.jetbrains.kotlin.daemon.common.LoopbackNetworkInterface$ClientLoopbackSocketFactory@6e1820bd]" #39 [37123] daemon prio=5 os_prio=31 cpu=107.29ms elapsed=1866.16s tid=0x00007fa8e5933200 nid=37123 waiting on condition  [0x000070000fbf0000]
-   java.lang.Thread.State: TIMED_WAITING (parking)
-        at jdk.internal.misc.Unsafe.park(java.base@21.0.8/Native Method)
-        - parking to wait for  <0x00000007e3ecead0> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
-        at java.util.concurrent.locks.LockSupport.parkNanos(java.base@21.0.8/LockSupport.java:269)
-        at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(java.base@21.0.8/AbstractQueuedSynchronizer.java:1852)
-        at java.lang.ref.ReferenceQueue.await(java.base@21.0.8/ReferenceQueue.java:71)
-        at java.lang.ref.ReferenceQueue.remove0(java.base@21.0.8/ReferenceQueue.java:143)
-        at java.lang.ref.ReferenceQueue.remove(java.base@21.0.8/ReferenceQueue.java:218)
-        at sun.rmi.transport.DGCClient$EndpointEntry$RenewCleanThread.run(java.rmi@21.0.8/DGCClient.java:567)
-        at java.lang.Thread.runWith(java.base@21.0.8/Thread.java:1596)
-        at java.lang.Thread.run(java.base@21.0.8/Thread.java:1583)
-"RMI RenewClean-[127.0.0.1:56463,org.jetbrains.kotlin.daemon.common.LoopbackNetworkInterface$ClientLoopbackSocketFactory@2f216949]" #45 [27403] daemon prio=5 os_prio=31 cpu=36.30ms elapsed=594.74s tid=0x00007fa8e596aa00 nid=27403 waiting on condition  [0x000070000f0cf000]
-   java.lang.Thread.State: TIMED_WAITING (parking)
-        at jdk.internal.misc.Unsafe.park(java.base@21.0.8/Native Method)
-        - parking to wait for  <0x00000007f5540590> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
-        at java.util.concurrent.locks.LockSupport.parkNanos(java.base@21.0.8/LockSupport.java:269)
-        at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(java.base@21.0.8/AbstractQueuedSynchronizer.java:1852)
-        at java.lang.ref.ReferenceQueue.await(java.base@21.0.8/ReferenceQueue.java:71)
-        at java.lang.ref.ReferenceQueue.remove0(java.base@21.0.8/ReferenceQueue.java:143)
-        at java.lang.ref.ReferenceQueue.remove(java.base@21.0.8/ReferenceQueue.java:218)
-        at sun.rmi.transport.DGCClient$EndpointEntry$RenewCleanThread.run(java.rmi@21.0.8/DGCClient.java:567)
-        at java.lang.Thread.runWith(java.base@21.0.8/Thread.java:1596)
-        at java.lang.Thread.run(java.base@21.0.8/Thread.java:1583)
-"RMI TCP Connection(18)-127.0.0.1" #48 [26899] daemon prio=5 os_prio=31 cpu=133.59ms elapsed=302.47s tid=0x00007fa8c4d6a400 nid=26899 runnable  [0x000070000f9e8000]
-   java.lang.Thread.State: RUNNABLE
-        at java.util.ArrayList.iterator(java.base@21.0.8/ArrayList.java:1029)
-        at org.jetbrains.kotlin.cli.jvm.compiler.ClasspathRootsResolver.computeRoots(ClasspathRootsResolver.kt:103)
-        at org.jetbrains.kotlin.cli.jvm.compiler.ClasspathRootsResolver.convertClasspathRoots(ClasspathRootsResolver.kt:90)
-        at org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment.<init>(KotlinCoreEnvironment.kt:273)
-        at org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment.<init>(KotlinCoreEnvironment.kt)
-        at org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment$Companion.createForProduction(KotlinCoreEnvironment.kt:474)
-        at org.jetbrains.kotlin.incremental.parsing.ParseFileUtilsKt.classesFqNames(parseFileUtils.kt:47)
-        at org.jetbrains.kotlin.incremental.parsing.ParseFileUtilsKt.classesFqNames(parseFileUtils.kt:35)
-        at org.jetbrains.kotlin.incremental.dirtyFiles.ChangesDetectionUtilsKt.getRemovedClassesChanges(changesDetectionUtils.kt:140)
-        at org.jetbrains.kotlin.incremental.dirtyFiles.JvmSourcesToCompileCalculator.calculateSourcesToCompileWithKnownChanges(JvmSourcesToCompileCalculator.kt:77)
-        at org.jetbrains.kotlin.incremental.dirtyFiles.JvmSourcesToCompileCalculator.calculateSourcesToCompileImpl(JvmSourcesToCompileCalculator.kt:49)
-        at org.jetbrains.kotlin.incremental.dirtyFiles.JvmSourcesToCompileCalculator.calculateWithClasspathSnapshot(JvmSourcesToCompileCalculator.kt:97)
-        at org.jetbrains.kotlin.incremental.IncrementalJvmCompilerRunner.calculateSourcesToCompile(IncrementalJvmCompilerRunner.kt:60)
-        at org.jetbrains.kotlin.incremental.IncrementalJvmCompilerRunner.calculateSourcesToCompile(IncrementalJvmCompilerRunner.kt:23)
-        at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.tryCompileIncrementally$lambda$10$compile(IncrementalCompilerRunner.kt:230)
-        at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.tryCompileIncrementally(IncrementalCompilerRunner.kt:272)
-        at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.compile(IncrementalCompilerRunner.kt:124)
-        at org.jetbrains.kotlin.daemon.CompileServiceImplBase.execIncrementalCompiler(CompileServiceImpl.kt:679)
-        at org.jetbrains.kotlin.daemon.CompileServiceImplBase.access$execIncrementalCompiler(CompileServiceImpl.kt:93)
-        at org.jetbrains.kotlin.daemon.CompileServiceImpl.compile(CompileServiceImpl.kt:1806)
-        at java.lang.invoke.LambdaForm$DMH/0x0000000121095400.invokeInterface(java.base@21.0.8/LambdaForm$DMH)
-        at java.lang.invoke.LambdaForm$MH/0x0000000121098800.invoke(java.base@21.0.8/LambdaForm$MH)
-        at java.lang.invoke.Invokers$Holder.invokeExact_MT(java.base@21.0.8/Invokers$Holder)
-        at jdk.internal.reflect.DirectMethodHandleAccessor.invokeImpl(java.base@21.0.8/DirectMethodHandleAccessor.java:157)
-        at jdk.internal.reflect.DirectMethodHandleAccessor.invoke(java.base@21.0.8/DirectMethodHandleAccessor.java:103)
-        at java.lang.reflect.Method.invoke(java.base@21.0.8/Method.java:580)
-        at sun.rmi.server.UnicastServerRef.dispatch(java.rmi@21.0.8/UnicastServerRef.java:360)
-        at sun.rmi.transport.Transport$1.run(java.rmi@21.0.8/Transport.java:200)
-        at sun.rmi.transport.Transport$1.run(java.rmi@21.0.8/Transport.java:197)
-        at java.security.AccessController.executePrivileged(java.base@21.0.8/AccessController.java:809)
-        at java.security.AccessController.doPrivileged(java.base@21.0.8/AccessController.java:714)
-        at sun.rmi.transport.Transport.serviceCall(java.rmi@21.0.8/Transport.java:196)
-        at sun.rmi.transport.tcp.TCPTransport.handleMessages(java.rmi@21.0.8/TCPTransport.java:598)
-        at sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run0(java.rmi@21.0.8/TCPTransport.java:844)
-        at sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.lambda$run$0(java.rmi@21.0.8/TCPTransport.java:721)
-        at sun.rmi.transport.tcp.TCPTransport$ConnectionHandler$$Lambda/0x000000012106bbe0.run(java.rmi@21.0.8/Unknown Source)
-        at java.security.AccessController.executePrivileged(java.base@21.0.8/AccessController.java:778)
-        at java.security.AccessController.doPrivileged(java.base@21.0.8/AccessController.java:400)
-        at sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run(java.rmi@21.0.8/TCPTransport.java:720)
-        at java.util.concurrent.ThreadPoolExecutor.runWorker(java.base@21.0.8/ThreadPoolExecutor.java:1144)
-        at java.util.concurrent.ThreadPoolExecutor$Worker.run(java.base@21.0.8/ThreadPoolExecutor.java:642)
-        at java.lang.Thread.runWith(java.base@21.0.8/Thread.java:1596)
-        at java.lang.Thread.run(java.base@21.0.8/Thread.java:1583)
-"RMI RenewClean-[127.0.0.1:57118,org.jetbrains.kotlin.daemon.common.LoopbackNetworkInterface$ClientLoopbackSocketFactory@11960cfd]" #49 [26399] daemon prio=5 os_prio=31 cpu=0.41ms elapsed=61.01s tid=0x00007fa8c487d200 nid=26399 waiting on condition  [0x000070000edc6000]
-   java.lang.Thread.State: TIMED_WAITING (parking)
-        at jdk.internal.misc.Unsafe.park(java.base@21.0.8/Native Method)
-        - parking to wait for  <0x00000007f556ab28> (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)
-        at java.util.concurrent.locks.LockSupport.parkNanos(java.base@21.0.8/LockSupport.java:269)
-        at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.await(java.base@21.0.8/AbstractQueuedSynchronizer.java:1852)
-        at java.lang.ref.ReferenceQueue.await(java.base@21.0.8/ReferenceQueue.java:71)
-        at java.lang.ref.ReferenceQueue.remove0(java.base@21.0.8/ReferenceQueue.java:143)
-        at java.lang.ref.ReferenceQueue.remove(java.base@21.0.8/ReferenceQueue.java:218)
-        at sun.rmi.transport.DGCClient$EndpointEntry$RenewCleanThread.run(java.rmi@21.0.8/DGCClient.java:567)
-        at java.lang.Thread.runWith(java.base@21.0.8/Thread.java:1596)
-        at java.lang.Thread.run(java.base@21.0.8/Thread.java:1583)
-"RMI TCP Connection(idle)" #50 [37639] daemon prio=5 os_prio=31 cpu=1.53ms elapsed=3.23s tid=0x00007fa8e591f600 nid=37639 runnable  [0x000070000efcc000]
-   java.lang.Thread.State: RUNNABLE
-        at java.nio.Buffer.clear(java.base@21.0.8/Buffer.java:460)
-        at java.nio.ByteBuffer.clear(java.base@21.0.8/ByteBuffer.java:1607)
-        at sun.nio.cs.StreamEncoder.writeBytes(java.base@21.0.8/StreamEncoder.java:312)
-        at sun.nio.cs.StreamEncoder.implFlushBuffer(java.base@21.0.8/StreamEncoder.java:405)
-        at sun.nio.cs.StreamEncoder.lockedFlushBuffer(java.base@21.0.8/StreamEncoder.java:123)
-        at sun.nio.cs.StreamEncoder.flushBuffer(java.base@21.0.8/StreamEncoder.java:110)
-        at java.io.OutputStreamWriter.flushBuffer(java.base@21.0.8/OutputStreamWriter.java:192)
-        at java.io.PrintStream.implWrite(java.base@21.0.8/PrintStream.java:812)
-        at java.io.PrintStream.write(java.base@21.0.8/PrintStream.java:790)
-        at java.io.PrintStream.print(java.base@21.0.8/PrintStream.java:1002)
-        at java.lang.ThreadGroup.uncaughtException(java.base@21.0.8/ThreadGroup.java:697)
-        at java.lang.ThreadGroup.uncaughtException(java.base@21.0.8/ThreadGroup.java:690)
-        at java.lang.Thread.dispatchUncaughtException(java.base@21.0.8/Thread.java:2902)
-"RMI TCP Connection(idle)" #52 [37891] daemon prio=5 os_prio=31 cpu=0.21ms elapsed=0.56s tid=0x00007fa8e6b3f400 nid=37891 waiting on condition  [0x000070000fdf6000]
-   java.lang.Thread.State: TIMED_WAITING (parking)
-        at jdk.internal.misc.Unsafe.park(java.base@21.0.8/Native Method)
-        - parking to wait for  <0x00000007e0712dc8> (a java.util.concurrent.SynchronousQueue$Transferer)
-        at java.util.concurrent.locks.LockSupport.parkNanos(java.base@21.0.8/LockSupport.java:410)
-        at java.util.concurrent.LinkedTransferQueue$DualNode.await(java.base@21.0.8/LinkedTransferQueue.java:452)
-        at java.util.concurrent.SynchronousQueue$Transferer.xferLifo(java.base@21.0.8/SynchronousQueue.java:194)
-        at java.util.concurrent.SynchronousQueue.xfer(java.base@21.0.8/SynchronousQueue.java:235)
-        at java.util.concurrent.SynchronousQueue.poll(java.base@21.0.8/SynchronousQueue.java:338)
-        at java.util.concurrent.ThreadPoolExecutor.getTask(java.base@21.0.8/ThreadPoolExecutor.java:1069)
-        at java.util.concurrent.ThreadPoolExecutor.runWorker(java.base@21.0.8/ThreadPoolExecutor.java:1130)
-        at java.util.concurrent.ThreadPoolExecutor$Worker.run(java.base@21.0.8/ThreadPoolExecutor.java:642)
-        at java.lang.Thread.runWith(java.base@21.0.8/Thread.java:1596)
-        at java.lang.Thread.run(java.base@21.0.8/Thread.java:1583)
-"Attach Listener" #51 [33039] daemon prio=9 os_prio=31 cpu=0.91ms elapsed=0.56s tid=0x00007fa8e7ead000 nid=33039 waiting on condition  [0x0000000000000000]
-   java.lang.Thread.State: RUNNABLE
-"RMI TCP Connection(idle)" #53 [41731] daemon prio=5 os_prio=31 cpu=0.17ms elapsed=0.28s tid=0x00007fa8e6413000 nid=41731 runnable  [0x000070000fef9000]
-   java.lang.Thread.State: RUNNABLE
-        at java.lang.Thread.scopedValueBindings(java.base@21.0.8/Thread.java:299)
-        at java.lang.Thread.run(java.base@21.0.8/Thread.java:1582)
-"GC Thread#9" os_prio=31 cpu=1298000.58ms elapsed=1881.92s tid=0x00007fa8e47a6a30 nid=42499 runnable
-"GC Thread#8" os_prio=31 cpu=1299278.39ms elapsed=1881.92s tid=0x00007fa8e47a64c0 nid=35843 runnable
-"GC Thread#7" os_prio=31 cpu=1299521.62ms elapsed=1881.92s tid=0x00007fa8e5257200 nid=35331 runnable
-"GC Thread#6" os_prio=31 cpu=1298843.75ms elapsed=1881.92s tid=0x00007fa8e47a5f50 nid=34819 runnable
-"GC Thread#5" os_prio=31 cpu=1300157.33ms elapsed=1881.92s tid=0x00007fa8e5256c90 nid=42755 runnable
-"GC Thread#4" os_prio=31 cpu=1298813.51ms elapsed=1881.92s tid=0x00007fa8e47a59e0 nid=34051 runnable
-"GC Thread#3" os_prio=31 cpu=1298785.05ms elapsed=1881.92s tid=0x00007fa8e47a5470 nid=33795 runnable
-"GC Thread#2" os_prio=31 cpu=1298872.46ms elapsed=1881.92s tid=0x00007fa8e47a50d0 nid=33539 runnable
-"GC Thread#1" os_prio=31 cpu=1299746.07ms elapsed=1881.92s tid=0x00007fa8e52568f0 nid=25863 runnable
-"VM Thread" os_prio=31 cpu=208258.04ms elapsed=1883.48s tid=0x00007fa8e5008400 nid=16643 runnable
-"VM Periodic Task Thread" os_prio=31 cpu=1113.85ms elapsed=1883.49s tid=0x00007fa8e50054a0 nid=13315 waiting on condition
-"GC Thread#0" os_prio=31 cpu=1300153.42ms elapsed=1883.61s tid=0x00007fa8e5704cb0 nid=11523 runnable
-JNI global refs: 21, weak refs: 0
-JNI global refs memory usage: 835, weak refs: 201
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100   1) package typechecker.impl.proofstep
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100   2)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100   3) import org.arend.ext.module.ModulePath
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100   4) import org.arend.server.ArendChecker
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100   5) import org.arend.server.ArendServer
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100   6) import typechecker.Goal
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100   7) import typechecker.ProofStep
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100   8) import java.io.File
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100   9) import ai.koog.agents.core.agent.AIAgent
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  10) import ai.koog.prompt.executor.clients.openai.OpenAIModels
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  11) import ai.koog.prompt.executor.llms.all.simpleOpenAIExecutor
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  12) import extractStep
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  13) import kotlinx.serialization.json.Json
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  14) import kotlinx.serialization.json.JsonElement
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  15) import kotlinx.serialization.json.JsonObject
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  16) import kotlinx.serialization.json.jsonObject
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  17) import kotlinx.coroutines.runBlocking
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  18) import org.arend.core.context.binding.Binding
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  19) import org.arend.core.context.binding.EvaluatingBinding
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  20) import org.arend.core.expr.ClassCallExpression
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  21) import org.arend.ext.concrete.definition.FunctionKind
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  22) import org.arend.ext.core.ops.NormalizationMode
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  23) import org.arend.ext.error.GeneralError
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  24) import org.arend.ext.error.ListErrorReporter
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  25) import org.arend.ext.prettyprinting.PrettyPrinterConfig
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  26) import org.arend.ext.reference.Precedence
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  27) import org.arend.frontend.parser.BuildVisitor
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  28) import org.arend.frontend.repl.CommonCliRepl
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  29) import org.arend.naming.reference.FullModuleReferable
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  30) import org.arend.naming.reference.LocalReferable
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  31) import org.arend.naming.reference.Referable
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  32) import org.arend.naming.resolving.typing.AbstractBody
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  33) import org.arend.naming.resolving.typing.TypedReferable
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  34) import org.arend.naming.resolving.visitor.ExpressionResolveNameVisitor
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  35) import org.arend.term.concrete.Concrete
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  36) import org.arend.term.concrete.ConcreteExpressionFactory
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  37) import org.arend.term.concrete.SearchConcreteVisitor
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  38) import org.arend.term.concrete.SubstConcreteVisitor
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  39) import org.arend.term.prettyprint.ToAbstractVisitor
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  40) import org.arend.typechecking.visitor.CheckTypeVisitor
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  41) import org.arend.typechecking.visitor.DesugarVisitor
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  42) import org.arend.typechecking.visitor.SyntacticDesugarVisitor
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  43) import typechecker.impl.ArendGoal
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  44) import typechecker.impl.ArendProof
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  45)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  46) class LLMStepGenerator(
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  47)   checker: ArendChecker,
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  48)   server: ArendServer,
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  49)   libName: String,
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  50)   modulePath: ModulePath
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  51) ): BaseStepGenerator(checker, server, libName, modulePath) {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  52)   private val systemPrompt = "You are an assistant for writing in the proof assistant language Arend. Answer concisely. Metas are like tactics in Lean. Remember that you have the following tactics. Metas rewrite, rewriteI, and rewriteF work just like the rewriting mechanism in other languages, such as Coq or Idris (in Agda, rewrite is allowed only in the LHS of a clause, so it’s different).\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  53)           "rewrite p t : T where p : a = b replaces occurrences of a in T with a variable obtaining a type T[x/a] and returns transportInv (\\lam x => T[x/a]) p t. Note that T is the expected type from the context, not the type of t. When the expected type is unknown, the type of t will be used instead of T.\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  54)           "rewriteF is like rewrite but it enforces to use the type of t instead of the expected type.\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  55)           "rewriteI p t is equivalent to rewrite (inv p) t.\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  56)           "To any of the metas above it is possible to add specification of numbers of occurrences. For example, rewrite {i1, i2, … ik} p t : T rewrites only occurrences with numbers i1, i2, … ik where occurrence ij is the number of occurrence after all previous occurrences have been replaced.\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  57)           "Examples \n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  58)           "\\lemma +-assoc (a b c : Nat) : a + b + c = a + (b + c) \\elim c\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  59)           "  | 0 => idp\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  60)           "  | suc c => rewrite (+-assoc a b c) idp\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  61)           "\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  62)           "\\lemma +-comm-rw (a b : Nat) : a + b = b + a\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  63)           "  | 0, 0 => idp\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  64)           "  | 0, suc b => rewrite (+-comm-rw 0 b) idp\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  65)           "  | suc a, 0 => rewriteI (+-comm-rw a 0) idp\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  66)           "  | suc a, suc b => rewrite (+-comm-rw \$ suc a) \$\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  67)           "       rewriteI (+-comm-rw a b) \$ rewriteI (+-comm-rw a \$ suc b) idp\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  68)           "\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  69)           "\\lemma test1 (x y : Nat) (p : x = 0) (q : 0 = y) : x = y => rewrite p q\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  70)           "\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  71)           "\\lemma test2 (x y : Nat) (p : 0 = x) (q : 0 = y) : x = y => rewriteI p q\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  72)           "\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  73)           "\\lemma test3 (x y : Nat) (p : 0 = x) (q : 0 = y) : x = y => rewriteF p q\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  74)           "\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  75)           "\\lemma test5 (x y : Nat) (p : 0 = x) (q : 0 = y) => rewrite p q\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  76)           "\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  77)           "\\lemma test6 {A : \\Set} (x : A) (f : A -> A) (h : \\Pi (z : A) -> f z = z) : f (f x) = x\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  78)           "  => rewrite h (rewrite h idp)\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  79)           "\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  80)           "\\lemma test7 {A : Nat} (x y : A) (f : A -> A) : f (x + y) = f (y + x)\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  81)           "  => rewrite +-comm-rw idp\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  82)           "\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  83)           "\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  84)           "Meta ext proves goals of the form a = {A} a’. It expects (at most) one argument and the type of this argument is called ‘subgoal’. The expected type is called ‘goal’.\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  85)           "If the goal is f = {\\Pi (x_1 : A_1) … (x_n : A_n) -> B} g, then the subgoal is \\Pi(x_1 : A_1) … (x_n : A_n) -> f x_1 … x_n = g x_1 … x_n\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  86)           "If the goal is t = {\\Sigma (x_1 : A_1) … (x_n : A_n) (y_1 : B_1 x_1 … x_n) … (y_k :B_k x_1 … x_n) (z_1 : C_1) … (z_m : C_m)} s, where C_i : \\Prop and they can depend on x_j and y_l for all i, j, and l, then the subgoal is \\Sigma (p_1 : t.1 =s.1) … (p_n : t.n = s.n) D_1 … D_k, where D_j is equal to coe (\\lam i => B (p_1 @i) … (p_n @ i)) t.{k + j - 1} right = s.{k + j - 1}\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  87)           "If the goal is t = {R} s, where R is a record, then the subgoal is defined in the same way as for \\Sigma-types It is also possible to use the following syntax in this case: ext R { | f_1 => e_1 … | f_l => e_l }, which is equivalent to ext (e_1, … e_l)\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  88)           "If the goal is A = {\\Prop} B, then the subgoal is \\Sigma (A -> B) (B -> A)\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  89)           "If the goal is A = {\\Type} B, then the subgoal is Equiv {A} {B}\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  90)           "If the goal is x = {P} y, where P : \\Prop, then the argument for ext should be omitted.\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  91)           "Meta simplify simplifies the expected type.\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  92)           "\\func test1 {M : Monoid} (x : M) : x = x * ide\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  93)           "  => simplify\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  94)           "\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  95)           "\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  96)           "\\func test6 {R : Ring} (x : R) : negative (x * x) = x * negative x\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  97)           "  => simplify\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  98)           "\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100  99)           "Meta equation\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 100)           "equation a_1 … a_n proves an equation a_0 = a_{n+1} using a_1, … a_n as intermediate steps. A proof of a_i = a_{i+1} can be specified as implicit arguments between them.using, usingOnly, and hiding with a single argument can be used instead of a proof to control the context. The first implicit argument can be either a universe or a subclass of either Monoid, AddMonoid, or Order.Lattice.Bounded.MeetSemilattice. In the former case, the meta will prove an equality in a type without using any additional structure on it. In the latter case, the meta will prove an equality using only structure available in the specified class.\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 101)           "The general principle of the equation meta in Arend is consistent across algebraic structures: the solver first checks if the Left Hand Side and Right Hand Side are syntactically identical. If not, it converts both sides into a canonical normal form. If the normal forms are identical, the proof is complete; otherwise, it produces a subgoal requiring a proof that the two normal forms are equal. You can use equation in p to transform a complex proof p into a simpler proof of these normal forms. However, the operational logic and how hypotheses are applied differ based on the structure's properties. For rigid structures like Monoids, the solver acts like a text editor: hypotheses perform direct substitutions based on exact pattern matching. An integer argument before a hypothesis (e.g., 2 p) specifies the exact position of the occurrence to replace. For Commutative Monoids, order matters less, so integer arguments specify the count of occurrences to replace. For structures with inverses, like Groups and Rings, the solver acts like a calculator. Instead of text substitution, hypotheses are applied arithmetically to cancel out terms. Here, integer arguments represent coefficients or exponents; for example, 2 p in a Group raises the hypothesis to the second power, while in a Ring it multiplies the equation by 2. Negative integers are allowed here to represent inverses or subtraction. Boolean Rings use a specific logic of ideal reduction. Thus, while the user interface is universal, the underlying engine shifts from structural replacement in monoids to arithmetic manipulation in groups and rings. You have \n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 102)           "Equation.monoid, equation.addMonoid, equation.cMonoid, equation.abMonoid, equation.cMonoidAuto, equation.group, equation.addGroup, equation.cGroup, equation.abGroup,equation.semiring, equation.cSemiring, equation.ring, equation.cRing, equation.cRingAuto, equation.bRing\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 103)           "\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 104)           "Meta linarith\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 105)           "This meta solves systems of linear equations in ordered rings using Fourier–Motzkin elimination.\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 106)           "\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 107)           "Forms of case expressions:\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 108)           "Basic form: \\case e_1, ... e_n \\with {\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 109)           "  | p_1^1, ... p_n^1 => d_1\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 110)           "  ...\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 111)           "  | p_1^k, ... p_n^k => d_k\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 112)           "}\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 113)           "If one of the expressions e_1, … e_n is a variable, keyword \\elim can be specified before it. " +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 114)           "This variable will be evaluated from the context in the clauses. More importantly, it will be " +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 115)           "substituted in the types of other arguments and the result type of the case expression. Thus, the" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 116)           " following two snippets are equivalent if e : E and the result type of the case expression is A." +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 117)           "\\case \\elim x, e \\with {\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 118)           "  | pat, pat' => result\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 119)           "}" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 120)           "\\case x \\as x, e : E \\return A \\with {\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 121)           "  | pat, pat' => result\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 122)           "}"
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 123)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 124)   private val apiKey: String = System.getenv("OPENAI_API") ?: ""
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 125)   private val executor = simpleOpenAIExecutor(apiKey)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 126)   private val preprompt: String
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 127)   private var currentProof: Concrete.Expression = ConcreteExpressionFactory.cGoal("", null)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 128)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 129)   public fun setCurrentProof(proof: Concrete.Expression) {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 130)     currentProof = proof
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 131)   }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 132)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 133)   init {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 134)     val examples = parseConcatenatedJson(File("src/examples.json"))
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 135)     val examplesPrompt = examples.fold("") { acc, map ->
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 136)       acc + "\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 137)               "context: ${map["Context"]}\nexpected type: ${map["Expected type"]}"+
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 138)               "\n" + "CORRECT COMPLETION EXPRESSION is: ${map["Expression"]}"}
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 139)     val examplePremises = HashSet<String>()
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 140)     examples.forEach { examplePremises.addAll((it["Premises"] as List<String>).map { "$it\n" }) }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 141)     examplePremises.removeIf { it.contains("fin-last-or") }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 142)     println(examplePremises)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 143)     preprompt = "I am going to give you a snippet of code in the formal verification language Arend. " +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 144)             "You have to guess the completion of just one step (definition or tactic application). Use {?} " +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 145)             "for arguments where a nontrivial proof is expected (but not where a non-proof term is expected). " +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 146)             "First, output a short plan describing your reasoning for proving the goal. " +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 147)             "Then, suggest the first step. Wrap the term in [TERM] and [/TERM] tags. " +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 148)             "For example:\nPlan: We need to case split on i, then handle each case separately.\n[TERM]\\case \\elim i \\with { | zero => {?} | suc i' => {?} }[/TERM]\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 149)             "Dont create nested cases with the same variable like in the example \\case \\elim i \\with { | zero => \\case \\elim i ...}" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 150)             "Never use \\case i for individual variables!! Use \\case \\elim i instead!!\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 151)             "Dont wrap your output in anything like ```arend etc. " +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 152)             "Now, I am going to give you examples of such successful completions." +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 153)             "Premises: \n$examplePremises\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 154)             "Examples:\n$examplesPrompt\n"
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 155)   }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 156)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 157)   companion object {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 158)     fun extractTermFromResponse(response: String): String? {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 159)       val startTag = "[TERM]"
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 160)       val endTag = "[/TERM]"
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 161)       val startIndex = response.indexOf(startTag)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 162)       if (startIndex == -1) return null
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 163)       val termStart = startIndex + startTag.length
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 164)       val endIndex = response.indexOf(endTag, termStart)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 165)       if (endIndex == -1) return null
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 166)       return response.substring(termStart, endIndex).trim()
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 167)     }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 168)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 169)     fun parseConcatenatedJson(file: File): List<Map<String, Any?>> {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 170)       val text = file.readText()
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 171)       val json = Json { ignoreUnknownKeys = true }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 172)       val results = mutableListOf<Map<String, Any?>>()
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 173)       var index = 0
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 174)       while (index < text.length) {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 175)         val start = text.indexOf('{', index)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 176)         if (start == -1) break
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 177)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 178)         var braceCount = 0
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 179)         var inString = false
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 180)         var escape = false
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 181)         var end = -1
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 182)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 183)         for (i in start until text.length) {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 184)           val char = text[i]
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 185)           if (escape) {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 186)             escape = false
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 187)             continue
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 188)           }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 189)           if (char == '\\') {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 190)             escape = true
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 191)             continue
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 192)           }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 193)           if (char == '\"') {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 194)             inString = !inString
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 195)             continue
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 196)           }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 197)           if (!inString) {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 198)             if (char == '{') braceCount++
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 199)             if (char == '}') {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 200)               braceCount--
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 201)               if (braceCount == 0) {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 202)                 end = i
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 203)                 break
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 204)               }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 205)             }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 206)           }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 207)         }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 208)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 209)         if (end != -1) {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 210)           val jsonString = text.substring(start, end + 1)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 211)           val element = json.parseToJsonElement(jsonString).jsonObject
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 212)           results.add(element.toMapValue())
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 213)           index = end + 1
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 214)         } else {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 215)           break
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 216)         }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 217)       }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 218)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 219)       return results
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 220)     }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 221)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 222)     fun JsonObject.toMapValue(): Map<String, Any?> {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 223)       return this.mapValues { (_, value) ->
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 224)         value.toAnyValue()
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 225)       }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 226)     }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 227)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 228)     fun JsonElement.toAnyValue(): Any? {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 229)       return when (this) {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 230)         is kotlinx.serialization.json.JsonNull -> null
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 231)         is kotlinx.serialization.json.JsonPrimitive -> {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 232)           if (isString) content
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 233)           else if (content == "true") true
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 234)           else if (content == "false") false
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 235)           else content.toLongOrNull() ?: content.toDoubleOrNull() ?: content
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 236)         }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 237)         is JsonObject -> this.toMapValue()
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 238)         is kotlinx.serialization.json.JsonArray -> this.map { it.toAnyValue() }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 239)       }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 240)     }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 241)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 242)   }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 243)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 244)   fun printContext(context: Set<Binding>): String {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 245)     return context.joinToString("\n") {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 246)       val type = it.type.normalize(NormalizationMode.RNF).toString()
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 247)       val bind =
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 248)         if (it.type is ClassCallExpression) it.name + " : " + type.substringBefore("{") else it.name + " : " + type
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 249)       if (it is EvaluatingBinding) bind + " => " + it.expression else bind
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 250)     }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 251)   }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 252)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 253)   /**
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 254)    * Collects the string representations of \case arguments from all \case expressions
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 255)    * that are ancestors of any {?} goal in the given proof expression.
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 256)    * Uses SearchConcreteVisitor for complete expression traversal.
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 257)    */
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 258)   private fun collectParentCaseVariables(expr: Concrete.Expression): List<String> {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 259)     val result = mutableListOf<String>()
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 260)     val visitor = object : SearchConcreteVisitor<Void?, Boolean>() {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 261)       override fun visitGoal(expr: Concrete.GoalExpression, params: Void?): Boolean = true
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 262)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 263)       override fun visitCase(expr: Concrete.CaseExpression, params: Void?): Boolean {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 264)         var goalInClauses = false
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 265)         for (clause in expr.clauses) {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 266)           val body = clause.expression
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 267)           if (body != null && body.accept(this, null) == true) {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 268)             goalInClauses = true
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 269)           }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 270)         }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 271)         if (goalInClauses) {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 272)           for (arg in expr.arguments) {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 273)             result.add(arg.expression.toString())
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 274)           }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 275)         }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 276)         return goalInClauses
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 277)       }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 278)     }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 279)     expr.accept(visitor, null)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 280)     return result
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 281)   }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 282)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 283)   /**
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 284)    * Checks if the given expression contains a \case on any variable from the forbidden set.
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 285)    */
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 286)   private fun containsForbiddenCase(expr: Concrete.Expression, forbiddenVars: Set<String>): Boolean {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 287)     if (forbiddenVars.isEmpty()) return false
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 288)     val visitor = object : SearchConcreteVisitor<Void?, Boolean>() {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 289)       override fun visitCase(expr: Concrete.CaseExpression, params: Void?): Boolean {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 290)         for (arg in expr.arguments) {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 291)           if (arg.expression.toString() in forbiddenVars) return true
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 292)         }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 293)         // Continue searching in clause bodies
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 294)         for (clause in expr.clauses) {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 295)           val body = clause.expression
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 296)           if (body != null && body.accept(this, null) == true) return true
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 297)         }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 298)         return false
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 299)       }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 300)     }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 301)     return expr.accept(visitor, null) == true
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 302)   }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 303)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 304)   override fun generate(goal: Goal): List<ProofStep> {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 305)     val arendGoal = goal as? ArendGoal ?: return emptyList()
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 306)     val moduleLocation = getModuleLocation() ?: return emptyList()
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 307)     val factory = arendGoal.typechecker.factory
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 308)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 309)     val context = printContext(HashSet(goal.typechecker.context.values))
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 310)     val parentCaseVars = collectParentCaseVariables(currentProof)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 311)     val parentCasesInfo = if (parentCaseVars.isNotEmpty()) {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 312)       "\nIMPORTANT: The following variables have already been cased on in parent expressions: ${parentCaseVars.joinToString(", ")}. " +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 313)               "Do NOT create a \\case expression on any of these variables again. Use a different approach or different variables."
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 314)     } else ""
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 315)     var currentPrompt = preprompt + "provide CORRECT COMPLETION EXPRESSION for \n"+ "context: ${context}\nexpected type: ${goal.expectedType}\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 316)             "current definition: \\lemma fin-last-or {k : Nat} (i : Fin (suc k)) : (i NatOrder.< k) || (i = finLast k)\n" +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 317)             "current proof: ${currentProof}\n" + parentCasesInfo +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 318)             "\nReminder: you can use {?} for subexpressions (but not for the whole expression). Dont try to solve everything at once."
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 319)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 320)     println("Expected type: " + arendGoal.expectedType)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 321)     println("Context: $context")
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 322)     repeat(50) { attempt ->
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 323)       println("Attempt ${attempt + 1}")
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 324)       val agent = AIAgent(
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 325)         promptExecutor = executor,
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 326)         systemPrompt = systemPrompt,
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 327)         llmModel = OpenAIModels.Chat.GPT4o,
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 328)         temperature = 0.7,
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 329)       )
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 330)       val response = runBlocking { agent.run(currentPrompt) }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 331)       println("The response:\n${response.chunked(120).joinToString("\n")}")
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 332)       val term = extractTermFromResponse(response)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 333)       if (term == null) {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 334)         println("Could not extract term from response")
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 335)         currentPrompt += "\n\nYour previous response did not contain a term wrapped in [TERM]...[/TERM] tags. Please provide your answer with the term wrapped in [TERM] and [/TERM] tags."
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 336)         return@repeat
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 337)       }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 338)       println("Extracted term: $term")
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 339)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 340)       val errorReporter = ListErrorReporter()
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 341)       var step: Concrete.Expression? = null
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 342)       try {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 343)         val parser = CommonCliRepl.createParser(term, moduleLocation, errorReporter)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 344)         val visitor = BuildVisitor(moduleLocation, errorReporter)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 345)         val exprContext = parser.expr()
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 346)         var concreteExpr: Concrete.Expression? = visitor.visitExpr(exprContext)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 347)         val contextSave = arendGoal.typechecker.saveTypecheckingContext()
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 348)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 349)         if (term.startsWith("fin-last-or")) errorReporter.report(GeneralError(GeneralError.Level.ERROR, "Termination check failed."))
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 350)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 351)         if (concreteExpr != null && !errorReporter.errorList.any { it.level == org.arend.ext.error.GeneralError.Level.ERROR }) {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 352)           val scope = getScope()
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 353)           if (scope != null) {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 354)             val typedReferables = contextSave.localContext().keys.map { TypedReferable(it, AbstractBody(0, it, 0)) }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 355)             val resolveVisitor = ExpressionResolveNameVisitor(scope, typedReferables, server.typingInfo, errorReporter, null, null)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 356)             concreteExpr = concreteExpr!!.accept(resolveVisitor, null)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 357)             if (concreteExpr != null) {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 358)               concreteExpr = SyntacticDesugarVisitor.desugar(concreteExpr, errorReporter)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 359)               concreteExpr = DesugarVisitor.desugar(concreteExpr, errorReporter)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 360)             }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 361)           }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 362)         }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 363)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 364)         if (concreteExpr != null && !errorReporter.errorList.any { it.level == GeneralError.Level.ERROR }) {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 365)           // Reject expressions that case on already-cased variables
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 366)           if (containsForbiddenCase(concreteExpr!!, parentCaseVars.toSet())) {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 367)             errorReporter.report(GeneralError(GeneralError.Level.ERROR, "Expression contains a nested \\case on an already-cased variable: ${parentCaseVars.joinToString(", ")}"))
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 368)           }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 369)         }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 370)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 371)         if (concreteExpr != null && !errorReporter.errorList.any { it.level == GeneralError.Level.ERROR }) {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 372)           step = extractStep(concreteExpr) as? Concrete.Expression
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 373)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 374)           val branchTC = CheckTypeVisitor.loadTypecheckingContext(contextSave, errorReporter)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 375)           val typecheckingResult = step?.let { branchTC.typecheck(step, arendGoal.expectedType) }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 376)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 377)           if (term != step.toString()) {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 378)             currentPrompt += "\n\nYour guess ${term} has been simplified to ${step}."
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 379)           }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 380)           if (typecheckingResult != null && !branchTC.status.hasErrors()) {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 381)             println("typechecked successfully!")
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 382)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 383)             val moduleRef = FullModuleReferable(moduleLocation)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 384)             val functionRef = factory.global(moduleRef, "llm_goal_" + term.hashCode().xor(goal.expectedType.toString().hashCode()), Precedence.DEFAULT, null, null)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 385)             val substVisitor = SubstConcreteVisitor(null)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 386)             val concreteParameters = branchTC.context.map {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 387)               val ref = LocalReferable(it.value.name)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 388)               substVisitor.bind(it.key, ref)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 389)               Concrete.NameParameter(it.value, true, ref)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 390)             }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 391)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 392)             step = step?.accept(substVisitor, null)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 393)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 394)             val proofDef = factory.function(
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 395)               functionRef,
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 396)               FunctionKind.FUNC,
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 397)               concreteParameters,
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 398)               ToAbstractVisitor.convert(arendGoal.expectedType, PrettyPrinterConfig.DEFAULT),
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 399)               null,
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 400)               factory.body(step!!)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 401)             ) as Concrete.FunctionDefinition
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 402)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 403)             val arendProof = ArendProof(proofDef, ArendGoal(goal.expectedType, branchTC, goal.sourceNode))
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 404)             return listOf(ArendProofStep(arendProof, 1.0))
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 405)           }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 406)         }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 407)       } catch (e: Exception) {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 408)         errorReporter.report(GeneralError(GeneralError.Level.ERROR, e.message ?: e.toString()))
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 409)       }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 410)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 411)       val errors = errorReporter.errorList.filter { it.level == org.arend.ext.error.GeneralError.Level.ERROR }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 412)       if (errors.isNotEmpty()) {
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 413)         val errorMsg = errors.joinToString("\n") { it.toString() }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 414)         println("Errors: $errorMsg")
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 415)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 416)         currentPrompt += "\n\nPrevious (simplified) guess: $step\nResulted in errors:\n$errorMsg\nPlease provide a CORRECT COMPLETION EXPRESSION wrapped in [TERM]...[/TERM] tags." + "Reminder: you can use {?} for subexpressions (but not for the whole expression), " +
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 417)                 "for example for clauses in \\case. Dont try to solve everything at once."
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 418)       }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 419)     }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 420)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 421)     return emptyList()
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 422)   }
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 423)
+00000000 (Not Committed Yet 2026-03-28 22:12:05 +0100 424) }

@@ -34,6 +34,7 @@ import search.best_first.BestFirstSearch
 import typechecker.impl.ArendGoal
 import typechecker.impl.ArendProof
 import typechecker.impl.proofstep.HeuristicStepGenerator
+import typechecker.impl.proofstep.LLMStepGenerator
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.Objects
@@ -58,7 +59,7 @@ fun main(args: Array<String>) {
   try {
     val cmdLine: CommandLine = parseArgs(args) ?: throw IllegalArgumentException("Missing required argument: -L <libdir>")
     val libDir: Path = Paths.get(cmdLine.getOptionValues("L")[0])
-    val testFilename = "test"
+    val testFilename = "testPS"
 
     val errorReporter = ListErrorReporter()
     val libraryManager = LibraryManager(errorReporter)
@@ -74,7 +75,33 @@ fun main(args: Array<String>) {
 
     libraryManager.updateLibrary(library, server)
 
+    fun loadDependencies(lib: SourceLibrary) {
+      for (dependencyName in lib.libraryDependencies) {
+        if (libraryManager.containsLibrary(dependencyName)) continue
+        val depConfigFile = libDir.resolve(dependencyName).resolve(FileUtils.LIBRARY_CONFIG_FILE)
+        if (java.nio.file.Files.exists(depConfigFile)) {
+          val depLibrary = FileSourceLibrary.fromConfigFile(depConfigFile, false, ListErrorReporter())
+          if (depLibrary != null) {
+            libraryManager.updateLibrary(depLibrary, server)
+            // Load all source modules from the dependency library
+            for (mod in depLibrary.findModules(false)) {
+              depLibrary.getSource(mod, false)?.load(server, errorReporter)
+            }
+            loadDependencies(depLibrary)
+          }
+        }
+      }
+    }
+    loadDependencies(library)
+
     val modulePath = modulePath(testFilename)
+
+    // Also load all source modules from the main library itself
+    for (mod in library.findModules(false)) {
+      if (mod != modulePath) {
+        library.getSource(mod, false)?.load(server, errorReporter)
+      }
+    }
     val module = ModuleLocation(
       library.libraryName,
       ModuleLocation.LocationKind.SOURCE,
@@ -85,6 +112,14 @@ fun main(args: Array<String>) {
     )
     library.getSource(modulePath, false)?.load(server, errorReporter)
     val group: ConcreteGroup = server.getRawGroup(module) ?: throw IllegalArgumentException("Module not found: $modulePath")
+    checker.resolveAll(UnstoppableCancellationIndicator.INSTANCE, ProgressReporter.empty())
+
+    // Typecheck all loaded modules (dependencies) so their definitions are available
+    val allModules = server.modules.toList()
+    if (allModules.isNotEmpty()) {
+      val allChecker = server.getCheckerFor(allModules)
+      allChecker.typecheck(UnstoppableCancellationIndicator.INSTANCE, ProgressReporter.empty())
+    }
 
     group.traverseGroup { x ->
       x.definition?.let {
@@ -98,7 +133,7 @@ fun main(args: Array<String>) {
                 listener ->
                   object : CheckTypeVisitor(errorReporter, pool, arendExtension, listener) {
                     override fun visitGoal(expr: Concrete.GoalExpression, expectedType: Expression): TypecheckingResult {
-                      val bestFirstSearch = BestFirstSearch(HeuristicStepGenerator(checker, server, library.libraryName, modulePath))
+                      val bestFirstSearch = BestFirstSearch(LLMStepGenerator(checker, server, library.libraryName, modulePath))
                       val goal = ArendGoal( expectedType, this, expr)
                       val proof = bestFirstSearch.search(goal) as? ArendProof
                       if (proof != null) {
@@ -115,7 +150,7 @@ fun main(args: Array<String>) {
       }
     }
 
-    println(errorReporter.errorList.joinToString("\n"))
+    //println(errorReporter.errorList.joinToString("\n"))
   } catch (e: Exception) {
     e.printStackTrace()
   }

@@ -11,6 +11,10 @@ repositories {
 }
 
 dependencies {
+    implementation("org.arend:parser")
+    implementation("org.antlr:antlr4-runtime:4.10")
+    implementation("ai.koog:koog-agents:0.6.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
     implementation("org.json:json:20231013")
     implementation(kotlin("reflect"))
     implementation(kotlin("stdlib-jdk8"))

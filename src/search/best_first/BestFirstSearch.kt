@@ -1,9 +1,12 @@
 package search.best_first
 
+import org.arend.term.concrete.Concrete
 import typechecker.Goal
 import typechecker.Proof
 import typechecker.ProofStep
 import typechecker.ProofStepGenerator
+import typechecker.impl.ArendProof
+import typechecker.impl.proofstep.LLMStepGenerator
 import java.util.PriorityQueue
 
 class BestFirstSearch(private val proofStepGenerator: ProofStepGenerator) {
@@ -22,6 +25,11 @@ class BestFirstSearch(private val proofStepGenerator: ProofStepGenerator) {
         val proofSteps = proofStepGenerator.generate(goal)
         for (proofStep in proofSteps) {
           val expansion = node.applyProofStep(goal, proofStep) ?: continue
+          if (proofStepGenerator is LLMStepGenerator) {
+            proofStepGenerator.setCurrentProof((expansion.getProof() as ArendProof).getProof()!!)
+          }
+          println("Current proof: ${expansion.getProof()}")
+          readln()
           if (expansion.getProof().isFinished()) {
             return expansion.getProof()
           }

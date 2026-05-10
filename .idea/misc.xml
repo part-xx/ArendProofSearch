@@ -21,6 +21,7 @@
   </component>
   <component name="ExternalStorageConfigurationManager" enabled="true" />
   <component name="FrameworkDetectionExcludesConfiguration">
+    <file type="web" url="file://$PROJECT_DIR$/../arend-lang-new/Arend" />
     <file type="web" url="file://$PROJECT_DIR$/../arend-lang/Arend" />
     <file type="web" url="file://$PROJECT_DIR$" />
   </component>

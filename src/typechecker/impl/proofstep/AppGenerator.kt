@@ -32,6 +32,7 @@ import org.arend.naming.reference.LocalReferable
 import org.arend.naming.reference.TCDefReferable
 import org.arend.server.ArendServer
 import typechecker.Goal
+import kotlin.io.normalize
 
 class AppGenerator(private val server: ArendServer, private val premises: List<CallableDefinition>, private val moduleLocation: ModuleLocation): ProofStepGenerator {
 
@@ -48,7 +49,7 @@ class AppGenerator(private val server: ArendServer, private val premises: List<C
         is Constructor -> {
           val dataParams = mutableListOf<DependentLink>()
           def.dataType.getTypeWithParams(dataParams, def.dataType.makeIdLevels())
-          val dataArgs = dataParams.map { typechecker.generateNewInferenceVariable(it.name, it.typeExpr, goal.sourceNode, true) as Expression }
+          val dataArgs = dataParams.map { typechecker.generateNewInferenceVariable(it.name, it.type, goal.sourceNode, true) as Expression }
           ConCallExpression.make(def, levels, dataArgs, emptyList<Expression>())
         }
         else -> def.getDefCall(levels, emptyList<Expression>())
@@ -77,7 +78,7 @@ class AppGenerator(private val server: ArendServer, private val premises: List<C
         result = TypedSingleDependentLink(
           link.isExplicit,
           link.name,
-          link.type.subst(SubstVisitor(substitution, LevelSubstitution.EMPTY)),
+          link.type.subst(substitution),
           false
         )
         singleParameters.add(result)
@@ -89,11 +90,11 @@ class AppGenerator(private val server: ArendServer, private val premises: List<C
       val args = singleParameters.map { ReferenceExpression(it) }
 
       var body = def.getDefCall(levels, args)
-      val resultSort = body.computeType().toSort() ?: Sort.SET0
+      // val resultSort = body.computeType().toSort() ?: Sort.SET0
 
       singleParameters.reverse()
       for (param in singleParameters) {
-        body = LamExpression(resultSort, param, body)
+        body = LamExpression(param, body)
       }
 
       return body
@@ -115,8 +116,8 @@ class AppGenerator(private val server: ArendServer, private val premises: List<C
         break
       }
       if (param.isExplicit) {
-        val paramType = coreParam.typeExpr.type
-        if (paramType is UniverseExpression && paramType.sort == Sort.PROP) {
+        val paramType = coreParam.type.type.normalize(NormalizationMode.WHNF) as? UniverseExpression
+        if (paramType != null && paramType.sortExpression == Sort.PROP) {
           for (i in 0..<param.refList.size) {
             args.add(factory.arg(factory.goal(), true))
           }
@@ -216,7 +217,7 @@ class AppGenerator(private val server: ArendServer, private val premises: List<C
               null,
               factory.body(concreteExpr)
             ) as Concrete.FunctionDefinition,
-            branchTC
+            ArendGoal(goal.expectedType, branchTC, goal.sourceNode)
           )
           result.add(ArendProofStep(resultProof, 1.0))
         }
