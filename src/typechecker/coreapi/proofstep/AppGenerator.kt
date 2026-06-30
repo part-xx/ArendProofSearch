@@ -1,4 +1,4 @@
-package typechecker.impl.proofstep
+package typechecker.coreapi.proofstep
 
 import org.arend.core.context.param.DependentLink
 import org.arend.core.context.param.EmptyDependentLink
@@ -10,37 +10,34 @@ import org.arend.core.definition.Constructor
 import org.arend.core.definition.FunctionDefinition
 import org.arend.typechecking.visitor.CheckTypeVisitor
 import org.arend.core.expr.*
-import org.arend.core.sort.Sort
 import org.arend.core.subst.ExprSubstitution
 import org.arend.core.subst.SubstVisitor
+import org.arend.ext.core.level.LevelSubstitution
 import org.arend.ext.concrete.definition.FunctionKind
 import org.arend.ext.concrete.expr.ConcreteArgument
 import org.arend.ext.concrete.expr.ConcreteExpression
-import org.arend.ext.core.ops.CMP
 import org.arend.ext.core.ops.NormalizationMode
 import org.arend.term.concrete.Concrete
+import typechecker.Proof
+import typechecker.ProofStep
 import typechecker.ProofStepGenerator
-import typechecker.impl.ArendGoal
-import typechecker.impl.ArendProof
+import typechecker.coreapi.ArendGoal
+import typechecker.coreapi.ArendProof
 
-import org.arend.ext.core.level.LevelSubstitution
 import org.arend.ext.error.ListErrorReporter
 import org.arend.ext.module.ModuleLocation
 import org.arend.ext.reference.Precedence
 import org.arend.naming.reference.FullModuleReferable
 import org.arend.naming.reference.LocalReferable
-import org.arend.naming.reference.TCDefReferable
 import org.arend.server.ArendServer
-import typechecker.Goal
-import kotlin.io.normalize
 
-class AppGenerator(private val server: ArendServer, private val premises: List<CallableDefinition>, private val moduleLocation: ModuleLocation): ProofStepGenerator {
+class AppGenerator(private val server: ArendServer, private val premises: List<CallableDefinition>, private val moduleLocation: ModuleLocation): ProofStepGenerator<ArendGoal> {
 
   class Premise(val def: CallableDefinition) {
     fun toExpression(typechecker: CheckTypeVisitor, goal: ArendGoal): Expression {
       val levels = def.makeIdLevels()
       return when (def) {
-        is FunctionDefinition -> etaExpand(def) // def.getDefCall(levels, emptyList())
+        is FunctionDefinition -> etaExpand(def)
         is ClassField -> {
           val thisType = def.parentClass.getDefCall(def.parentClass.makeIdLevels(), emptyList<Expression>())
           val thisArg = typechecker.generateNewInferenceVariable("this", thisType, goal.sourceNode, true) as Expression
@@ -49,7 +46,7 @@ class AppGenerator(private val server: ArendServer, private val premises: List<C
         is Constructor -> {
           val dataParams = mutableListOf<DependentLink>()
           def.dataType.getTypeWithParams(dataParams, def.dataType.makeIdLevels())
-          val dataArgs = dataParams.map { typechecker.generateNewInferenceVariable(it.name, it.type, goal.sourceNode, true) as Expression }
+          val dataArgs = dataParams.map { typechecker.generateNewInferenceVariable(it.name, it.typeExpr, goal.sourceNode, true) as Expression }
           ConCallExpression.make(def, levels, dataArgs, emptyList<Expression>())
         }
         else -> def.getDefCall(levels, emptyList<Expression>())
@@ -63,14 +60,8 @@ class AppGenerator(private val server: ArendServer, private val premises: List<C
         return def.getDefCall(levels, emptyList())
       }
 
-      // Convert DependentLink to SingleDependentLink for LamExpression
       val singleParameters = mutableListOf<SingleDependentLink>()
-      // Reconstruct as SingleDependentLink if it's a chain of multiple blocks
       val paramsList = DependentLink.Helper.toList(parameters)
-      // val names = paramsList.map { it.name }
-      // Note: This assumes they can be grouped.
-      // If types differ, you may need nested Lambdas instead of a single SingleDependentLink block.
-      // For eta-expansion of a function, recreating the parameters 1-by-1 is safest.
 
       var result: SingleDependentLink = EmptyDependentLink.getInstance()
       val substitution = ExprSubstitution()
@@ -78,7 +69,7 @@ class AppGenerator(private val server: ArendServer, private val premises: List<C
         result = TypedSingleDependentLink(
           link.isExplicit,
           link.name,
-          link.type.subst(substitution),
+          link.type.subst(SubstVisitor(substitution, LevelSubstitution.EMPTY)),
           false
         )
         singleParameters.add(result)
@@ -86,15 +77,13 @@ class AppGenerator(private val server: ArendServer, private val premises: List<C
       }
       singleParameters.reverse()
 
-      // Create arguments for the function call
       val args = singleParameters.map { ReferenceExpression(it) }
 
       var body = def.getDefCall(levels, args)
-      // val resultSort = body.computeType().toSort() ?: Sort.SET0
 
       singleParameters.reverse()
       for (param in singleParameters) {
-        body = LamExpression(param, body)
+        body = LamExpression(param.type.getSortOfType(), param, body)
       }
 
       return body
@@ -108,16 +97,14 @@ class AppGenerator(private val server: ArendServer, private val premises: List<C
     var coreParam = def.parameters
     val factory = typechecker.factory
     val args = mutableListOf<ConcreteArgument>()
-    // var coreCurrentVar = 0
-    // var coreCurrentSize = DependentLink.Helper.size(coreParam)
 
     for (param in concreteDef.parameters) {
       if (args.size == numArgsToAdd) {
         break
       }
       if (param.isExplicit) {
-        val paramType = coreParam.type.type.normalize(NormalizationMode.WHNF) as? UniverseExpression
-        if (paramType != null && paramType.sortExpression == Sort.PROP) {
+        val paramType = coreParam.type.getExpr().normalize(NormalizationMode.WHNF) as? UniverseExpression
+        if (paramType != null && paramType.sort == org.arend.core.sort.Sort.PROP) {
           for (i in 0..<param.refList.size) {
             args.add(factory.arg(factory.goal(), true))
           }
@@ -128,19 +115,10 @@ class AppGenerator(private val server: ArendServer, private val premises: List<C
         }
       }
       coreParam = coreParam.next
-      /*
-      if (coreCurrentVar < coreCurrentSize - 1) {
-        ++coreCurrentVar
-      } else {
-
-        coreCurrentSize = DependentLink.Helper.size(coreParam)
-        coreCurrentVar = 0
-      }*/
     }
 
     return factory.app(factory.ref(def.ref), args)
   }
-
 
   private fun getArity(expression: Expression): Int {
     var type = expression.normalize(NormalizationMode.WHNF)
@@ -154,47 +132,25 @@ class AppGenerator(private val server: ArendServer, private val premises: List<C
     return arity
   }
 
-  override fun generate(goal: Goal): List<ArendProofStep> {
-    val goalArd = goal as? ArendGoal ?: return emptyList()
-    val result = mutableListOf<ArendProofStep>()
-    val expectedType = goalArd.expectedType
-    val typechecker = goalArd.typechecker
+  override fun generate(goal: ArendGoal, currentProof: Proof<ArendGoal>?): List<ProofStep<ArendGoal>> {
+    val result = mutableListOf<ProofStep<ArendGoal>>()
+    val expectedType = goal.expectedType
+    val typechecker = goal.typechecker
     val factory = typechecker.factory
-    // val tcBackupContext = typechecker.context
-
-    // typechecker.copyContextFrom(goalArd.context)
 
     for (premise in premises) {
-      val funcType = Premise(premise).toExpression(typechecker, goalArd).computeType()
+      val funcType = Premise(premise).toExpression(typechecker, goal).computeType()
 
       val expectedArity = getArity(expectedType)
       val funcArity = getArity(funcType)
       val numArgsToAdd = funcArity - expectedArity
 
       val concreteApp = createConcreteApp(premise, typechecker, numArgsToAdd)
-      /*if (numArgsToAdd >= 0) {
-        var currentFunc = func
-        var currentFuncType = funcType
-        var ok = true
-        for (i in 0..<numArgsToAdd) {
-          currentFuncType = currentFuncType.normalize(NormalizationMode.WHNF)
-          val pi = currentFuncType as? PiExpression
-          if (pi == null) {
-            ok = false
-            break
-          }
-          val parameters = pi.parameters
-          val arg = tc.generateNewInferenceVariable(parameters.name ?: "arg", parameters.typeExpr, goalArd.sourceNode, true) as Expression
-          currentFunc = AppExpression.make(currentFunc, arg, parameters.isExplicit)
-          currentFuncType = pi.applyExpression(arg)
-        }*/
 
       if (concreteApp != null) {
         val context = typechecker.saveTypecheckingContext()
         val branchTC = CheckTypeVisitor.loadTypecheckingContext(context, ListErrorReporter())
         val appExpr = branchTC.typecheck(concreteApp, expectedType)
-          // typechecker.typecheck(concreteApp, expectedType)
-        //if (tc.compare(currentFuncType, expectedType, CMP.LE, goalArd.sourceNode, true, true, true)) {
         if (!branchTC.status.hasErrors() && appExpr != null) {
           val concreteExpr = factory.core(appExpr)
           val concreteParameters =
@@ -213,18 +169,16 @@ class AppGenerator(private val server: ArendServer, private val premises: List<C
               functionRef,
               FunctionKind.FUNC,
               concreteParameters,
-              factory.core(goalArd.expectedType.computeTyped()),
+              factory.core(goal.expectedType.computeTyped()),
               null,
               factory.body(concreteExpr)
             ) as Concrete.FunctionDefinition,
             ArendGoal(goal.expectedType, branchTC, goal.sourceNode)
           )
-          result.add(ArendProofStep(resultProof, 1.0))
+          result.add(ProofStep(resultProof, 1.0))
         }
       }
     }
-
-    // typechecker.copyContextFrom(tcBackupContext)
 
     return result
   }

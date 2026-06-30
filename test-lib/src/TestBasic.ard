@@ -1,0 +1,26 @@
+-- Basic test file with simple goals that don't depend on arend-lib
+
+\data Nat'
+  | zero'
+  | suc' Nat'
+
+\func \infixl 6 +' (a b : Nat') : Nat' \elim b
+  | zero' => a
+  | suc' b => suc' (a +' b)
+
+-- Trivial: provable by idp
+\lemma refl-test : zero' = zero'
+  => {?}
+
+-- Simple congruence
+\lemma suc-cong-test (a b : Nat') (p : a = b) : suc' a = suc' b
+  => {?}
+
+-- Case split needed
+\lemma plus-zero-test (n : Nat') : zero' +' n = n \elim n
+  | zero' => {?}
+  | suc' n => {?}
+
+-- Already solved (no goals)
+\lemma already-done : zero' = zero'
+  => idp

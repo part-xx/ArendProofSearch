@@ -1,20 +1,26 @@
-package typechecker.impl.proofstep
+package typechecker.coreapi.proofstep
 
 import org.arend.ext.module.ModulePath
 import org.arend.server.ArendChecker
 import org.arend.server.ArendServer
-import typechecker.Goal
+import typechecker.Proof
 import typechecker.ProofStep
 import java.io.File
 import ai.koog.agents.core.agent.AIAgent
-import ai.koog.prompt.executor.clients.openai.OpenAIModels
-import ai.koog.prompt.executor.llms.all.simpleOpenAIExecutor
+import ai.koog.prompt.llm.LLModel
+import org.example.org.jetbrains.ai.kotlin.playbook.createLiteLLMModel
+import org.example.org.jetbrains.ai.kotlin.playbook.createLiteLLMPromptExecutor
+import org.jetbrains.ai.kotlin.playbook.LITELLM_API_KEY
+import org.jetbrains.ai.kotlin.playbook.LITELLM_URL
 import extractStep
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonPrimitive
 import org.arend.core.context.binding.Binding
 import org.arend.core.context.binding.EvaluatingBinding
 import org.arend.core.expr.ClassCallExpression
@@ -27,7 +33,6 @@ import org.arend.ext.reference.Precedence
 import org.arend.frontend.parser.BuildVisitor
 import org.arend.frontend.repl.CommonCliRepl
 import org.arend.naming.reference.FullModuleReferable
-import org.arend.naming.reference.Referable
 import org.arend.naming.resolving.typing.AbstractBody
 import org.arend.naming.resolving.typing.TypedReferable
 import org.arend.naming.resolving.visitor.ExpressionResolveNameVisitor
@@ -38,8 +43,8 @@ import org.arend.term.prettyprint.ToAbstractVisitor
 import org.arend.typechecking.visitor.CheckTypeVisitor
 import org.arend.typechecking.visitor.DesugarVisitor
 import org.arend.typechecking.visitor.SyntacticDesugarVisitor
-import typechecker.impl.ArendGoal
-import typechecker.impl.ArendProof
+import typechecker.coreapi.ArendGoal
+import typechecker.coreapi.ArendProof
 
 class LLMStepGenerator(
   checker: ArendChecker,
@@ -47,7 +52,7 @@ class LLMStepGenerator(
   libName: String,
   modulePath: ModulePath
 ): BaseStepGenerator(checker, server, libName, modulePath) {
-  private val systemPrompt = "You are an assistant for writing in the proof assistant language Arend. Answer concisely. Metas are like tactics in Lean. Remember that you have the following tactics. Metas rewrite, rewriteI, and rewriteF work just like the rewriting mechanism in other languages, such as Coq or Idris (in Agda, rewrite is allowed only in the LHS of a clause, so it’s different).\n" +
+  private val systemPrompt = "You are an assistant for writing in the proof assistant language Arend. Answer concisely. Metas are like tactics in Lean. Remember that you have the following tactics. Metas rewrite, rewriteI, and rewriteF work just like the rewriting mechanism in other languages, such as Coq or Idris (in Agda, rewrite is allowed only in the LHS of a clause, so it's different).\n" +
           "rewrite p t : T where p : a = b replaces occurrences of a in T with a variable obtaining a type T[x/a] and returns transportInv (\\lam x => T[x/a]) p t. Note that T is the expected type from the context, not the type of t. When the expected type is unknown, the type of t will be used instead of T.\n" +
           "rewriteF is like rewrite but it enforces to use the type of t instead of the expected type.\n" +
           "rewriteI p t is equivalent to rewrite (inv p) t.\n" +
@@ -79,7 +84,7 @@ class LLMStepGenerator(
           "  => rewrite +-comm-rw idp\n" +
           "\n" +
           "\n" +
-          "Meta ext proves goals of the form a = {A} a’. It expects (at most) one argument and the type of this argument is called ‘subgoal’. The expected type is called ‘goal’.\n" +
+          "Meta ext proves goals of the form a = {A} a'. It expects (at most) one argument and the type of this argument is called 'subgoal'. The expected type is called 'goal'.\n" +
           "If the goal is f = {\\Pi (x_1 : A_1) … (x_n : A_n) -> B} g, then the subgoal is \\Pi(x_1 : A_1) … (x_n : A_n) -> f x_1 … x_n = g x_1 … x_n\n" +
           "If the goal is t = {\\Sigma (x_1 : A_1) … (x_n : A_n) (y_1 : B_1 x_1 … x_n) … (y_k :B_k x_1 … x_n) (z_1 : C_1) … (z_m : C_m)} s, where C_i : \\Prop and they can depend on x_j and y_l for all i, j, and l, then the subgoal is \\Sigma (p_1 : t.1 =s.1) … (p_n : t.n = s.n) D_1 … D_k, where D_j is equal to coe (\\lam i => B (p_1 @i) … (p_n @ i)) t.{k + j - 1} right = s.{k + j - 1}\n" +
           "If the goal is t = {R} s, where R is a record, then the subgoal is defined in the same way as for \\Sigma-types It is also possible to use the following syntax in this case: ext R { | f_1 => e_1 … | f_l => e_l }, which is equivalent to ext (e_1, … e_l)\n" +
@@ -119,14 +124,10 @@ class LLMStepGenerator(
           "  | pat, pat' => result\n" +
           "}"
 
-  private val apiKey: String = System.getenv("OPENAI_API") ?: ""
-  private val executor = simpleOpenAIExecutor(apiKey)
+  private val liteLLMModelId: String = "openai/gpt-4o"
+  private val executor = createLiteLLMPromptExecutor(LITELLM_URL, LITELLM_API_KEY)
+  private val llmModel: LLModel = createLiteLLMModel(liteLLMModelId)
   private val preprompt: String
-  private var currentProof: Concrete.Expression = ConcreteExpressionFactory.cGoal("", null)
-
-  public fun setCurrentProof(proof: Concrete.Expression) {
-    currentProof = proof
-  }
 
   init {
     val examples = parseConcatenatedJson(File("src/examples.json"))
@@ -225,15 +226,15 @@ class LLMStepGenerator(
 
     fun JsonElement.toAnyValue(): Any? {
       return when (this) {
-        is kotlinx.serialization.json.JsonNull -> null
-        is kotlinx.serialization.json.JsonPrimitive -> {
+        is JsonNull -> null
+        is JsonPrimitive -> {
           if (isString) content
           else if (content == "true") true
           else if (content == "false") false
           else content.toLongOrNull() ?: content.toDoubleOrNull() ?: content
         }
         is JsonObject -> this.toMapValue()
-        is kotlinx.serialization.json.JsonArray -> this.map { it.toAnyValue() }
+        is JsonArray -> this.map { it.toAnyValue() }
       }
     }
 
@@ -248,11 +249,6 @@ class LLMStepGenerator(
     }
   }
 
-  /**
-   * Collects the string representations of \case arguments from all \case expressions
-   * that are ancestors of any {?} goal in the given proof expression.
-   * Uses SearchConcreteVisitor for complete expression traversal.
-   */
   private fun collectParentCaseVariables(expr: Concrete.Expression): List<String> {
     val result = mutableListOf<String>()
     val visitor = object : SearchConcreteVisitor<Void?, Boolean>() {
@@ -278,9 +274,6 @@ class LLMStepGenerator(
     return result
   }
 
-  /**
-   * Checks if the given expression contains a \case on any variable from the forbidden set.
-   */
   private fun containsForbiddenCase(expr: Concrete.Expression, forbiddenVars: Set<String>): Boolean {
     if (forbiddenVars.isEmpty()) return false
     val visitor = object : SearchConcreteVisitor<Void?, Boolean>() {
@@ -288,7 +281,6 @@ class LLMStepGenerator(
         for (arg in expr.arguments) {
           if (arg.expression.toString() in forbiddenVars) return true
         }
-        // Continue searching in clause bodies
         for (clause in expr.clauses) {
           val body = clause.expression
           if (body != null && body.accept(this, null) == true) return true
@@ -299,30 +291,34 @@ class LLMStepGenerator(
     return expr.accept(visitor, null) == true
   }
 
-  override fun generate(goal: Goal): List<ProofStep> {
-    val arendGoal = goal as? ArendGoal ?: return emptyList()
-    val moduleLocation = getModuleLocation() ?: return emptyList()
-    val factory = arendGoal.typechecker.factory
+  private fun getCurrentProofExpr(currentProof: Proof<ArendGoal>?): Concrete.Expression {
+    return (currentProof as? ArendProof)?.getProof() ?: ConcreteExpressionFactory.cGoal("", null)
+  }
 
+  override fun generate(goal: ArendGoal, currentProof: Proof<ArendGoal>?): List<ProofStep<ArendGoal>> {
+    val moduleLocation = getModuleLocation() ?: return emptyList()
+    val factory = goal.typechecker.factory
+
+    val currentProofExpr = getCurrentProofExpr(currentProof)
     val context = printContext(HashSet(goal.typechecker.context.values))
-    val parentCaseVars = collectParentCaseVariables(currentProof)
+    val parentCaseVars = collectParentCaseVariables(currentProofExpr)
     val parentCasesInfo = if (parentCaseVars.isNotEmpty()) {
       "\nIMPORTANT: The following variables have already been cased on in parent expressions: ${parentCaseVars.joinToString(", ")}. " +
               "Do NOT create a \\case expression on any of these variables again. Use a different approach or different variables."
     } else ""
     var currentPrompt = preprompt + "provide CORRECT COMPLETION EXPRESSION for \n"+ "context: ${context}\nexpected type: ${goal.expectedType}\n" +
-            "current definition: \\lemma fin-last-or {k : Nat} (i : Fin (suc k)) : (i NatOrder.< k) || (i = finLast k)\n" +
-            "current proof: ${currentProof}\n" + parentCasesInfo +
+    //        "current definition: \\lemma fin-last-or {k : Nat} (i : Fin (suc k)) : (i NatOrder.< k) || (i = finLast k)\n" +
+            "current proof: ${currentProofExpr}\n" + parentCasesInfo +
             "\nReminder: you can use {?} for subexpressions (but not for the whole expression). Dont try to solve everything at once."
 
-    println("Expected type: " + arendGoal.expectedType)
+    println("Expected type: " + goal.expectedType)
     println("Context: $context")
     repeat(50) { attempt ->
       println("Attempt ${attempt + 1}")
       val agent = AIAgent(
-        promptExecutor = executor,
+        executor = executor,
         systemPrompt = systemPrompt,
-        llmModel = OpenAIModels.Chat.GPT4o,
+        llmModel = llmModel,
         temperature = 0.7,
       )
       val response = runBlocking { agent.run(currentPrompt) }
@@ -338,15 +334,15 @@ class LLMStepGenerator(
       val errorReporter = ListErrorReporter()
       var step: Concrete.Expression? = null
       try {
-        val parser = CommonCliRepl.createParser(term, moduleLocation, errorReporter)
+        val parser = CommonCliRepl.createParser(term!!, moduleLocation, errorReporter)
         val visitor = BuildVisitor(moduleLocation, errorReporter)
         val exprContext = parser.expr()
         var concreteExpr: Concrete.Expression? = visitor.visitExpr(exprContext)
-        val contextSave = arendGoal.typechecker.saveTypecheckingContext()
+        val contextSave = goal.typechecker.saveTypecheckingContext()
 
-        if (term.startsWith("fin-last-or")) errorReporter.report(GeneralError(GeneralError.Level.ERROR, "Termination check failed."))
+        // if (term.startsWith("fin-last-or")) errorReporter.report(GeneralError(GeneralError.Level.ERROR, "Termination check failed."))
 
-        if (concreteExpr != null && !errorReporter.errorList.any { it.level == org.arend.ext.error.GeneralError.Level.ERROR }) {
+        if (concreteExpr != null && !errorReporter.errorList.any { it.level == GeneralError.Level.ERROR }) {
           val scope = getScope()
           if (scope != null) {
             val typedReferables = contextSave.localContext().keys.map { TypedReferable(it, AbstractBody(0, it, 0)) }
@@ -360,7 +356,6 @@ class LLMStepGenerator(
         }
 
         if (concreteExpr != null && !errorReporter.errorList.any { it.level == GeneralError.Level.ERROR }) {
-          // Reject expressions that case on already-cased variables
           if (containsForbiddenCase(concreteExpr!!, parentCaseVars.toSet())) {
             errorReporter.report(GeneralError(GeneralError.Level.ERROR, "Expression contains a nested \\case on an already-cased variable: ${parentCaseVars.joinToString(", ")}"))
           }
@@ -370,7 +365,7 @@ class LLMStepGenerator(
           step = extractStep(concreteExpr) as? Concrete.Expression
 
           val branchTC = CheckTypeVisitor.loadTypecheckingContext(contextSave, errorReporter)
-          val typecheckingResult = step?.let { branchTC.typecheck(step, arendGoal.expectedType) }
+          val typecheckingResult = step?.let { branchTC.typecheck(step, goal.expectedType) }
 
           if (term != step.toString()) {
             currentPrompt += "\n\nYour guess ${term} has been simplified to ${step}."
@@ -381,7 +376,7 @@ class LLMStepGenerator(
             val moduleRef = FullModuleReferable(moduleLocation)
             val functionRef = factory.global(moduleRef, "llm_goal_" + term.hashCode().xor(goal.expectedType.toString().hashCode()), Precedence.DEFAULT, null, null)
             val concreteParameters = branchTC.context.map {
-              val typeExpr = ToAbstractVisitor.convert(it.value.type, PrettyPrinterConfig.DEFAULT)
+              val typeExpr = ToAbstractVisitor.convert(it.value.typeExpr, PrettyPrinterConfig.DEFAULT)
               Concrete.TelescopeParameter(it.value, true, listOf(it.key), typeExpr, false)
             }
 
@@ -389,20 +384,20 @@ class LLMStepGenerator(
               functionRef,
               FunctionKind.FUNC,
               concreteParameters,
-              ToAbstractVisitor.convert(arendGoal.expectedType, PrettyPrinterConfig.DEFAULT),
+              ToAbstractVisitor.convert(goal.expectedType, PrettyPrinterConfig.DEFAULT),
               null,
               factory.body(step!!)
             ) as Concrete.FunctionDefinition
 
             val arendProof = ArendProof(proofDef, ArendGoal(goal.expectedType, branchTC, goal.sourceNode))
-            return listOf(ArendProofStep(arendProof, 1.0))
+            return listOf(ProofStep(arendProof, 1.0))
           }
         }
       } catch (e: Exception) {
         errorReporter.report(GeneralError(GeneralError.Level.ERROR, e.message ?: e.toString()))
       }
 
-      val errors = errorReporter.errorList.filter { it.level == org.arend.ext.error.GeneralError.Level.ERROR }
+      val errors = errorReporter.errorList.filter { it.level == GeneralError.Level.ERROR }
       if (errors.isNotEmpty()) {
         val errorMsg = errors.joinToString("\n") { it.toString() }
         println("Errors: $errorMsg")

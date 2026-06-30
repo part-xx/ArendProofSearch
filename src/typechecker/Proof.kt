@@ -1,9 +1,7 @@
 package typechecker
 
-interface Proof {
-    fun goals(): List<Goal>
-    fun replaceGoal(goal: Goal, proof: Proof): Proof?
-    // fun applyProofStep(goal: Goal, step: ProofStep): Proof?
-
+interface Proof<G : Goal<G>> {
+    fun goals(): List<G>
+    fun replaceGoal(goal: G, proof: Proof<G>): Proof<G>?
     fun isFinished(): Boolean = goals().isEmpty()
 }

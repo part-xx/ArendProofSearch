@@ -4,7 +4,7 @@ import typechecker.Goal
 import typechecker.Proof
 import typechecker.ProofStep
 
-interface Node {
-    fun getProof(): Proof
-    fun applyProofStep(goal: Goal, proofStep: ProofStep): Node?
+interface Node<G : Goal<G>> {
+    fun getProof(): Proof<G>
+    fun applyProofStep(goal: G, proofStep: ProofStep<G>): Node<G>?
 }

@@ -1,30 +1,19 @@
-package typechecker.impl
+package typechecker.coreapi
 
 import FindGoalsVisitor
 import org.arend.core.context.binding.Binding
-import org.arend.core.definition.FunctionDefinition
-import org.arend.core.elimtree.ElimBody
-import org.arend.core.elimtree.LeafElimTree
-import org.arend.core.expr.ErrorExpression
 import org.arend.core.expr.Expression
 import org.arend.core.expr.visitor.FreeVariablesCollector
-import org.arend.ext.concrete.expr.ConcreteExpression
 import org.arend.ext.error.ArgInferenceError
 import org.arend.ext.error.ErrorReporter
 import org.arend.ext.error.ListErrorReporter
-import org.arend.ext.typechecking.ExpressionTypechecker
-import org.arend.naming.reference.LocalReferable
 import org.arend.term.concrete.BaseConcreteExpressionVisitor
 import org.arend.term.concrete.Concrete
-import org.arend.term.concrete.SearchConcreteVisitor
 import org.arend.term.concrete.SubstConcreteVisitor
-import org.arend.typechecking.visitor.CheckTypeVisitor
 import org.arend.typechecking.visitor.DefinitionTypechecker
-import org.arend.typechecking.visitor.SearchVisitor
-import typechecker.Goal
 import typechecker.Proof
 
-open class ArendProof(private val theorem: Concrete.FunctionDefinition, private val goal: ArendGoal): Proof {
+open class ArendProof(private val theorem: Concrete.FunctionDefinition, private val goal: ArendGoal): Proof<ArendGoal> {
   private val goalExpressions: Map<ArendGoal, Concrete.Expression>
   private val definitionTypechecker = DefinitionTypechecker(goal.typechecker, emptySet())
 
@@ -61,26 +50,22 @@ open class ArendProof(private val theorem: Concrete.FunctionDefinition, private 
         for (binding in exprContext) {
           if (context.contains(binding)) { continue }
           context.add(binding)
-          exprQueue.addLast(binding.type)
+          exprQueue.addLast(binding.typeExpr)
         }
       }
     }
   }
 
-
-
   override fun goals(): List<ArendGoal> {
     return goalExpressions.keys.toList()
   }
 
-  override fun replaceGoal(goal: Goal, proof: Proof): ArendProof? {
-    val goalArd = goal as? ArendGoal ?: return null
+  override fun replaceGoal(goal: ArendGoal, proof: Proof<ArendGoal>): ArendProof? {
     val proofArd = proof as? ArendProof ?: return null
-    val goalExpr = goalExpressions[goalArd] ?: return null
+    val goalExpr = goalExpressions[goal] ?: return null
 
-    // Build a substitution from proofArd.theorem's parameter referables to the current goal's context referables
     val substVisitor = SubstConcreteVisitor(null)
-    val goalContext = goalArd.typechecker.context
+    val goalContext = goal.typechecker.context
     for (param in proofArd.theorem.parameters) {
       for (ref in param.referableList) {
         if (ref != null) {
@@ -110,10 +95,6 @@ open class ArendProof(private val theorem: Concrete.FunctionDefinition, private 
     if (withErrors) {
       return null
     }
-
-    //val elimBody = ((typechecker.definition as? FunctionDefinition)?.body as? ElimBody) ?: return null
-    // val elimTree = elimBody.elimTree as? LeafElimTree ?: return null
-    // val checkedProof = elimBody.clauses[elimTree.clauseIndex].expression ?: return null
 
     return ArendProof(newTheorem, this.goal)
   }

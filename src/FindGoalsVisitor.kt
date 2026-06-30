@@ -4,7 +4,7 @@ import org.arend.term.concrete.Concrete
 import org.arend.typechecking.TypecheckingContext
 import org.arend.typechecking.result.TypecheckingResult
 import org.arend.typechecking.visitor.CheckTypeVisitor
-import typechecker.impl.ArendGoal
+import typechecker.coreapi.ArendGoal
 
 class FindGoalsVisitor(typecheckingContext: TypecheckingContext,
                        val sourceNode: Concrete.Expression,

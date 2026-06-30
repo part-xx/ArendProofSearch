@@ -1,35 +1,27 @@
 package search.best_first
 
-import org.arend.term.concrete.Concrete
 import typechecker.Goal
 import typechecker.Proof
-import typechecker.ProofStep
 import typechecker.ProofStepGenerator
-import typechecker.impl.ArendProof
-import typechecker.impl.proofstep.LLMStepGenerator
 import java.util.PriorityQueue
 
-class BestFirstSearch(private val proofStepGenerator: ProofStepGenerator) {
+class BestFirstSearch<G : Goal<G>>(private val proofStepGenerator: ProofStepGenerator<G>) {
   companion object {
     const val MAX_DEPTH = 5
   }
 
-  fun search(goal: Goal): Proof? {
-    val nodesQueue = PriorityQueue<BFSNode>(compareBy { it.score })
+  fun search(initialProof: Proof<G>): Proof<G>? {
+    val nodesQueue = PriorityQueue<BFSNode<G>>(compareBy { it.score })
 
-    nodesQueue.add(BFSNode(goal, 0.0, 0))
+    nodesQueue.add(BFSNode(initialProof, 0.0, 0))
     while (nodesQueue.isNotEmpty()) {
       val node = nodesQueue.poll()
       if (node.depth > MAX_DEPTH) { continue }
-      for (goal in node.getProof().goals()) {
-        val proofSteps = proofStepGenerator.generate(goal)
+      for (currentGoal in node.getProof().goals()) {
+        val proofSteps = proofStepGenerator.generate(currentGoal, node.getProof())
         for (proofStep in proofSteps) {
-          val expansion = node.applyProofStep(goal, proofStep) ?: continue
-          if (proofStepGenerator is LLMStepGenerator) {
-            proofStepGenerator.setCurrentProof((expansion.getProof() as ArendProof).getProof()!!)
-          }
+          val expansion = node.applyProofStep(currentGoal, proofStep) ?: continue
           println("Current proof: ${expansion.getProof()}")
-          readln()
           if (expansion.getProof().isFinished()) {
             return expansion.getProof()
           }

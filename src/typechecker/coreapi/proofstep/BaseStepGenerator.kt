@@ -1,4 +1,4 @@
-package typechecker.impl.proofstep
+package typechecker.coreapi.proofstep
 
 import org.arend.core.definition.CallableDefinition
 import org.arend.ext.module.LongName
@@ -11,9 +11,9 @@ import org.arend.naming.scope.ScopeFactory
 import org.arend.server.ArendChecker
 import org.arend.server.ArendServer
 import typechecker.ProofStepGenerator
-import typechecker.impl.ArendGoal
+import typechecker.coreapi.ArendGoal
 
-abstract class BaseStepGenerator(protected val checker: ArendChecker, protected val server: ArendServer, protected val libName: String, protected val modulePath: ModulePath): ProofStepGenerator {
+abstract class BaseStepGenerator(protected val checker: ArendChecker, protected val server: ArendServer, protected val libName: String, protected val modulePath: ModulePath): ProofStepGenerator<ArendGoal> {
   protected fun getCallableDefinition(goal: ArendGoal, tcReferable: TCDefReferable): CallableDefinition? {
     val definition = goal.typechecker.getCoreDefinition(tcReferable)
     return definition as? CallableDefinition
