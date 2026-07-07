@@ -15,14 +15,14 @@ class CliProcessApi(
 
     private val json = Json { ignoreUnknownKeys = true }
 
-    private fun runCli(vararg extraArgs: String): String {
+    private fun runCli(vararg extraArgs: String, appendLibPath: Boolean = true): String {
         val cmd = mutableListOf("java", "-jar", jarPath.toString())
         val libsDir = libraryPath.resolve("libs")
         if (java.nio.file.Files.isDirectory(libsDir)) {
             cmd.addAll(listOf("-L", libsDir.toString()))
         }
         cmd.addAll(extraArgs)
-        cmd.add(libraryPath.toString())
+        if (appendLibPath) cmd.add(libraryPath.toString())
 
         val process = ProcessBuilder(cmd)
             .directory(libraryPath.toFile())
@@ -55,21 +55,16 @@ class CliProcessApi(
         return json.decodeFromString<FindGoalsResponse>(extractJson(raw))
     }
 
-    override fun checkExpression(moduleDef: String, goalId: String, expression: String): CheckResult {
-        val raw = runCli("-ce", moduleDef, goalId, expression)
-        return json.decodeFromString<CheckResult>(extractJson(raw))
-    }
-
-    override fun applyStep(moduleDef: String, goalId: String, expression: String): ApplyStepResponse {
-        val raw = runCli("-as", moduleDef, goalId, expression)
+    override fun applyStep(moduleDef: String, fullBody: String): ApplyStepResponse {
+        val raw = runCli("-as", moduleDef, fullBody)
         return json.decodeFromString<ApplyStepResponse>(extractJson(raw))
     }
 
     override fun getScope(moduleDef: String, goalId: String): ScopeResponse {
-        val raw = runCli("--json", "-sc", moduleDef)
+        val raw = runCli("--json", "-sc", moduleDef, appendLibPath = false)
         val scopeJson = json.decodeFromString<CliScopeResponse>(extractJson(raw))
         return ScopeResponse(
-            scope = scopeJson.scope.map { ScopeEntry(name = it.name, kind = it.kind ?: "", type = "") },
+            scope = scopeJson.scope.map { ScopeEntry(name = it.name, kind = it.kind ?: "", type = "", module = it.module ?: "") },
             locals = emptyList()
         )
     }
@@ -77,6 +72,31 @@ class CliProcessApi(
     override fun proofSearch(pattern: String): ProofSearchResponse {
         val raw = runCli("--json", "-ps", pattern)
         return json.decodeFromString<ProofSearchResponse>(extractJson(raw))
+    }
+
+    override fun signature(moduleDef: String): String {
+        val raw = runCli("-sg", moduleDef)
+        val lines = raw.lines().dropWhile { it.startsWith("[") || it.isBlank() }
+        return lines.joinToString("\n").trim()
+    }
+
+    override fun signatureInfo(moduleDef: String, name: String): SignatureInfoResponse? {
+        return try {
+            val raw = runCli("-si", moduleDef, name)
+            json.decodeFromString<SignatureInfoResponse>(extractJson(raw))
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    override fun typeExpr(moduleDef: String, goalId: String, expression: String): String? {
+        return try {
+            val raw = runCli("-te", moduleDef, goalId, expression)
+            val resp = json.decodeFromString<TypeExprResponse>(extractJson(raw))
+            resp.type
+        } catch (_: Exception) {
+            null
+        }
     }
 
     override fun close() {}

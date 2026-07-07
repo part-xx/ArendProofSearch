@@ -20,7 +20,7 @@ fun runCliSearch(args: Array<String>) {
     )
     cmdOptions.addOption(
         Option.builder().longOpt("model").hasArg().argName("model-id")
-            .desc("LLM model ID (default: openai/gpt-4o)").build()
+            .desc("LLM model ID (default: from LLM_MODEL env or deepseek-chat)").build()
     )
 
     val cmdLine = try {
@@ -34,7 +34,7 @@ fun runCliSearch(args: Array<String>) {
         ?: run { System.err.println("Missing required option: -L <libdir>"); return }
     val moduleDef = cmdLine.getOptionValue("m")
         ?: run { System.err.println("Missing required option: --module-def MODULE:DEF"); return }
-    val modelId = cmdLine.getOptionValue("model", "openai/gpt-4o")
+    val modelId = cmdLine.getOptionValue("model", org.jetbrains.ai.kotlin.playbook.LLM_MODEL_ID)
 
     println("Connecting to Arend CLI for library at $libPath...")
     CliConnection(Paths.get(libPath)).use { cli ->
@@ -52,7 +52,7 @@ fun runCliSearch(args: Array<String>) {
             println("  $goal")
         }
 
-        val generator = CliLLMStepGenerator(cli, moduleDef, modelId)
+        val generator = CliLLMStepGenerator(cli, moduleDef, liteLLMModelId = modelId)
         val search = BestFirstSearch<PlainTextGoal>(generator)
 
         println("Starting proof search...")

@@ -20,13 +20,6 @@ data class FindGoalsResponse(
 )
 
 @Serializable
-data class CheckResult(
-    val success: Boolean,
-    val normalizedExpr: String = "",
-    val errors: List<String> = emptyList()
-)
-
-@Serializable
 data class ApplyStepResponse(
     val success: Boolean,
     val proof: String = "",
@@ -38,7 +31,8 @@ data class ApplyStepResponse(
 data class ScopeEntry(
     val name: String,
     val kind: String = "",
-    val type: String = ""
+    val type: String = "",
+    val module: String = ""
 )
 
 @Serializable
@@ -68,4 +62,38 @@ data class SearchLocation(
 data class ProofSearchResponse(
     val results: List<SearchResult> = emptyList(),
     val count: Int = 0
+)
+
+@Serializable
+data class ParamInfo(
+    val name: String,
+    val type: String,
+    val explicit: Boolean,
+    val propositional: Boolean
+)
+
+@Serializable
+data class TypeExprResponse(
+    val type: String? = null
+)
+
+@Serializable
+data class ConstructorInfo(
+    val name: String,
+    val params: List<ConstructorParam> = emptyList()
+)
+
+@Serializable
+data class ConstructorParam(
+    val name: String,
+    val type: String,
+    val explicit: Boolean
+)
+
+@Serializable
+data class SignatureInfoResponse(
+    val name: String,
+    val params: List<ParamInfo> = emptyList(),
+    val resultType: String? = null,
+    val constructors: List<ConstructorInfo>? = null
 )

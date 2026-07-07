@@ -54,31 +54,6 @@ class CliResponsesTest {
     }
 
     @Test
-    fun `CheckResult deserializes success`() {
-        val raw = """{"success": true, "normalizedExpr": "idp", "errors": []}"""
-        val result = json.decodeFromString<CheckResult>(raw)
-        assertTrue(result.success)
-        assertEquals("idp", result.normalizedExpr)
-        assertTrue(result.errors.isEmpty())
-    }
-
-    @Test
-    fun `CheckResult deserializes failure`() {
-        val raw = """{"success": false, "errors": ["Type mismatch", "Expected Nat, got Bool"]}"""
-        val result = json.decodeFromString<CheckResult>(raw)
-        assertTrue(!result.success)
-        assertEquals(2, result.errors.size)
-    }
-
-    @Test
-    fun `CheckResult defaults work`() {
-        val raw = """{"success": true}"""
-        val result = json.decodeFromString<CheckResult>(raw)
-        assertEquals("", result.normalizedExpr)
-        assertTrue(result.errors.isEmpty())
-    }
-
-    @Test
     fun `ApplyStepResponse deserializes success with remaining goals`() {
         val raw = """
         {

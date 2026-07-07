@@ -6,5 +6,5 @@ import typechecker.ProofStep
 
 interface Node<G : Goal<G>> {
     fun getProof(): Proof<G>
-    fun applyProofStep(goal: G, proofStep: ProofStep<G>): Node<G>?
+    fun applyProofStep(goal: G, proofStep: ProofStep<G>): Node<G>
 }

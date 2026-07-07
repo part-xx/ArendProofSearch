@@ -26,6 +26,7 @@ import org.arend.typechecking.visitor.CheckTypeVisitor
 import org.arend.util.FileUtils
 import org.arend.util.FileUtils.modulePath
 import org.jetbrains.ai.kotlin.playbook.getChatCompletionMessage
+import org.jetbrains.ai.kotlin.playbook.listModels
 import search.best_first.BestFirstSearch
 import typechecker.Proof
 import typechecker.coreapi.ArendGoal
@@ -148,6 +149,12 @@ fun testLLM() {
         "Tell me what model are you?",
         instrument = false
       )
+    }\n"
+  )
+
+  println(
+    "Available models:\n${
+      listModels().joinToString("\n")
     }\n"
   )
 }

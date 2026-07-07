@@ -50,29 +50,54 @@ class CliConnection(libraryPath: Path) : CliApi, AutoCloseable {
         return output.toString().trim()
     }
 
+    private fun extractJson(raw: String): String {
+        val start = raw.lastIndexOf("\n{")
+        if (start >= 0) return raw.substring(start + 1).trim()
+        if (raw.startsWith("{\"")) return raw.trim()
+        throw IOException("No JSON object in daemon output: ${raw.take(200)}")
+    }
+
     override fun findGoals(moduleDef: String): FindGoalsResponse {
         val raw = invokeCliCommand("-fg", moduleDef)
-        return json.decodeFromString<FindGoalsResponse>(raw)
+        return json.decodeFromString<FindGoalsResponse>(extractJson(raw))
     }
 
-    override fun checkExpression(moduleDef: String, goalId: String, expression: String): CheckResult {
-        val raw = invokeCliCommand("-ce", moduleDef, goalId, expression)
-        return json.decodeFromString<CheckResult>(raw)
-    }
-
-    override fun applyStep(moduleDef: String, goalId: String, expression: String): ApplyStepResponse {
-        val raw = invokeCliCommand("-as", moduleDef, goalId, expression)
-        return json.decodeFromString<ApplyStepResponse>(raw)
+    override fun applyStep(moduleDef: String, fullBody: String): ApplyStepResponse {
+        val raw = invokeCliCommand("-as", moduleDef, fullBody)
+        return json.decodeFromString<ApplyStepResponse>(extractJson(raw))
     }
 
     override fun getScope(moduleDef: String, goalId: String): ScopeResponse {
         val raw = invokeCliCommand("-gs", moduleDef, goalId)
-        return json.decodeFromString<ScopeResponse>(raw)
+        return json.decodeFromString<ScopeResponse>(extractJson(raw))
     }
 
     override fun proofSearch(pattern: String): ProofSearchResponse {
         val raw = invokeCliCommand("-psj", pattern)
-        return json.decodeFromString<ProofSearchResponse>(raw)
+        return json.decodeFromString<ProofSearchResponse>(extractJson(raw))
+    }
+
+    override fun signature(moduleDef: String): String {
+        val raw = invokeCliCommand("-sg", moduleDef)
+        return raw.lines().last { it.isNotBlank() }
+    }
+
+    override fun signatureInfo(moduleDef: String, name: String): SignatureInfoResponse? {
+        return try {
+            val raw = invokeCliCommand("-si", moduleDef, name)
+            json.decodeFromString<SignatureInfoResponse>(extractJson(raw))
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    override fun typeExpr(moduleDef: String, goalId: String, expression: String): String? {
+        return try {
+            val raw = invokeCliCommand("-te", moduleDef, goalId, expression)
+            json.decodeFromString<TypeExprResponse>(extractJson(raw)).type
+        } catch (_: Exception) {
+            null
+        }
     }
 
     override fun close() {

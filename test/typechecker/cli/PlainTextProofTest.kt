@@ -9,24 +9,20 @@ import kotlin.test.assertTrue
 class FakeCli : CliApi {
     var findGoalsResult: FindGoalsResponse = FindGoalsResponse("M:D", emptyList())
     var applyStepResult: ApplyStepResponse = ApplyStepResponse(false)
-    var checkExpressionResult: CheckResult = CheckResult(false)
     var scopeResult: ScopeResponse = ScopeResponse()
     var proofSearchResult: ProofSearchResponse = ProofSearchResponse()
+    val signatureInfoResults = mutableMapOf<String, SignatureInfoResponse>()
 
     val findGoalsCalls = mutableListOf<String>()
-    val applyStepCalls = mutableListOf<Triple<String, String, String>>()
+    val applyStepCalls = mutableListOf<Pair<String, String>>()
 
     override fun findGoals(moduleDef: String): FindGoalsResponse {
         findGoalsCalls.add(moduleDef)
         return findGoalsResult
     }
 
-    override fun checkExpression(moduleDef: String, goalId: String, expression: String): CheckResult {
-        return checkExpressionResult
-    }
-
-    override fun applyStep(moduleDef: String, goalId: String, expression: String): ApplyStepResponse {
-        applyStepCalls.add(Triple(moduleDef, goalId, expression))
+    override fun applyStep(moduleDef: String, fullBody: String): ApplyStepResponse {
+        applyStepCalls.add(Pair(moduleDef, fullBody))
         return applyStepResult
     }
 
@@ -36,6 +32,20 @@ class FakeCli : CliApi {
 
     override fun proofSearch(pattern: String): ProofSearchResponse {
         return proofSearchResult
+    }
+
+    override fun signature(moduleDef: String): String {
+        return ""
+    }
+
+    override fun signatureInfo(moduleDef: String, name: String): SignatureInfoResponse? {
+        return signatureInfoResults[name]
+    }
+
+    var typeExprResults = mutableMapOf<String, String>()
+
+    override fun typeExpr(moduleDef: String, goalId: String, expression: String): String? {
+        return typeExprResults[expression]
     }
 }
 
@@ -151,7 +161,7 @@ class PlainTextProofTest {
         cli.applyStepResult = ApplyStepResponse(success = true, proof = "idp", goals = emptyList())
 
         val proof = PlainTextProof(cli, "TestMod:lemma1", "{?}",
-            listOf(PlainTextGoal("2", "Nat", emptyList(), "TestMod:lemma1")))
+            listOf(PlainTextGoal("0", "Nat", emptyList(), "TestMod:lemma1")))
         val goal = proof.goals()[0]
         val replacement = PlainTextProof(cli, "TestMod:lemma1", "idp")
 
@@ -159,8 +169,7 @@ class PlainTextProofTest {
 
         assertEquals(1, cli.applyStepCalls.size)
         assertEquals("TestMod:lemma1", cli.applyStepCalls[0].first)
-        assertEquals("2", cli.applyStepCalls[0].second)
-        assertEquals("idp", cli.applyStepCalls[0].third)
+        assertEquals("idp", cli.applyStepCalls[0].second)
     }
 
     @Test
@@ -215,5 +224,449 @@ class PlainTextProofTest {
         val proof = PlainTextProof(cli, "M:D", "{?}",
             listOf(PlainTextGoal("0", "Nat", emptyList(), "M:D")))
         assertTrue(!proof.isFinished())
+    }
+}
+
+class StepParsingTest {
+    private fun makeGenerator(): typechecker.cli.proofstep.CliLLMStepGenerator {
+        val cli = FakeCli()
+        return typechecker.cli.proofstep.CliLLMStepGenerator(cli, "M:D")
+    }
+
+    @Test
+    fun `parseStepFromResponse extracts APPLY step`() {
+        val gen = makeGenerator()
+        val response = """
+            Plan: Apply pmap with identity function.
+            [APPLY pmap]
+            \lam x => x
+            [/APPLY]
+        """.trimIndent()
+        val step = gen.parseStepFromResponse(response)
+        assertNotNull(step)
+        assertEquals("apply", step.type)
+        assertEquals("pmap", step.name)
+        assertEquals(1, step.args.size)
+        assertEquals("\\lam x => x", step.args[0])
+    }
+
+    @Test
+    fun `parseStepFromResponse extracts APPLY with no args`() {
+        val gen = makeGenerator()
+        val response = """
+            Plan: Apply byLeft.
+            [APPLY byLeft]
+            [/APPLY]
+        """.trimIndent()
+        val step = gen.parseStepFromResponse(response)
+        assertNotNull(step)
+        assertEquals("apply", step.type)
+        assertEquals("byLeft", step.name)
+        assertTrue(step.args.isEmpty())
+    }
+
+    @Test
+    fun `parseStepFromResponse extracts REWRITE step`() {
+        val gen = makeGenerator()
+        val response = """
+            Plan: Rewrite using p.
+            [REWRITE]p[/REWRITE]
+        """.trimIndent()
+        val step = gen.parseStepFromResponse(response)
+        assertNotNull(step)
+        assertEquals("rewrite", step.type)
+        assertEquals("p", step.rawTerm)
+    }
+
+    @Test
+    fun `parseStepFromResponse extracts REWRITE with complex equality`() {
+        val gen = makeGenerator()
+        val response = """
+            Plan: Rewrite using inv q.
+            [REWRITE]inv q[/REWRITE]
+        """.trimIndent()
+        val step = gen.parseStepFromResponse(response)
+        assertNotNull(step)
+        assertEquals("rewrite", step.type)
+        assertEquals("inv q", step.rawTerm)
+    }
+
+    @Test
+    fun `parseStepFromResponse extracts CASE step`() {
+        val gen = makeGenerator()
+        val response = """
+            Plan: Case split on n.
+            [CASE]n[/CASE]
+        """.trimIndent()
+        val step = gen.parseStepFromResponse(response)
+        assertNotNull(step)
+        assertEquals("case", step.type)
+        assertEquals("n", step.rawTerm)
+    }
+
+    @Test
+    fun `parseStepFromResponse extracts INTRO with names`() {
+        val gen = makeGenerator()
+        val response = """
+            Plan: Introduce x and y.
+            [INTRO]x y[/INTRO]
+        """.trimIndent()
+        val step = gen.parseStepFromResponse(response)
+        assertNotNull(step)
+        assertEquals("intro", step.type)
+        assertEquals(listOf("x", "y"), step.args)
+    }
+
+    @Test
+    fun `parseStepFromResponse extracts INTRO with no names`() {
+        val gen = makeGenerator()
+        val response = """
+            Plan: Introduce.
+            [INTRO][/INTRO]
+        """.trimIndent()
+        val step = gen.parseStepFromResponse(response)
+        assertNotNull(step)
+        assertEquals("intro", step.type)
+        assertTrue(step.args.isEmpty())
+    }
+
+    @Test
+    fun `parseStepFromResponse returns null for no tags`() {
+        val gen = makeGenerator()
+        val step = gen.parseStepFromResponse("Just some text without tags")
+        assertNull(step)
+    }
+
+    @Test
+    fun `buildTermFromApply constructs term with prop args as holes`() {
+        val gen = makeGenerator()
+        // Manually populate the cache via reflection or by using a real test
+        // For now, test the logic directly
+        val info = SignatureInfoResponse(
+            name = "pmap",
+            params = listOf(
+                ParamInfo("A", "\\Type", false, false),
+                ParamInfo("B", "\\Type", false, false),
+                ParamInfo("f", "A -> B", true, false),
+                ParamInfo("a", "A", false, false),
+                ParamInfo("a'", "A", false, false),
+                ParamInfo("p", "a = a'", true, true)
+            ),
+            resultType = "f a = f a'"
+        )
+        // Use reflection to populate cache
+        val cacheField = gen.javaClass.getDeclaredField("sigInfoCache")
+        cacheField.isAccessible = true
+        @Suppress("UNCHECKED_CAST")
+        val cache = cacheField.get(gen) as MutableMap<String, SignatureInfoResponse>
+        cache["pmap"] = info
+
+        val term = gen.buildTermFromApply("pmap", listOf("\\lam x => suc x"))
+        assertEquals("pmap (\\lam x => suc x) {?}", term)
+    }
+
+    @Test
+    fun `buildTermFromApply fills all prop args as holes`() {
+        val gen = makeGenerator()
+        val info = SignatureInfoResponse(
+            name = "transport",
+            params = listOf(
+                ParamInfo("A", "\\Type", false, false),
+                ParamInfo("B", "A -> \\Type", true, false),
+                ParamInfo("a", "A", false, false),
+                ParamInfo("a'", "A", false, false),
+                ParamInfo("p", "a = a'", true, true),
+                ParamInfo("b", "B a", true, false)
+            ),
+            resultType = "B a'"
+        )
+        val cacheField = gen.javaClass.getDeclaredField("sigInfoCache")
+        cacheField.isAccessible = true
+        @Suppress("UNCHECKED_CAST")
+        val cache = cacheField.get(gen) as MutableMap<String, SignatureInfoResponse>
+        cache["transport"] = info
+
+        val term = gen.buildTermFromApply("transport", listOf("\\lam x => x = 0", "h"))
+        assertEquals("transport (\\lam x => x = 0) {?} h", term)
+    }
+
+    @Test
+    fun `buildTermFromApply returns null for unknown name`() {
+        val gen = makeGenerator()
+        val term = gen.buildTermFromApply("unknown", emptyList())
+        assertNull(term)
+    }
+
+    @Test
+    fun `parseStepFromResponse handles dotted field access`() {
+        val gen = makeGenerator()
+        val response = """
+            Plan: Apply isIrr on p.
+            [APPLY p.isIrr]
+            inv k|n.inv-right
+            [/APPLY]
+        """.trimIndent()
+        val step = gen.parseStepFromResponse(response)
+        assertNotNull(step)
+        assertEquals("apply", step.type)
+        assertEquals("p.isIrr", step.name)
+        assertEquals(1, step.args.size)
+        assertEquals("inv k|n.inv-right", step.args[0])
+    }
+
+    @Test
+    fun `buildTermFromApply resolves dotted field access via field sig info`() {
+        val gen = makeGenerator()
+        val info = SignatureInfoResponse(
+            name = "isIrr",
+            params = listOf(
+                ParamInfo("M", "CMonoid", false, false),
+                ParamInfo("e", "M", false, false),
+                ParamInfo("this", "Irr e", false, false),
+                ParamInfo("x", "M", false, false),
+                ParamInfo("y", "M", false, false),
+                ParamInfo("p0", "e = x * y", true, true)
+            ),
+            resultType = "Inv x || Inv y"
+        )
+        val cacheField = gen.javaClass.getDeclaredField("sigInfoCache")
+        cacheField.isAccessible = true
+        @Suppress("UNCHECKED_CAST")
+        val cache = cacheField.get(gen) as MutableMap<String, SignatureInfoResponse>
+        cache["isIrr"] = info
+
+        val term = gen.buildTermFromApply("p.isIrr", listOf("inv k|n.inv-right"))
+        assertEquals("p.isIrr {?}", term)
+    }
+
+    @Test
+    fun `buildTermFromApply passes implicit args before explicit params`() {
+        val gen = makeGenerator()
+        val info = SignatureInfoResponse(
+            name = "isIrr",
+            params = listOf(
+                ParamInfo("M", "CMonoid", false, false),
+                ParamInfo("e", "M", false, false),
+                ParamInfo("x", "M", false, false),
+                ParamInfo("y", "M", false, false),
+                ParamInfo("_", "e = x * y", true, true)
+            ),
+            resultType = "Inv x || Inv y"
+        )
+        val cacheField = gen.javaClass.getDeclaredField("sigInfoCache")
+        cacheField.isAccessible = true
+        @Suppress("UNCHECKED_CAST")
+        val cache = cacheField.get(gen) as MutableMap<String, SignatureInfoResponse>
+        cache["isIrr"] = info
+
+        val term = gen.buildTermFromApply("p.isIrr", listOf("{k}", "{k|n.inv}"))
+        assertEquals("p.isIrr {k} {k|n.inv} {?}", term)
+    }
+
+    @Test
+    fun `buildTermFromApply mixes implicit and explicit args`() {
+        val gen = makeGenerator()
+        val info = SignatureInfoResponse(
+            name = "pmap",
+            params = listOf(
+                ParamInfo("A", "\\Type", false, false),
+                ParamInfo("B", "\\Type", false, false),
+                ParamInfo("a", "A", false, false),
+                ParamInfo("a'", "A", false, false),
+                ParamInfo("f", "A -> B", true, false),
+                ParamInfo("p", "a = a'", true, true)
+            ),
+            resultType = "f a = f a'"
+        )
+        val cacheField = gen.javaClass.getDeclaredField("sigInfoCache")
+        cacheField.isAccessible = true
+        @Suppress("UNCHECKED_CAST")
+        val cache = cacheField.get(gen) as MutableMap<String, SignatureInfoResponse>
+        cache["pmap"] = info
+
+        val term = gen.buildTermFromApply("pmap", listOf("{Nat}", "\\lam x => suc x"))
+        assertEquals("pmap {Nat} (\\lam x => suc x) {?}", term)
+    }
+
+    @Test
+    fun `buildCaseExpression generates case from variable type`() {
+        val cli = FakeCli()
+        cli.signatureInfoResults["Nat"] = SignatureInfoResponse(
+            name = "Nat",
+            params = emptyList(),
+            resultType = null,
+            constructors = listOf(
+                ConstructorInfo("0", emptyList()),
+                ConstructorInfo("suc", listOf(ConstructorParam("n", "Nat", true)))
+            )
+        )
+        val gen = typechecker.cli.proofstep.CliLLMStepGenerator(cli, "M:D")
+        val goal = PlainTextGoal("0", "P n", listOf(ContextBinding("n", "Nat")), "M:D")
+        val result = gen.buildCaseExpression("n", goal)
+        assertEquals("\\case \\elim n \\with { | 0 => {?} | suc n => {?} }", result)
+    }
+
+    @Test
+    fun `buildCaseExpression generates top-level elim for variable`() {
+        val cli = FakeCli()
+        cli.signatureInfoResults["Nat"] = SignatureInfoResponse(
+            name = "Nat",
+            params = emptyList(),
+            resultType = null,
+            constructors = listOf(
+                ConstructorInfo("0", emptyList()),
+                ConstructorInfo("suc", listOf(ConstructorParam("n", "Nat", true)))
+            )
+        )
+        val gen = typechecker.cli.proofstep.CliLLMStepGenerator(cli, "M:D")
+        val goal = PlainTextGoal("0", "P n", listOf(ContextBinding("n", "Nat")), "M:D")
+        val result = gen.buildCaseExpression("n", goal, topLevel = true)
+        assertEquals("\\elim n | 0 => {?} | suc n => {?}", result)
+    }
+
+    @Test
+    fun `buildCaseExpression uses case elim for expression even at top level`() {
+        val cli = FakeCli()
+        cli.typeExprResults["decideEq x y"] = "Dec (x = y)"
+        cli.signatureInfoResults["Dec"] = SignatureInfoResponse(
+            name = "Dec",
+            params = listOf(ParamInfo("P", "\\Prop", true, false)),
+            resultType = null,
+            constructors = listOf(
+                ConstructorInfo("yes", listOf(ConstructorParam("p", "P", true))),
+                ConstructorInfo("no", listOf(ConstructorParam("q", "Not P", true)))
+            )
+        )
+        val gen = typechecker.cli.proofstep.CliLLMStepGenerator(cli, "M:D")
+        val goal = PlainTextGoal("0", "x = y", listOf(
+            ContextBinding("x", "Nat"), ContextBinding("y", "Nat")
+        ), "M:D")
+        val result = gen.buildCaseExpression("decideEq x y", goal, topLevel = true)
+        assertEquals("\\case decideEq x y \\with { | yes p => {?} | no q => {?} }", result)
+    }
+
+    @Test
+    fun `buildCaseExpression returns null for unknown variable`() {
+        val cli = FakeCli()
+        val gen = typechecker.cli.proofstep.CliLLMStepGenerator(cli, "M:D")
+        val goal = PlainTextGoal("0", "P x", listOf(ContextBinding("x", "Foo")), "M:D")
+        val result = gen.buildCaseExpression("x", goal)
+        assertNull(result)
+    }
+
+    @Test
+    fun `buildCaseExpression handles expression without elim`() {
+        val cli = FakeCli()
+        cli.typeExprResults["decideEq x y"] = "Dec (x = y)"
+        cli.signatureInfoResults["Dec"] = SignatureInfoResponse(
+            name = "Dec",
+            params = listOf(ParamInfo("P", "\\Prop", true, false)),
+            resultType = null,
+            constructors = listOf(
+                ConstructorInfo("yes", listOf(ConstructorParam("p", "P", true))),
+                ConstructorInfo("no", listOf(ConstructorParam("q", "Not P", true)))
+            )
+        )
+        val gen = typechecker.cli.proofstep.CliLLMStepGenerator(cli, "M:D")
+        val goal = PlainTextGoal("0", "x = y", listOf(
+            ContextBinding("x", "Nat"), ContextBinding("y", "Nat")
+        ), "M:D")
+        val result = gen.buildCaseExpression("decideEq x y", goal)
+        assertEquals("\\case decideEq x y \\with { | yes p => {?} | no q => {?} }", result)
+    }
+
+    @Test
+    fun `parseStepFromResponse picks last tag across types`() {
+        val gen = makeGenerator()
+        val response = """
+            Let me try byLeft first.
+            [APPLY byLeft]
+            [/APPLY]
+            Actually, I should case split on the isIrr result.
+            [CASE]p.isIrr (inv k|n.inv-right)[/CASE]
+        """.trimIndent()
+        val step = gen.parseStepFromResponse(response)
+        assertNotNull(step)
+        assertEquals("case", step.type)
+        assertEquals("p.isIrr (inv k|n.inv-right)", step.rawTerm)
+    }
+
+    @Test
+    fun `parseStepFromResponse picks last tag when APPLY is after CASE`() {
+        val gen = makeGenerator()
+        val response = """
+            [CASE]n[/CASE]
+            Wait, I should apply pmap instead.
+            [APPLY pmap]
+            \lam x => suc x
+            [/APPLY]
+        """.trimIndent()
+        val step = gen.parseStepFromResponse(response)
+        assertNotNull(step)
+        assertEquals("apply", step.type)
+        assertEquals("pmap", step.name)
+    }
+
+    @Test
+    fun `buildTermFromApply fills propositional args as holes`() {
+        val gen = makeGenerator()
+        val info = SignatureInfoResponse(
+            name = "inv",
+            params = listOf(
+                ParamInfo("A", "\\Type", false, false),
+                ParamInfo("a", "A", false, false),
+                ParamInfo("a'", "A", false, false),
+                ParamInfo("p", "a = a'", true, true)
+            ),
+            resultType = "a' = a"
+        )
+        val cacheField = gen.javaClass.getDeclaredField("sigInfoCache")
+        cacheField.isAccessible = true
+        @Suppress("UNCHECKED_CAST")
+        val cache = cacheField.get(gen) as MutableMap<String, SignatureInfoResponse>
+        cache["inv"] = info
+
+        val term = gen.buildTermFromApply("inv", listOf("k|n.inv-right"))
+        assertEquals("inv {?}", term)
+    }
+
+    @Test
+    fun `buildIntroExpression with provided names`() {
+        val gen = makeGenerator()
+        val goal = PlainTextGoal("0", "\\Pi (a : Nat) (b : Nat) -> a = b", emptyList(), "M:D")
+        val result = gen.buildIntroExpression(listOf("x", "y"), goal)
+        assertEquals("\\lam x y => {?}", result)
+    }
+
+    @Test
+    fun `buildIntroExpression extracts names from Pi type`() {
+        val gen = makeGenerator()
+        val goal = PlainTextGoal("0", "\\Pi (n : Nat) (m : Nat) -> n + m = m + n", emptyList(), "M:D")
+        val result = gen.buildIntroExpression(emptyList(), goal)
+        assertEquals("\\lam n m => {?}", result)
+    }
+
+    @Test
+    fun `buildIntroExpression extracts names from multi-name Pi binder`() {
+        val gen = makeGenerator()
+        val goal = PlainTextGoal("0", "\\Pi (a b : Nat) -> a = b", emptyList(), "M:D")
+        val result = gen.buildIntroExpression(emptyList(), goal)
+        assertEquals("\\lam a b => {?}", result)
+    }
+
+    @Test
+    fun `buildIntroExpression handles arrow type with underscore`() {
+        val gen = makeGenerator()
+        val goal = PlainTextGoal("0", "Nat -> Nat", emptyList(), "M:D")
+        val result = gen.buildIntroExpression(emptyList(), goal)
+        assertEquals("\\lam _ => {?}", result)
+    }
+
+    @Test
+    fun `buildIntroExpression handles mixed Pi and arrow`() {
+        val gen = makeGenerator()
+        val goal = PlainTextGoal("0", "\\Pi (n : Nat) -> Nat -> n = n", emptyList(), "M:D")
+        val result = gen.buildIntroExpression(emptyList(), goal)
+        assertEquals("\\lam n _ => {?}", result)
     }
 }

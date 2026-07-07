@@ -69,6 +69,9 @@ sourceSets {
     java {
       setSrcDirs(listOf("src"))
     }
+    resources {
+      setSrcDirs(listOf("resources"))
+    }
   }
   test {
     java {
@@ -78,10 +81,16 @@ sourceSets {
 }
 
 val litellmApiKey: String by project
+val llmBaseUrl: String by project
+val llmApiKey: String by project
+val llmModel: String by project
 
 tasks.test {
   useJUnitPlatform()
   maxHeapSize = "4g"
   environment("LITELLM_API_KEY", System.getenv("LITELLM_API_KEY") ?: litellmApiKey)
+  systemProperty("llm.base.url", llmBaseUrl)
+  systemProperty("llm.api.key", llmApiKey.ifEmpty { litellmApiKey })
+  systemProperty("llm.model", llmModel)
 }
 

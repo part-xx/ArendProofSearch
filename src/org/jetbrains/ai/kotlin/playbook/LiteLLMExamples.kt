@@ -32,8 +32,25 @@ import kotlin.jvm.optionals.getOrNull
 
 
 private const val LITELLM_HOST = "litellm.labs.jb.gg"
-const val LITELLM_URL = "https://$LITELLM_HOST"
-val LITELLM_API_KEY = System.getenv("LITELLM_API_KEY") ?: error("LITELLM_API_KEY environment variable is not set")
+
+private val gradleProps: java.util.Properties by lazy {
+    java.util.Properties().apply {
+        val f = java.io.File("gradle.properties")
+        if (f.exists()) f.reader().use { load(it) }
+    }
+}
+
+val LITELLM_URL: String = gradleProps.getProperty("llmBaseUrl")?.takeIf { it.isNotEmpty() }
+    ?: System.getenv("LLM_BASE_URL")
+    ?: "https://$LITELLM_HOST"
+val LITELLM_API_KEY: String = gradleProps.getProperty("llmApiKey")?.takeIf { it.isNotEmpty() }
+    ?: System.getenv("LLM_API_KEY")
+    ?: System.getenv("LITELLM_API_KEY")
+    ?: gradleProps.getProperty("litellmApiKey")?.takeIf { it.isNotEmpty() }
+    ?: error("Set llmApiKey in gradle.properties (or LLM_API_KEY env var)")
+val LLM_MODEL_ID: String = gradleProps.getProperty("llmModel")?.takeIf { it.isNotEmpty() }
+    ?: System.getenv("LLM_MODEL")
+    ?: "deepseek-chat"
 
 fun createOpenAIClient(instrument: Boolean): OpenAIClient {
     return OpenAIOkHttpClient.builder()

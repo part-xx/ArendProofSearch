@@ -24,7 +24,10 @@ class PlainTextProof(
 
     override fun replaceGoal(goal: PlainTextGoal, proof: Proof<PlainTextGoal>): Proof<PlainTextGoal>? {
         val replacement = (proof as? PlainTextProof)?.proofText ?: return null
-        val response = cli.applyStep(moduleDef, goal.id, replacement)
+        val goalIndex = goal.id.toIntOrNull() ?: return null
+        val newBody = replaceNthGoal(proofText, goalIndex, replacement) ?: return null
+
+        val response = cli.applyStep(moduleDef, newBody)
         if (!response.success) return null
 
         val newGoals = response.goals.map { g ->
@@ -35,7 +38,7 @@ class PlainTextProof(
                 moduleDef = moduleDef
             )
         }
-        return PlainTextProof(cli, moduleDef, response.proof, newGoals)
+        return PlainTextProof(cli, moduleDef, newBody, newGoals)
     }
 
     override fun toString(): String = proofText
@@ -52,6 +55,23 @@ class PlainTextProof(
                 )
             }
             return PlainTextProof(cli, moduleDef, "{?}", goals)
+        }
+
+        fun replaceNthGoal(text: String, n: Int, replacement: String): String? {
+            var count = 0
+            var i = 0
+            while (i <= text.length - 3) {
+                if (text[i] == '{' && text[i + 1] == '?' && text[i + 2] == '}') {
+                    if (count == n) {
+                        return text.substring(0, i) + replacement + text.substring(i + 3)
+                    }
+                    count++
+                    i += 3
+                } else {
+                    i++
+                }
+            }
+            return null
         }
     }
 }

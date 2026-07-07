@@ -19,8 +19,13 @@ class BestFirstSearch<G : Goal<G>>(private val proofStepGenerator: ProofStepGene
       if (node.depth > MAX_DEPTH) { continue }
       for (currentGoal in node.getProof().goals()) {
         val proofSteps = proofStepGenerator.generate(currentGoal, node.getProof())
+        if (proofSteps.isEmpty()) {
+          println("No proof steps found for goal $currentGoal")
+          println("Current proof: ${node.getProof()}")
+          return null
+        }
         for (proofStep in proofSteps) {
-          val expansion = node.applyProofStep(currentGoal, proofStep) ?: continue
+          val expansion = node.applyProofStep(currentGoal, proofStep)
           println("Current proof: ${expansion.getProof()}")
           if (expansion.getProof().isFinished()) {
             return expansion.getProof()
