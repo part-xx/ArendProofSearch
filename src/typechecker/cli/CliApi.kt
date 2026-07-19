@@ -7,5 +7,5 @@ interface CliApi {
     fun proofSearch(pattern: String): ProofSearchResponse
     fun signature(moduleDef: String): String
     fun signatureInfo(moduleDef: String, name: String): SignatureInfoResponse?
-    fun typeExpr(moduleDef: String, goalId: String, expression: String): String?
+    fun typeExpr(moduleDef: String, goalId: String, expression: String): TypeExprResponse?
 }

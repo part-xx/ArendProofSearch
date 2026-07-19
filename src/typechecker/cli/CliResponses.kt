@@ -72,10 +72,22 @@ data class ParamInfo(
     val propositional: Boolean
 )
 
-@Serializable
+
 data class TypeExprResponse(
-    val type: String? = null
+    val data: TypeExprData? = null,
+    val error: String? = null
 )
+
+@Serializable
+data class TypeExprData(
+    val type: String? = null,
+    val datatype: Datatype? = null,
+)
+
+@Serializable
+data class Datatype(
+    val typename: String,
+    val module: String)
 
 @Serializable
 data class ConstructorInfo(

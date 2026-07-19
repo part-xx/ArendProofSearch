@@ -32,7 +32,9 @@ class CliConnection(libraryPath: Path) : CliApi, AutoCloseable {
         client = DaemonClient.connect(addr)
     }
 
-    private fun invokeCliCommand(vararg args: String): String {
+    private class CLIOutput(val result: String, val errors: String)
+
+    private fun invokeCliCommand(vararg args: String): CLIOutput {
         val output = StringBuilder()
         val errors = StringBuilder()
 
@@ -43,11 +45,16 @@ class CliConnection(libraryPath: Path) : CliApi, AutoCloseable {
             }
         }
 
-        if (exitCode != 0 && output.isEmpty()) {
-            throw IOException("Daemon command failed (exit $exitCode): $errors")
+        if (exitCode != 0) {
+            if (errors.trim().isEmpty()) {
+                throw IOException("Daemon command failed (exit $exitCode)")
+            }
+            return CLIOutput("", errors.toString().trim())
         }
 
-        return output.toString().trim()
+
+
+        return CLIOutput(output.toString().trim(), errors.toString().trim())
     }
 
     private fun extractJson(raw: String): String {
@@ -58,43 +65,46 @@ class CliConnection(libraryPath: Path) : CliApi, AutoCloseable {
     }
 
     override fun findGoals(moduleDef: String): FindGoalsResponse {
-        val raw = invokeCliCommand("-fg", moduleDef)
-        return json.decodeFromString<FindGoalsResponse>(extractJson(raw))
+        val cliOutput = invokeCliCommand("-fg", moduleDef)
+        return json.decodeFromString<FindGoalsResponse>(extractJson(cliOutput.result))
     }
 
     override fun applyStep(moduleDef: String, fullBody: String): ApplyStepResponse {
-        val raw = invokeCliCommand("-as", moduleDef, fullBody)
-        return json.decodeFromString<ApplyStepResponse>(extractJson(raw))
+        val cliOutput = invokeCliCommand("-as", moduleDef, fullBody)
+        return json.decodeFromString<ApplyStepResponse>(extractJson(cliOutput.result))
     }
 
     override fun getScope(moduleDef: String, goalId: String): ScopeResponse {
-        val raw = invokeCliCommand("-gs", moduleDef, goalId)
-        return json.decodeFromString<ScopeResponse>(extractJson(raw))
+        val cliOutput = invokeCliCommand("-gs", moduleDef, goalId)
+        return json.decodeFromString<ScopeResponse>(extractJson(cliOutput.result))
     }
 
     override fun proofSearch(pattern: String): ProofSearchResponse {
-        val raw = invokeCliCommand("-psj", pattern)
-        return json.decodeFromString<ProofSearchResponse>(extractJson(raw))
+        val cliOutput = invokeCliCommand("-psj", pattern)
+        return json.decodeFromString<ProofSearchResponse>(extractJson(cliOutput.result))
     }
 
     override fun signature(moduleDef: String): String {
-        val raw = invokeCliCommand("-sg", moduleDef)
-        return raw.lines().last { it.isNotBlank() }
+        val cliOutput = invokeCliCommand("-sg", moduleDef)
+        return cliOutput.result.lines().last { it.isNotBlank() }
     }
 
     override fun signatureInfo(moduleDef: String, name: String): SignatureInfoResponse? {
         return try {
-            val raw = invokeCliCommand("-si", moduleDef, name)
-            json.decodeFromString<SignatureInfoResponse>(extractJson(raw))
+            val cliOutput = invokeCliCommand("-si", moduleDef, name)
+            json.decodeFromString<SignatureInfoResponse>(extractJson(cliOutput.result))
         } catch (_: Exception) {
             null
         }
     }
 
-    override fun typeExpr(moduleDef: String, goalId: String, expression: String): String? {
+    override fun typeExpr(moduleDef: String, goalId: String, expression: String): TypeExprResponse? {
         return try {
-            val raw = invokeCliCommand("-te", moduleDef, goalId, expression)
-            json.decodeFromString<TypeExprResponse>(extractJson(raw)).type
+            val cliOutput = invokeCliCommand("-te", moduleDef, goalId, expression)
+            if (cliOutput.errors.isNotEmpty()) {
+                return TypeExprResponse(null, cliOutput.errors)
+            }
+            TypeExprResponse(json.decodeFromString<TypeExprData>(extractJson(cliOutput.result)))
         } catch (_: Exception) {
             null
         }

@@ -1,29 +1,57 @@
 package typechecker.cli.proofstep
 
-import ai.koog.agents.core.agent.AIAgent
-import ai.koog.prompt.llm.LLModel
+// LLM dependencies - commented out for build
+// Uncomment later to use JetBrains/koog or other LLM backend
+//import ai.koog.agents.core.agent.AIAgent
+//import ai.koog.prompt.llm.LLModel
 import kotlinx.coroutines.runBlocking
-import org.example.org.jetbrains.ai.kotlin.playbook.createLiteLLMModel
-import org.example.org.jetbrains.ai.kotlin.playbook.createLiteLLMPromptExecutor
-import org.jetbrains.ai.kotlin.playbook.LITELLM_API_KEY
-import org.jetbrains.ai.kotlin.playbook.LITELLM_URL
-import org.jetbrains.ai.kotlin.playbook.LLM_MODEL_ID
+//import org.example.org.jetbrains.ai.kotlin.playbook.createLiteLLMModel
+//import org.example.org.jetbrains.ai.kotlin.playbook.createLiteLLMPromptExecutor
+//import org.jetbrains.ai.kotlin.playbook.LITELLM_API_KEY
+//import org.jetbrains.ai.kotlin.playbook.LITELLM_URL
+//import org.jetbrains.ai.kotlin.playbook.LLM_MODEL_ID
 import typechecker.Proof
 import typechecker.ProofStep
 import typechecker.ProofStepGenerator
 import typechecker.cli.*
-import typechecker.coreapi.proofstep.LLMStepGenerator
+import typechecker.LLMClient
+import typechecker.OpenAILikeLLMClient
+
+import java.io.File
+
+// Gradle properties - read from gradle.properties file
+val openaiLikeApiKey: String = System.getenv("OPENAI_LIKE_API_KEY") ?: loadProperty("openaiLikeApiKey") ?: ""
+val openaiLikeBaseUrl: String = System.getenv("OPENAI_LIKE_BASE_URL") ?: loadProperty("openaiLikeBaseUrl") ?: ""
+val openaiLikeModel: String = System.getenv("OPENAI_LIKE_MODEL") ?: loadProperty("openaiLikeModel") ?: ""
+
+private fun loadProperty(name: String): String? {
+    val gradleProps = File("gradle.properties")
+    if (gradleProps.exists()) {
+        val props = java.util.Properties().apply {
+            load(gradleProps.inputStream())
+        }
+        return props.getProperty(name)
+    }
+    return null
+}
 
 class CliLLMStepGenerator(
     private val cli: CliApi,
     private val moduleDef: String,
     private val premises: List<String> = emptyList(),
-    liteLLMModelId: String = LLM_MODEL_ID,
+    // liteLLMModelId: String = "openai/gpt-4o",
     private val maxAttempts: Int = 50
 ) : ProofStepGenerator<PlainTextGoal> {
 
-    private val executor = createLiteLLMPromptExecutor(LITELLM_URL, LITELLM_API_KEY)
-    private val llmModel: LLModel = createLiteLLMModel(liteLLMModelId)
+    // LLM dependencies - commented out for build
+    // Uncomment later to use JetBrains/koog or other LLM backend
+    //private val executor = createLiteLLMPromptExecutor(LITELLM_URL, LITELLM_API_KEY)
+    //private val llmModel: LLModel = createLiteLLMModel(liteLLMModelId)
+    private val llmClient: LLMClient = OpenAILikeLLMClient(
+        apiKey = openaiLikeApiKey,
+        model = openaiLikeModel,
+        baseUrl = openaiLikeBaseUrl
+    )
 
     private val sigInfoCache = mutableMapOf<String, SignatureInfoResponse>()
     private val systemPrompt = buildSystemPrompt()
@@ -165,18 +193,8 @@ class CliLLMStepGenerator(
         return parts.joinToString(" ")
     }
 
-    fun buildCaseExpression(splitExpr: String, goal: PlainTextGoal, topLevel: Boolean = false): String? {
-        val binding = goal.contextBindings.find { it.name == splitExpr }
-        val isVariable = binding != null
-
-        val typeStr = if (binding != null) {
-            binding.type.trim()
-        } else {
-            cli.typeExpr(moduleDef, goal.id, splitExpr)?.trim() ?: return null
-        }
-        val typeName = extractTypeName(typeStr)
-
-        val info = cli.signatureInfo(moduleDef, typeName)
+    fun buildCaseExpression(splitExpr: String, datatype: String, dataModule: String, isVariable: Boolean = false, topLevel: Boolean = false): String? {
+        val info = cli.signatureInfo(dataModule, datatype)
         val constructors = info?.constructors
         if (constructors.isNullOrEmpty()) return null
 
@@ -335,14 +353,26 @@ class CliLLMStepGenerator(
 
         repeat(maxAttempts) { attempt ->
             println("Attempt ${attempt + 1} (temperature=$temperature)")
-            val agent = AIAgent(
-                executor = executor,
-                systemPrompt = systemPrompt,
-                llmModel = llmModel,
-                temperature = temperature,
-            )
-            val response = runBlocking { agent.run(currentPrompt) }
+            // LLM dependencies - commented out for build
+            // Uncomment later to use JetBrains/koog or other LLM backend
+            //val agent = AIAgent(
+            //    executor = executor,
+            //    systemPrompt = systemPrompt,
+            //    llmModel = llmModel,
+            //    temperature = temperature,
+            //)
+            //val response = runBlocking { agent.run(currentPrompt) }
+            val response = runBlocking { llmClient.generateResponse(systemPrompt, currentPrompt) }
             println("The response:\n${response.chunked(120).joinToString("\n")}")
+
+            if (response in failedAttempts) {
+                println("DUPLICATE — already tried this expression, raising temperature")
+                temperature = minOf(temperature + 0.1, 1.0)
+                currentPrompt += "\n\nYou already tried: $response\nThis EXACT response was already rejected. " +
+                        //              "Explain why your previous approaches failed, then describe a FUNDAMENTALLY DIFFERENT strategy. " +
+                        "Provide your new attempt."
+                return@repeat
+            }
 
             val step = parseStepFromResponse(response)
             if (step == null) {
@@ -377,11 +407,45 @@ class CliLLMStepGenerator(
                     result
                 }
                 "case" -> {
+                    val splitExpr = step.rawTerm!!
+                    val binding = goal.contextBindings.find { it.name == splitExpr }
+
+                    val cliResponse = cli.typeExpr(moduleDef, goal.id, splitExpr) ?: run {
+                        println("CLI invocation error for '$splitExpr'")
+                        return emptyList()
+                    }
+
+                    if (cliResponse.error != null) {
+                        println("Using case with split expression '$splitExpr' resulted in error: ${cliResponse.error}")
+                        currentPrompt += "\n\nTypechecking split expression $splitExpr resulted in error: ${cliResponse.error}\n\n" +
+                                // "In 1-2 sentences, explain what caused this error. " +
+                                // "Then, write a corrected plan. Keep parts that worked. " +
+                                "Provide your next attempt."
+                        failedAttempts.add(response)
+                        return@repeat
+                    }
+
+                    val typeName = cliResponse.data?.datatype?.typename ?: run {
+                        println("Cannot recognize the type of '$splitExpr' as a datatype")
+                        currentPrompt += "\n\nCannot recognize the type of '$splitExpr' as a datatype\n\n" +
+                                // "In 1-2 sentences, explain what caused this error. " +
+                                // "Then, write a corrected plan. Keep parts that worked. " +
+                                "Provide your next attempt."
+                        failedAttempts.add(response)
+                        return@repeat
+                    }
+                    val dataModule = cliResponse.data.datatype.module
+                    val isVariable = binding != null
                     val isTopLevel = currentProofText.trim() == "{?}"
-                    val result = buildCaseExpression(step.rawTerm!!, goal, topLevel = isTopLevel)
+                    val result = buildCaseExpression(splitExpr, typeName, dataModule, topLevel = isTopLevel, isVariable = isVariable)
                     println("Constructed from CASE: $result")
                     result ?: run {
-                        println("Could not build case expression for '${step.rawTerm}'")
+                        println("Could not build case expression for '${splitExpr}'")
+                        currentPrompt += "\n\nCould not build case expression for '${splitExpr}'\n\n" +
+                                // "In 1-2 sentences, explain what caused this error. " +
+                                // "Then, write a corrected plan. Keep parts that worked. " +
+                                "Provide your next attempt."
+                        failedAttempts.add(response)
                         return@repeat
                     }
                 }
@@ -402,7 +466,7 @@ class CliLLMStepGenerator(
                 println("DUPLICATE — already tried this expression, raising temperature")
                 temperature = minOf(temperature + 0.1, 1.0)
                 currentPrompt += "\n\nYou already tried: $term\nThis EXACT expression was already rejected. " +
-                        "Explain why your previous approaches failed, then describe a FUNDAMENTALLY DIFFERENT strategy. " +
+          //              "Explain why your previous approaches failed, then describe a FUNDAMENTALLY DIFFERENT strategy. " +
                         "Provide your new attempt."
                 return@repeat
             }
@@ -452,8 +516,8 @@ class CliLLMStepGenerator(
                 attemptHistory.add(Pair(term, errorMsg))
 
                 currentPrompt += "\n\n${progressNote}Previous guess: $term\nResulted in error: $errorMsg\n\n" +
-                        "In 1-2 sentences, explain what caused this error. " +
-                        "Then, write a corrected plan. Keep parts that worked. " +
+            //            "In 1-2 sentences, explain what caused this error. " +
+            //            "Then, write a corrected plan. Keep parts that worked. " +
                         "Provide your next attempt."
             }
         }

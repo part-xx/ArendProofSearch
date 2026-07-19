@@ -9,7 +9,7 @@ class CliProcessApi(
     private val libraryPath: Path,
     private val jarPath: Path = Paths.get(
         System.getProperty("arend.jar",
-            "/Users/admin/codingspace/arend-lang-new/Arend/cli/build/libs/cli-1.11.0-full.jar")
+            "/Users/fedor/codingspace/arend-lang/Arend/cli/build/libs/cli-1.11.0-full.jar")
     )
 ) : CliApi, AutoCloseable {
 
@@ -89,11 +89,10 @@ class CliProcessApi(
         }
     }
 
-    override fun typeExpr(moduleDef: String, goalId: String, expression: String): String? {
+    override fun typeExpr(moduleDef: String, goalId: String, expression: String): TypeExprResponse? {
         return try {
             val raw = runCli("-te", moduleDef, goalId, expression)
-            val resp = json.decodeFromString<TypeExprResponse>(extractJson(raw))
-            resp.type
+            json.decodeFromString<TypeExprResponse>(extractJson(raw))
         } catch (_: Exception) {
             null
         }

@@ -6,21 +6,20 @@ import org.arend.server.ArendServer
 import typechecker.Proof
 import typechecker.ProofStep
 import java.io.File
-import ai.koog.agents.core.agent.AIAgent
-import ai.koog.prompt.llm.LLModel
-import org.example.org.jetbrains.ai.kotlin.playbook.createLiteLLMModel
-import org.example.org.jetbrains.ai.kotlin.playbook.createLiteLLMPromptExecutor
-import org.jetbrains.ai.kotlin.playbook.LITELLM_API_KEY
-import org.jetbrains.ai.kotlin.playbook.LITELLM_URL
+// LLM dependencies - commented out for build
+// Uncomment later to use JetBrains/koog or other LLM backend
+//import ai.koog.agents.core.agent.AIAgent
+//import ai.koog.prompt.llm.LLModel
+//import org.example.org.jetbrains.ai.kotlin.playbook.createLiteLLMModel
+//import org.example.org.jetbrains.ai.kotlin.playbook.createLiteLLMPromptExecutor
+//import org.jetbrains.ai.kotlin.playbook.LITELLM_API_KEY
+//import org.jetbrains.ai.kotlin.playbook.LITELLM_URL
 import extractStep
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonObject
+import typechecker.LLMClient
+import typechecker.FallbackLLMClient
+import org.json.JSONObject
+import org.json.JSONArray
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonNull
-import kotlinx.serialization.json.JsonPrimitive
 import org.arend.core.context.binding.Binding
 import org.arend.core.context.binding.EvaluatingBinding
 import org.arend.core.expr.ClassCallExpression
@@ -125,9 +124,12 @@ class LLMStepGenerator(
           "}"
 
   private val liteLLMModelId: String = "openai/gpt-4o"
-  private val executor = createLiteLLMPromptExecutor(LITELLM_URL, LITELLM_API_KEY)
-  private val llmModel: LLModel = createLiteLLMModel(liteLLMModelId)
+  // LLM dependencies - commented out for build
+  // Uncomment later to use JetBrains/koog or other LLM backend
+  //private val executor = createLiteLLMPromptExecutor(LITELLM_URL, LITELLM_API_KEY)
+  //private val llmModel: LLModel = createLiteLLMModel(liteLLMModelId)
   private val preprompt: String
+  private val llmClient: LLMClient = FallbackLLMClient()
 
   init {
     val examples = parseConcatenatedJson(File("src/examples.json"))
@@ -167,7 +169,6 @@ class LLMStepGenerator(
 
     fun parseConcatenatedJson(file: File): List<Map<String, Any?>> {
       val text = file.readText()
-      val json = Json { ignoreUnknownKeys = true }
       val results = mutableListOf<Map<String, Any?>>()
       var index = 0
       while (index < text.length) {
@@ -207,34 +208,41 @@ class LLMStepGenerator(
 
         if (end != -1) {
           val jsonString = text.substring(start, end + 1)
-          val element = json.parseToJsonElement(jsonString).jsonObject
-          results.add(element.toMapValue())
+          val jsonObject = JSONObject(jsonString)
+          results.add(jsonObject.toMapValue())
           index = end + 1
         } else {
           break
         }
       }
-
       return results
     }
 
-    fun JsonObject.toMapValue(): Map<String, Any?> {
-      return this.mapValues { (_, value) ->
-        value.toAnyValue()
+    fun JSONObject.toMapValue(): Map<String, Any?> {
+      val map = mutableMapOf<String, Any?>()
+      val keys = this.keys()
+      while (keys.hasNext()) {
+        val key = keys.next()
+        map[key] = this.get(key).toAnyValue()
       }
+      return map
     }
 
-    fun JsonElement.toAnyValue(): Any? {
+    fun Any.toAnyValue(): Any? {
       return when (this) {
-        is JsonNull -> null
-        is JsonPrimitive -> {
-          if (isString) content
-          else if (content == "true") true
-          else if (content == "false") false
-          else content.toLongOrNull() ?: content.toDoubleOrNull() ?: content
+        is JSONObject -> this.toMapValue()
+        is JSONArray -> {
+          val list = mutableListOf<Any?>()
+          for (i in 0 until this.length()) {
+            list.add(this.get(i).toAnyValue())
+          }
+          list
         }
-        is JsonObject -> this.toMapValue()
-        is JsonArray -> this.map { it.toAnyValue() }
+        null -> null
+        is Boolean -> this
+        is Number -> this
+        is String -> this
+        else -> this.toString()
       }
     }
 
@@ -315,13 +323,16 @@ class LLMStepGenerator(
     println("Context: $context")
     repeat(50) { attempt ->
       println("Attempt ${attempt + 1}")
-      val agent = AIAgent(
-        executor = executor,
-        systemPrompt = systemPrompt,
-        llmModel = llmModel,
-        temperature = 0.7,
-      )
-      val response = runBlocking { agent.run(currentPrompt) }
+      // LLM dependencies - commented out for build
+      // Uncomment later to use JetBrains/koog or other LLM backend
+      //val agent = AIAgent(
+      //  executor = executor,
+      //  systemPrompt = systemPrompt,
+      //  llmModel = llmModel,
+      //  temperature = 0.7,
+      //)
+      //val response = runBlocking { agent.run(currentPrompt) }
+      val response = runBlocking { llmClient.generateResponse(systemPrompt, currentPrompt) }
       println("The response:\n${response.chunked(120).joinToString("\n")}")
       val term = extractTermFromResponse(response)
       if (term == null) {

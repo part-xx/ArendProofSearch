@@ -8,6 +8,10 @@ import search.best_first.BestFirstSearch
 import typechecker.cli.proofstep.CliLLMStepGenerator
 import java.nio.file.Paths
 
+// LLM dependencies - commented out for build
+// Uncomment later to use JetBrains/koog or other LLM backend
+//import org.jetbrains.ai.kotlin.playbook.LLM_MODEL_ID
+
 fun runCliSearch(args: Array<String>) {
     val cmdOptions = Options()
     cmdOptions.addOption(
@@ -34,7 +38,10 @@ fun runCliSearch(args: Array<String>) {
         ?: run { System.err.println("Missing required option: -L <libdir>"); return }
     val moduleDef = cmdLine.getOptionValue("m")
         ?: run { System.err.println("Missing required option: --module-def MODULE:DEF"); return }
-    val modelId = cmdLine.getOptionValue("model", org.jetbrains.ai.kotlin.playbook.LLM_MODEL_ID)
+    // LLM dependencies - commented out for build
+    // Uncomment later to use JetBrains/koog or other LLM backend
+    //val modelId = cmdLine.getOptionValue("model", org.jetbrains.ai.kotlin.playbook.LLM_MODEL_ID)
+    val modelId = cmdLine.getOptionValue("model", "openai/gpt-4o")
 
     println("Connecting to Arend CLI for library at $libPath...")
     CliConnection(Paths.get(libPath)).use { cli ->
@@ -52,7 +59,7 @@ fun runCliSearch(args: Array<String>) {
             println("  $goal")
         }
 
-        val generator = CliLLMStepGenerator(cli, moduleDef, liteLLMModelId = modelId)
+        val generator = CliLLMStepGenerator(cli, moduleDef)//, liteLLMModelId = modelId)
         val search = BestFirstSearch<PlainTextGoal>(generator)
 
         println("Starting proof search...")
