@@ -44,8 +44,8 @@ class FakeCli : CliApi {
 
     var typeExprResults = mutableMapOf<String, String>()
 
-    override fun typeExpr(moduleDef: String, goalId: String, expression: String): String? {
-        return typeExprResults[expression]
+    override fun typeExpr(moduleDef: String, goalId: String, expression: String): TypeExprResponse? {
+        return null
     }
 }
 
@@ -502,7 +502,7 @@ class StepParsingTest {
         )
         val gen = typechecker.cli.proofstep.CliLLMStepGenerator(cli, "M:D")
         val goal = PlainTextGoal("0", "P n", listOf(ContextBinding("n", "Nat")), "M:D")
-        val result = gen.buildCaseExpression("n", goal)
+        val result = gen.buildCaseExpression("n", "Nat", "")
         assertEquals("\\case \\elim n \\with { | 0 => {?} | suc n => {?} }", result)
     }
 
@@ -520,7 +520,7 @@ class StepParsingTest {
         )
         val gen = typechecker.cli.proofstep.CliLLMStepGenerator(cli, "M:D")
         val goal = PlainTextGoal("0", "P n", listOf(ContextBinding("n", "Nat")), "M:D")
-        val result = gen.buildCaseExpression("n", goal, topLevel = true)
+        val result = gen.buildCaseExpression("n", "Nat", "", topLevel = true)
         assertEquals("\\elim n | 0 => {?} | suc n => {?}", result)
     }
 
@@ -541,7 +541,7 @@ class StepParsingTest {
         val goal = PlainTextGoal("0", "x = y", listOf(
             ContextBinding("x", "Nat"), ContextBinding("y", "Nat")
         ), "M:D")
-        val result = gen.buildCaseExpression("decideEq x y", goal, topLevel = true)
+        val result = gen.buildCaseExpression("decideEq x y", "Dec", "", topLevel = true)
         assertEquals("\\case decideEq x y \\with { | yes p => {?} | no q => {?} }", result)
     }
 
@@ -550,7 +550,7 @@ class StepParsingTest {
         val cli = FakeCli()
         val gen = typechecker.cli.proofstep.CliLLMStepGenerator(cli, "M:D")
         val goal = PlainTextGoal("0", "P x", listOf(ContextBinding("x", "Foo")), "M:D")
-        val result = gen.buildCaseExpression("x", goal)
+        val result = gen.buildCaseExpression("x", "Foo", "")
         assertNull(result)
     }
 
@@ -571,7 +571,7 @@ class StepParsingTest {
         val goal = PlainTextGoal("0", "x = y", listOf(
             ContextBinding("x", "Nat"), ContextBinding("y", "Nat")
         ), "M:D")
-        val result = gen.buildCaseExpression("decideEq x y", goal)
+        val result = gen.buildCaseExpression("decideEq x y", "Dec", "Set")
         assertEquals("\\case decideEq x y \\with { | yes p => {?} | no q => {?} }", result)
     }
 
@@ -670,3 +670,4 @@ class StepParsingTest {
         assertEquals("\\lam n _ => {?}", result)
     }
 }
+

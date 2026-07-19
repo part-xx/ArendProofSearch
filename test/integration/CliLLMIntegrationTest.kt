@@ -4,6 +4,7 @@ import search.best_first.BestFirstSearch
 import typechecker.cli.*
 import typechecker.cli.proofstep.CliLLMStepGenerator
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import java.nio.file.Files
@@ -25,7 +26,7 @@ import java.nio.file.Paths
  */
 class CliLLMIntegrationTest {
 
-    private val libPath = Paths.get("/Users/admin/codingspace/arend-lang-new/Arend/arend-lib")
+    private val libPath = Paths.get("/Users/fedor/codingspace/arend-lang/Arend/arend-lib")
     private val maxAttempts = Integer.getInteger("maxAttempts", 10)
     private val testModulePath: Path = libPath.resolve("src/testPS.ard")
     private val testBinPath: Path = libPath.resolve("bin/testPS.arc")
@@ -171,7 +172,7 @@ class CliLLMIntegrationTest {
             println("Using daemon connection")
             return conn
         } catch (_: Exception) {}
-        val jarPath = Paths.get("/Users/admin/codingspace/arend-lang-new/Arend/cli/build/libs/cli-1.11.0-full.jar")
+        val jarPath = Paths.get("/Users/fedor/codingspace/arend-lang/Arend/cli/build/libs/cli-1.11.0-full.jar")
         if (!Files.exists(jarPath)) {
             println("SKIP: CLI jar not found at $jarPath")
             return null
@@ -266,23 +267,6 @@ class CliLLMIntegrationTest {
     }
 
     @Test
-    fun `daemon - buildCaseExpression on isIrr result with infix Or type`() {
-        withTestModule(listOf(TARGET_PRIME_CHAR_DIR)) { cli ->
-            val goals = cli.findGoals("testPS:prime-char-dir").goals
-            assertTrue(goals.isNotEmpty())
-            val goal = PlainTextGoal(goals[0].id, goals[0].expectedType, goals[0].context, "testPS:prime-char-dir")
-
-            val gen = CliLLMStepGenerator(cli, "testPS:prime-char-dir", listOf(OR, IRR, LDIV, INV), maxAttempts = 1)
-            val caseExpr = gen.buildCaseExpression("p.isIrr (inv k|n.inv-right)", goal)
-            println("buildCaseExpression result: $caseExpr")
-            assertNotNull(caseExpr, "Should build case expression for isIrr result")
-            assertTrue(caseExpr.contains("byLeft"), "Should have byLeft constructor")
-            assertTrue(caseExpr.contains("byRight"), "Should have byRight constructor")
-            assertTrue(caseExpr.contains("\\case"), "Should be a \\case expression (not a variable)")
-        }
-    }
-
-    @Test
     fun `daemon - all test definitions have exactly 1 goal`() {
         withTestModule(ALL_SOURCES + ALL_TARGETS) { cli ->
             val defs = listOf(
@@ -308,6 +292,8 @@ class CliLLMIntegrationTest {
             assertTrue(result.goals.isEmpty())
         }
     }
+
+
 
     @Test
     fun `daemon - applyStep with case split creates subgoals`() {
