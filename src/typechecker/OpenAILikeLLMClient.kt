@@ -6,24 +6,11 @@ import io.ktor.client.plugins.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import kotlinx.serialization.Serializable
+import kotlinx.coroutines.*
+import kotlinx.coroutines.time.*
 import kotlinx.serialization.json.*
+import kotlin.time.Duration.Companion.milliseconds
 
-/**
- * LLM Client implementation for OpenAI-compatible APIs.
- * 
- * This client works with any OpenAI-compatible API, including:
- * - OpenAI GPT models
- * - DeepSeek
- * - Alibaba Cloud Qwen/DeepSeek
- * - Groq
- * - Together AI
- * - Any self-hosted OpenAI-compatible server
- * 
- * API specification: https://platform.openai.com/docs/api-reference/chat
- */
 class OpenAILikeLLMClient(
     private val apiKey: String,
     private val model: String = "qwen-math-plus",
@@ -32,68 +19,61 @@ class OpenAILikeLLMClient(
 
     private val httpClient = HttpClient {
         install(HttpTimeout) {
-            requestTimeoutMillis = 30000  // 30 seconds
-            connectTimeoutMillis = 10000  // 10 seconds
-            socketTimeoutMillis = 30000   // 30 seconds
+            requestTimeoutMillis = 120000
+            connectTimeoutMillis = 15000
+            socketTimeoutMillis = 120000
         }
     }
 
-    /**
-     * Generates a response from the OpenAI-compatible API.
-     *
-     * @param systemPrompt The system prompt to set the assistant's behavior
-     * @param userPrompt The user's prompt/input
-     * @return The generated response text
-     */
     override suspend fun generateResponse(systemPrompt: String, userPrompt: String): String {
-        return withContext(Dispatchers.Default) {
-            try {
-                val requestBody = """
-                    {
-                        "model": ${Json.encodeToString(model)},
-                        "messages": [
-                            {"role": "system", "content": ${Json.encodeToString(systemPrompt)}},
-                            {"role": "user", "content": ${Json.encodeToString(userPrompt)}}
-                        ]
+        var lastException: Exception? = null
+
+        for (attempt in 1..3) {
+            val response = try {
+                withTimeout(120000.milliseconds) {
+                    val requestBody = """
+                        {
+                            "model": ${Json.encodeToString(model)},
+                            "messages": [
+                                {"role": "system", "content": ${Json.encodeToString(systemPrompt)}},
+                                {"role": "user", "content": ${Json.encodeToString(userPrompt)}}
+                            ]
+                        }
+                    """
+
+                    httpClient.post("$baseUrl/chat/completions") {
+                        header(HttpHeaders.Authorization, "Bearer $apiKey")
+                        header(HttpHeaders.ContentType, "application/json")
+                        setBody(requestBody)
                     }
-                """
-
-                val response: HttpResponse = httpClient.post("$baseUrl/chat/completions") {
-                    header(HttpHeaders.Authorization, "Bearer $apiKey")
-                    header(HttpHeaders.ContentType, "application/json")
-                    setBody(requestBody)
                 }
+            } catch (e: Exception) {
+                lastException = e
+                if (attempt < 3) {
+                    val delayMs = 2000L * attempt * attempt
+                    println("API attempt $attempt failed: ${e.message}. Retrying in ${delayMs}ms...")
+                    delay(delayMs.milliseconds)
+                }
+                null
+            }
 
+            if (response != null) {
                 val responseBody = response.body<String>()
                 val json = Json.parseToJsonElement(responseBody)
-
                 val choices = (json as JsonObject)["choices"]?.jsonArray
                 val firstChoice = choices?.firstOrNull()
                 val message = (firstChoice as? JsonObject)?.get("message")?.jsonObject
                 val content = message?.get("content")?.jsonPrimitive?.content
 
-                content ?: run {
-                    throw RuntimeException("Failed to parse response: $responseBody")
-                }
+                content?.let { return it }
 
-            } catch (e: Exception) {
-                throw RuntimeException("Error calling API: ${e.message}", e)
+                throw RuntimeException("Failed to parse response: $responseBody")
             }
         }
+
+        throw RuntimeException("Error calling API after 3 attempts: ${lastException?.message}", lastException)
     }
 
-    /**
-     * Creates an OpenAILikeLLMClient instance using environment variables or default values.
-     *
-     * Environment variables:
-     * - OPENAI_LIKE_API_KEY: API key for any OpenAI-compatible API
-     * - OPENAI_LIKE_MODEL: Model to use (default: gpt-4o)
-     * - OPENAI_LIKE_BASE_URL: Base URL for the API endpoint (default: OpenAI)
-     *
-     * For DeepSeek or other OpenAI-compatible services:
-     * - Set OPENAI_LIKE_BASE_URL to the service's endpoint
-     * - Set OPENAI_LIKE_MODEL to the desired model name
-     */
     companion object {
         fun createFromEnvironment(): OpenAILikeLLMClient {
             val apiKey = System.getenv("OPENAI_LIKE_API_KEY")

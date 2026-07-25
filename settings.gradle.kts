@@ -3,5 +3,8 @@ plugins {
 }
 rootProject.name = "ArendProofSearch"
 
-includeBuild("../arend-lang-new/Arend")
+// Local Arend builds - uncomment if needed for development
+includeBuild("../arend-lang/Arend")
+//includeBuild("../arend-lang/Arend/base")
+//includeBuild("../arend-lang/Arend/api")
 

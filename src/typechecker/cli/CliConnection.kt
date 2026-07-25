@@ -39,6 +39,12 @@ class CliConnection(libraryPath: Path) : CliApi, AutoCloseable {
         val errors = StringBuilder()
 
         val exitCode = client.invoke("cli", mapOf("args" to args.toList())) { frame ->
+            /*val frameStr = frame.getOrDefault("data", "").toString()
+            if (frameStr.startsWith("[ERROR]")) {
+                errors.append(frameStr)
+            } else {
+                output.append(frameStr)
+            }*/
             when (frame["kind"]) {
                 "stdout" -> output.append(frame.getOrDefault("data", ""))
                 "stderr" -> errors.append(frame.getOrDefault("data", ""))
@@ -49,7 +55,7 @@ class CliConnection(libraryPath: Path) : CliApi, AutoCloseable {
             if (errors.trim().isEmpty()) {
                 throw IOException("Daemon command failed (exit $exitCode)")
             }
-            return CLIOutput("", errors.toString().trim())
+            // return CLIOutput("", errors.toString().trim())
         }
 
 
@@ -100,7 +106,7 @@ class CliConnection(libraryPath: Path) : CliApi, AutoCloseable {
 
     override fun typeExpr(moduleDef: String, goalId: String, expression: String): TypeExprResponse? {
         return try {
-            val cliOutput = invokeCliCommand("-te", moduleDef, goalId, expression)
+            val cliOutput = invokeCliCommand("-te", moduleDef, goalId, "\"$expression\"")
             if (cliOutput.errors.isNotEmpty()) {
                 return TypeExprResponse(null, cliOutput.errors)
             }

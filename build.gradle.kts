@@ -16,8 +16,8 @@ val koogVersion: String by project
 
 repositories {
   mavenCentral()
-  maven("https://packages.jetbrains.team/maven/p/grazi/grazie-platform-public/")
-  maven("https://packages.jetbrains.team/maven/p/ai-development-kit/ai-development-kit")
+ // maven("https://packages.jetbrains.team/maven/p/grazi/grazie-platform-public/")
+//  maven("https://packages.jetbrains.team/maven/p/ai-development-kit/ai-development-kit")
 }
 
 dependencies {
@@ -40,6 +40,8 @@ dependencies {
   implementation("io.ktor:ktor-client-cio:$ktorVersion")
   implementation("io.ktor:ktor-client-logging:$ktorVersion")
   implementation("io.ktor:ktor-client-websockets:$ktorVersion")
+  implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
+  implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
   implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
   implementation("ch.qos.logback:logback-classic:$logbackVersion")
 
@@ -49,13 +51,13 @@ dependencies {
   implementation("io.opentelemetry:opentelemetry-exporter-logging:${otelVersion}")
   implementation("io.opentelemetry.semconv:opentelemetry-semconv-incubating:${otelSemconvIncubatingVersion}")
 
-  implementation("com.jetbrains:ai-dev-kit-tracing-core:0.0.21")
-  implementation("com.jetbrains:ai-dev-kit-tracing-openai:0.0.21")
-
-  implementation("ai.grazie.api:api-gateway-client-jvm:0.8.2")
-  implementation("ai.grazie.client:client-ktor-jvm:0.8.2")
-
-  implementation("ai.koog:koog-agents:$koogVersion")
+  // JetBrains AI Platform and koog dependencies - commented out for build
+  // Uncomment later if you need JetBrains integration
+  //implementation("com.jetbrains:ai-dev-kit-tracing-core:0.0.21")
+  //implementation("com.jetbrains:ai-dev-kit-tracing-openai:0.0.21")
+  //implementation("ai.grazie.api:api-gateway-client-jvm:0.8.2")
+  //implementation("ai.grazie.client:client-ktor-jvm:0.8.2")
+  //implementation("ai.koog:koog-agents:$koogVersion")
 
   testImplementation("io.opentelemetry:opentelemetry-sdk-testing:${otelVersion}")
 }
@@ -84,6 +86,9 @@ val litellmApiKey: String by project
 val llmBaseUrl: String by project
 val llmApiKey: String by project
 val llmModel: String by project
+val openaiLikeApiKey: String by project
+val openaiLikeBaseUrl: String by project
+val openaiLikeModel: String by project
 
 tasks.test {
   useJUnitPlatform()
@@ -92,5 +97,14 @@ tasks.test {
   systemProperty("llm.base.url", llmBaseUrl)
   systemProperty("llm.api.key", llmApiKey.ifEmpty { litellmApiKey })
   systemProperty("llm.model", llmModel)
+  environment("OPENAI_LIKE_API_KEY", System.getenv("OPENAI_LIKE_API_KEY") ?: openaiLikeApiKey)
+  systemProperty("openai.like.base.url", openaiLikeBaseUrl)
+  systemProperty("openai.like.model", openaiLikeModel)
+}
+
+tasks.withType<JavaExec>().configureEach {
+  systemProperty("openai.like.api.key", openaiLikeApiKey)
+  systemProperty("openai.like.base.url", openaiLikeBaseUrl)
+  systemProperty("openai.like.model", openaiLikeModel)
 }
 

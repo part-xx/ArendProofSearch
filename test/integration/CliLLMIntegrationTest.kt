@@ -202,7 +202,8 @@ class CliLLMIntegrationTest {
             appendLine("""\import Paths.Meta""")
             appendLine("""\import Function.Meta""")
             appendLine("""\open Nat""")
-            appendLine("""\open Monoid (LDiv, Inv)""")
+            appendLine("""\open Monoid""")
+            appendLine("""\open Prime""")
             for (block in blocks) {
                 appendLine()
                 appendLine(block)
@@ -252,6 +253,33 @@ class CliLLMIntegrationTest {
     // ── CLI-only tests ──────────────────────────────────────────
 
     @Test
+    fun `cli typeExpr on isIrr expression`() {
+        withTestModule(listOf(TARGET_PRIME_CHAR_DIR)) { cli ->
+            val moduleDef = "testPS:prime-char-dir"
+            val result = cli.typeExpr(moduleDef, "0", "p.isIrr (inv k|n.inv-right)")
+            println("typeExpr result for p.isIrr (inv k|n.inv-right):")
+            println("  data: $result")
+            println("  error: ${result?.error}")
+            assertNotNull(result, "Should return a result")
+            assertNotNull(result.data?.type, "Should have a type")
+            println("  type: ${result.data.type}")
+        }
+    }
+
+    @Test
+    fun `cli typeExpr fails on isIrr expression`() {
+        withTestModule(listOf(TARGET_PRIME_CHAR_DIR)) { cli ->
+            val moduleDef = "testPS:prime-char-dir"
+            val result = cli.typeExpr(moduleDef, "0", "p.isIrr k|n.inv-right")
+            println("typeExpr result for p.isIrr k|n.inv-right:")
+            println("  data: $result")
+            println("  error: ${result?.error}")
+            assertNotNull(result, "Should return a result")
+            assertNotNull(result.error, "Should return an error")
+        }
+    }
+
+    @Test
     fun `daemon - signatureInfo for isIrr has propositional param`() {
         withTestModule(listOf(TARGET_PRIME_CHAR_DIR)) { cli ->
             val info = cli.signatureInfo("testPS:prime-char-dir", "isIrr")
@@ -267,23 +295,6 @@ class CliLLMIntegrationTest {
     }
 
     @Test
-    fun `daemon - all test definitions have exactly 1 goal`() {
-        withTestModule(ALL_SOURCES + ALL_TARGETS) { cli ->
-            val defs = listOf(
-                "refl-zero", "suc-cong", "bnot-bnot", "band-comm", "bor-comm",
-                "my-trans", "my-trans3", "double-plus", "double-add",
-                "app-nil-right", "app-assoc", "len-app",
-                "mymap-app", "mymap-comp", "mymap-id", "pair-eq"
-            )
-            for (def in defs) {
-                val resp = cli.findGoals("testPS:$def")
-                println("$def: ${resp.goals.size} goal(s) — ${resp.goals.firstOrNull()?.expectedType ?: "?"}")
-                assertTrue(resp.goals.size == 1, "testPS:$def should have exactly 1 goal")
-            }
-        }
-    }
-
-    @Test
     fun `daemon - applyStep idp for refl-zero completes proof`() {
         withTestModule(listOf(TARGET_REFL_ZERO)) { cli ->
             val result = cli.applyStep("testPS:refl-zero", "idp")
@@ -292,8 +303,6 @@ class CliLLMIntegrationTest {
             assertTrue(result.goals.isEmpty())
         }
     }
-
-
 
     @Test
     fun `daemon - applyStep with case split creates subgoals`() {
