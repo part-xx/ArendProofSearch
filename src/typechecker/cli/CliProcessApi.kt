@@ -89,12 +89,17 @@ class CliProcessApi(
         }
     }
 
-    override fun typeExpr(moduleDef: String, goalId: String, expression: String): TypeExprResponse? {
+    override fun typeExpr(moduleDef: String, goalId: String, expression: String, proofBody: String?): TypeExprResponse? {
         return try {
-            val raw = runCli("-te", moduleDef, goalId, expression)
-            json.decodeFromString<TypeExprResponse>(extractJson(raw))
-        } catch (_: Exception) {
-            null
+            val raw = if (proofBody != null) runCli("-te", moduleDef, goalId, expression, proofBody)
+                      else runCli("-te", moduleDef, goalId, expression)
+            // Decode TypeExprData (same shape as CliConnection), not TypeExprResponse —
+            // the CLI prints {"type": ..., "datatype": ...} at top level.
+            TypeExprResponse(json.decodeFromString<TypeExprData>(extractJson(raw)))
+        } catch (e: Exception) {
+            // Surface failures instead of swallowing them as null —
+            // callers treat null as "give up on the goal", hiding the real cause.
+            TypeExprResponse(null, "CLI invocation failed: ${e.message}")
         }
     }
 

@@ -6,6 +6,7 @@ import typechecker.cli.proofstep.CliLLMStepGenerator
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import java.nio.file.Files
 import java.nio.file.Path
@@ -151,6 +152,12 @@ class CliLLMIntegrationTest {
         val TARGET_PRIME_CHAR_DIR = """\lemma prime-char-dir {n : Nat} (p : Irr n) {k : Nat} (k|n : LDiv k n) : (k = n) || (k = 1)
             => {?}"""
 
+        val TARGET_PRIME_CHAR_DIR_RW = """\lemma prime-char-dir {n : Nat} (p : Irr n) {k : Nat} (k|n : LDiv k n) : (k = n) || (k = 1)
+            => rewrite (inv k|n.inv-right) {?}"""
+
+        val TARGET_PRIME_CHAR_DIR_RW_CASE = """\lemma prime-char-dir {n : Nat} (p : Irr n) {k : Nat} (k|n : LDiv k n) : (k = n) || (k = 1)
+            => (rewrite (inv k|n.inv-right) (\case p.isIrr (inv k|n.inv-right) \with { | byLeft a => {?} | byRight b => {?} }))"""
+
         val ALL_SOURCES = listOf(SRC_DOUBLE, SRC_LEN, SRC_MYMAP, SRC_BOOL, SRC_BNOT, SRC_BAND, SRC_BOR)
         val ALL_TARGETS = listOf(
             TARGET_REFL_ZERO, TARGET_SUC_CONG, TARGET_BNOT_BNOT, TARGET_BAND_COMM,
@@ -184,7 +191,7 @@ class CliLLMIntegrationTest {
     private fun requireLLM(): Boolean {
         val key = System.getenv("LITELLM_API_KEY")
         if (key.isNullOrEmpty()) {
-            println("SKIP: LITELLM_API_KEY not set (VPN off?)")
+            println("SKIP: LITELLM_API_KEY not set")
             return false
         }
         return true
@@ -267,6 +274,34 @@ class CliLLMIntegrationTest {
     }
 
     @Test
+    fun `cli typeExpr on isIrr expression (rw)`() {
+        withTestModule(listOf(TARGET_PRIME_CHAR_DIR_RW)) { cli ->
+            val moduleDef = "testPS:prime-char-dir"
+            val result = cli.typeExpr(moduleDef, "0", "p.isIrr (inv k|n.inv-right)")
+            println("typeExpr result for p.isIrr (inv k|n.inv-right):")
+            println("  data: $result")
+            println("  error: ${result?.error}")
+            assertNotNull(result, "Should return a result")
+            assertNotNull(result.data?.type, "Should have a type")
+            println("  type: ${result.data.type}")
+        }
+    }
+
+    @Test
+    fun `cli typeExpr on isIrr expression (rw case)`() {
+        withTestModule(listOf(TARGET_PRIME_CHAR_DIR_RW_CASE)) { cli ->
+            val moduleDef = "testPS:prime-char-dir"
+            val result = cli.typeExpr(moduleDef, "0", "p.isIrr (inv k|n.inv-right)")
+            println("typeExpr result for p.isIrr (inv k|n.inv-right):")
+            println("  data: $result")
+            println("  error: ${result?.error}")
+            assertNotNull(result, "Should return a result")
+            assertNotNull(result.data?.type, "Should have a type")
+            println("  type: ${result.data.type}")
+        }
+    }
+
+    @Test
     fun `cli typeExpr fails on isIrr expression`() {
         withTestModule(listOf(TARGET_PRIME_CHAR_DIR)) { cli ->
             val moduleDef = "testPS:prime-char-dir"
@@ -276,6 +311,70 @@ class CliLLMIntegrationTest {
             println("  error: ${result?.error}")
             assertNotNull(result, "Should return a result")
             assertNotNull(result.error, "Should return an error")
+        }
+    }
+
+    @Test
+    fun `cli typeExpr on partial isIrr application after failed apply attempts`() {
+        withTestModule(listOf(TARGET_PRIME_CHAR_DIR)) { cli ->
+            val moduleDef = "testPS:prime-char-dir"
+
+            // Replays the exact CLI sequence from the failing search run:
+            // attempt 1 — APPLY p.isIrr, propositional arg becomes a {?} subgoal
+            val r1 = cli.applyStep(moduleDef, "p.isIrr {?}")
+            println("applyStep(p.isIrr {?}) => success=${r1.success}, errors=${r1.errors}")
+            assertTrue(r1.errors.isNotEmpty(), "p.isIrr {?} should fail (unsolved implicit args)")
+
+            // attempt 2 — implicit args given explicitly; still a type mismatch
+            // (Inv k || Inv k|n.inv does not match (k = n) || (k = 1))
+            val r2 = cli.applyStep(moduleDef, "p.isIrr {k} {k|n.inv} {?}")
+            println("applyStep(p.isIrr {k} {k|n.inv} {?}) => success=${r2.success}, errors=${r2.errors}")
+            assertTrue(r2.errors.isNotEmpty(), "p.isIrr {k} {k|n.inv} {?} should fail (Inv is not an equality)")
+
+            // attempt 3 — CASE on the partial application; this is the call that
+            // crashed the search with "Daemon command failed (exit 1)" (exit 1 + empty stderr)
+            val result = cli.typeExpr(moduleDef, "0", "p.isIrr {k} {k|n.inv}")
+            println("typeExpr(p.isIrr {k} {k|n.inv}) =>")
+            println("  data: ${result?.data}")
+            println("  error: ${result?.error}")
+            assertNotNull(result, "Should return a result")
+            assertNull(result.error, "typeExpr should succeed on a well-typed partial application")
+            assertNotNull(result.data?.type, "Should have a type (a Pi type, hence no datatype)")
+            assertNull(result.data?.datatype, "Partial application is a function type, not a datatype")
+        }
+    }
+
+    @Test
+    fun `cli typeExpr with proof body uses body goals and branch context`() {
+        withTestModule(listOf(TARGET_PRIME_CHAR_DIR)) { cli ->
+            val moduleDef = "testPS:prime-char-dir"
+            val body = """(\case p.isIrr {k} {k|n.inv} {?} \with { | byLeft a => {?} | byRight b => {?} })"""
+
+            // Without the body, goals come from the on-disk definition: only goal 0 exists
+            val noBody = cli.typeExpr(moduleDef, "1", "a")
+            println("typeExpr(goal=1, 'a', no body) => error=${noBody?.error}")
+            assertNotNull(noBody?.error, "goal 1 should be out of range without the proof body")
+
+            // With the body, goals come from it.
+            // Goal 0 is the isIrr equality hole in the scrutinee
+            val hole0 = cli.typeExpr(moduleDef, "0", "p.isIrr {k} {k|n.inv}", body)
+            println("typeExpr(goal=0, 'p.isIrr {k} {k|n.inv}', body) => data=${hole0?.data}, error=${hole0?.error}")
+            assertNotNull(hole0, "Should return a result")
+            assertNull(hole0.error, "goal 0 of the body should exist: ${hole0.error}")
+            assertNotNull(hole0.data?.type, "Should have a type")
+
+            // Goal 1 is the byLeft branch, whose context binds a : Inv {p.M} k
+            val inBranch = cli.typeExpr(moduleDef, "1", "a", body)
+            println("typeExpr(goal=1, 'a', body) => data=${inBranch?.data}, error=${inBranch?.error}")
+            val branch = assertNotNull(inBranch, "Should return a result")
+            assertNull(branch.error, "branch-local 'a' should resolve: ${branch.error}")
+            val branchType = assertNotNull(branch.data?.type, "Should have a type")
+            assertTrue(branchType.contains("Inv"), "branch-local 'a' should have an Inv type, got $branchType")
+
+            // The on-disk state must be restored afterwards: goal 1 is out of range again
+            val restored = cli.typeExpr(moduleDef, "1", "a")
+            println("typeExpr(goal=1, 'a', after restore) => error=${restored?.error}")
+            assertNotNull(restored?.error, "body substitution must be undone afterwards")
         }
     }
 

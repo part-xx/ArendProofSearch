@@ -104,15 +104,19 @@ class CliConnection(libraryPath: Path) : CliApi, AutoCloseable {
         }
     }
 
-    override fun typeExpr(moduleDef: String, goalId: String, expression: String): TypeExprResponse? {
+    override fun typeExpr(moduleDef: String, goalId: String, expression: String, proofBody: String?): TypeExprResponse? {
         return try {
-            val cliOutput = invokeCliCommand("-te", moduleDef, goalId, "\"$expression\"")
+            val args = mutableListOf("-te", moduleDef, goalId, "\"$expression\"")
+            if (proofBody != null) args.add("\"$proofBody\"")
+            val cliOutput = invokeCliCommand(*args.toTypedArray())
             if (cliOutput.errors.isNotEmpty()) {
                 return TypeExprResponse(null, cliOutput.errors)
             }
             TypeExprResponse(json.decodeFromString<TypeExprData>(extractJson(cliOutput.result)))
-        } catch (_: Exception) {
-            null
+        } catch (e: Exception) {
+            // Surface transport/protocol failures instead of swallowing them as null —
+            // callers treat null as "give up on the goal", hiding the real cause.
+            TypeExprResponse(null, "CLI invocation failed: ${e.message}")
         }
     }
 

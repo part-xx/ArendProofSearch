@@ -5,6 +5,7 @@ out/
 .idea
 build/
 
+.gradle
 
 ### Kotlin ###
 .kotlin

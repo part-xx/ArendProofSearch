@@ -7,41 +7,40 @@
         <compositeConfiguration>
           <compositeBuild compositeDefinitionSource="SCRIPT">
             <builds>
-              <build path="$PROJECT_DIR$/../arend-lang-new/Arend" name="Arend">
+              <build path="$PROJECT_DIR$/../arend-lang/Arend" name="Arend">
                 <projects>
-                  <project path="$PROJECT_DIR$/../arend-lang-new/Arend" />
-                  <project path="$PROJECT_DIR$/../arend-lang-new/Arend/api" />
-                  <project path="$PROJECT_DIR$/../arend-lang-new/Arend/arend-lib" />
-                  <project path="$PROJECT_DIR$/../arend-lang-new/Arend/arend-lib/meta" />
-                  <project path="$PROJECT_DIR$/../arend-lang-new/Arend/base" />
-                  <project path="$PROJECT_DIR$/../arend-lang-new/Arend/cli" />
-                  <project path="$PROJECT_DIR$/../arend-lang-new/Arend/intellij" />
-                  <project path="$PROJECT_DIR$/../arend-lang-new/Arend/parser" />
-                  <project path="$PROJECT_DIR$/../arend-lang-new/Arend/proto" />
+                  <project path="$PROJECT_DIR$/../arend-lang/Arend" />
+                  <project path="$PROJECT_DIR$/../arend-lang/Arend/api" />
+                  <project path="$PROJECT_DIR$/../arend-lang/Arend/arend-lib" />
+                  <project path="$PROJECT_DIR$/../arend-lang/Arend/arend-lib/meta" />
+                  <project path="$PROJECT_DIR$/../arend-lang/Arend/base" />
+                  <project path="$PROJECT_DIR$/../arend-lang/Arend/cli" />
+                  <project path="$PROJECT_DIR$/../arend-lang/Arend/parser" />
+                  <project path="$PROJECT_DIR$/../arend-lang/Arend/proto" />
                 </projects>
               </build>
-              <build path="$PROJECT_DIR$/../arend-lang-new/Arend/buildSrc" name="buildSrc">
+              <build path="$PROJECT_DIR$/../arend-lang/Arend/buildSrc" name="buildSrc">
                 <projects>
-                  <project path="$PROJECT_DIR$/../arend-lang-new/Arend/buildSrc" />
+                  <project path="$PROJECT_DIR$/../arend-lang/Arend/buildSrc" />
                 </projects>
               </build>
             </builds>
           </compositeBuild>
         </compositeConfiguration>
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="gradleJvm" value="corretto-24" />
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/../arend-lang-new/Arend" />
-            <option value="$PROJECT_DIR$/../arend-lang-new/Arend/api" />
-            <option value="$PROJECT_DIR$/../arend-lang-new/Arend/arend-lib" />
-            <option value="$PROJECT_DIR$/../arend-lang-new/Arend/arend-lib/meta" />
-            <option value="$PROJECT_DIR$/../arend-lang-new/Arend/base" />
-            <option value="$PROJECT_DIR$/../arend-lang-new/Arend/buildSrc" />
-            <option value="$PROJECT_DIR$/../arend-lang-new/Arend/cli" />
-            <option value="$PROJECT_DIR$/../arend-lang-new/Arend/intellij" />
-            <option value="$PROJECT_DIR$/../arend-lang-new/Arend/parser" />
-            <option value="$PROJECT_DIR$/../arend-lang-new/Arend/proto" />
+            <option value="$PROJECT_DIR$/../arend-lang/Arend" />
+            <option value="$PROJECT_DIR$/../arend-lang/Arend/api" />
+            <option value="$PROJECT_DIR$/../arend-lang/Arend/arend-lib" />
+            <option value="$PROJECT_DIR$/../arend-lang/Arend/arend-lib/meta" />
+            <option value="$PROJECT_DIR$/../arend-lang/Arend/base" />
+            <option value="$PROJECT_DIR$/../arend-lang/Arend/buildSrc" />
+            <option value="$PROJECT_DIR$/../arend-lang/Arend/cli" />
+            <option value="$PROJECT_DIR$/../arend-lang/Arend/parser" />
+            <option value="$PROJECT_DIR$/../arend-lang/Arend/proto" />
           </set>
         </option>
       </GradleProjectSettings>

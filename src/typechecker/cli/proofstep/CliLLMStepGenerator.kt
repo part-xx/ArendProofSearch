@@ -15,6 +15,7 @@ import typechecker.ProofStep
 import typechecker.ProofStepGenerator
 import typechecker.cli.*
 import typechecker.LLMClient
+import typechecker.LLMUnavailableException
 import typechecker.OpenAILikeLLMClient
 
 import java.io.File
@@ -23,6 +24,8 @@ import java.io.File
 val openaiLikeApiKey: String = System.getenv("OPENAI_LIKE_API_KEY") ?: loadProperty("openaiLikeApiKey") ?: ""
 val openaiLikeBaseUrl: String = System.getenv("OPENAI_LIKE_BASE_URL") ?: loadProperty("openaiLikeBaseUrl") ?: ""
 val openaiLikeModel: String = System.getenv("OPENAI_LIKE_MODEL") ?: loadProperty("openaiLikeModel") ?: ""
+val openaiLikeMaxTokens: Int = (System.getenv("OPENAI_LIKE_MAX_TOKENS") ?: loadProperty("openaiLikeMaxTokens"))?.toIntOrNull() ?: 1024
+val openaiLikeEnableThinking: Boolean = (System.getenv("OPENAI_LIKE_ENABLE_THINKING") ?: loadProperty("openaiLikeEnableThinking"))?.toBoolean() ?: false
 
 private fun loadProperty(name: String): String? {
     val gradleProps = File("gradle.properties")
@@ -39,21 +42,39 @@ class CliLLMStepGenerator(
     private val cli: CliApi,
     private val moduleDef: String,
     private val premises: List<String> = emptyList(),
-    // liteLLMModelId: String = "openai/gpt-4o",
-    private val maxAttempts: Int = 50
+    private val maxAttempts: Int = 10,
+    /** How many distinct validated step candidates to collect per goal. */
+    private val maxCandidates: Int = 2,
+    /**
+     * true  — history-based: the model sees previous failures/successes and is told
+     *         to provide a NEW, different attempt after each accepted candidate.
+     * false — independent attempts: every attempt runs with the same fresh prompt
+     *         (no error history, no knowledge of previous successes). Duplicates
+     *         are filtered mechanically; diversity comes from temperature sampling.
+     */
+    private val seekAlternatives: Boolean = false,
+    private val llmClient: LLMClient = OpenAILikeLLMClient(
+        apiKey = openaiLikeApiKey,
+        model = openaiLikeModel,
+        baseUrl = openaiLikeBaseUrl,
+        maxTokens = openaiLikeMaxTokens,
+        enableThinking = openaiLikeEnableThinking
+    )
 ) : ProofStepGenerator<PlainTextGoal> {
 
     // LLM dependencies - commented out for build
     // Uncomment later to use JetBrains/koog or other LLM backend
     //private val executor = createLiteLLMPromptExecutor(LITELLM_URL, LITELLM_API_KEY)
     //private val llmModel: LLModel = createLiteLLMModel(liteLLMModelId)
-    private val llmClient: LLMClient = OpenAILikeLLMClient(
-        apiKey = openaiLikeApiKey,
-        model = openaiLikeModel,
-        baseUrl = openaiLikeBaseUrl
-    )
 
     private val sigInfoCache = mutableMapOf<String, SignatureInfoResponse>()
+    /**
+     * Validated step terms per semantic goal ([PlainTextGoal] equality ignores the
+     * positional id). Unlike ProofSteps, terms are goal-relative, so they can be
+     * reused when the same goal arises in a DIFFERENT proof state: re-applying a
+     * term to the new state only needs a typechecker check, not another LLM round.
+     */
+    private val stepTermCache = mutableMapOf<PlainTextGoal, List<String>>()
     private val systemPrompt = buildSystemPrompt()
     private val preprompt: String
     private val lemmaSignature: String = cli.signature(moduleDef)
@@ -126,6 +147,11 @@ class CliLLMStepGenerator(
     private fun formatPremiseWithInfo(name: String, info: SignatureInfoResponse): String {
         val explicitParams = info.params.filter { it.explicit }
 
+        // Implicit params in declaration order — the model pins them positionally
+        // with {braces} (e.g. path endpoints of *>, which are uninferrable otherwise).
+        val implicitArgs = info.params
+            .filter { !it.explicit }
+            .joinToString(" ") { "{${it.name}: ${it.type}}" }
         val provideArgs = explicitParams
             .filter { !it.propositional }
             .joinToString(", ") { "${it.name}: ${it.type}" }
@@ -135,6 +161,7 @@ class CliLLMStepGenerator(
         val resultStr = info.resultType ?: "?"
 
         val parts = mutableListOf<String>()
+        if (implicitArgs.isNotEmpty()) parts.add("implicits: $implicitArgs")
         if (provideArgs.isNotEmpty()) parts.add("provide: $provideArgs")
         if (subgoalArgs.isNotEmpty()) parts.add("subgoals: $subgoalArgs")
 
@@ -171,7 +198,10 @@ class CliLLMStepGenerator(
 
         val explicitParams = info.params.filter { it.explicit }
 
+        val implicitParamCount = info.params.count { !it.explicit }
+        // Ignore extra brace args beyond the declared implicits.
         val implicitArgs = providedArgs.filter { it.startsWith("{") && it.endsWith("}") }
+            .take(implicitParamCount)
         val explicitProvided = providedArgs.filter { !(it.startsWith("{") && it.endsWith("}")) }
 
         val parts = mutableListOf(name)
@@ -179,6 +209,8 @@ class CliLLMStepGenerator(
 
         var argIdx = 0
         for (param in explicitParams) {
+            // Propositional args are NEVER taken from the model — always filled as
+            // {?} subgoals; a value the model provides for them is ignored.
             if (!param.propositional && argIdx < explicitProvided.size) {
                 val v = explicitProvided[argIdx++]
                 if (v.contains(' ') || v.startsWith("\\")) {
@@ -333,25 +365,65 @@ class CliLLMStepGenerator(
         return candidates.maxByOrNull { it.position }?.step
     }
 
+    /** Invalidates the memoized negative result for a goal the search wants to retry. */
+    override fun onRetryGoal(goal: PlainTextGoal) {
+        stepTermCache.remove(goal)
+    }
+
     override fun generate(goal: PlainTextGoal, currentProof: Proof<PlainTextGoal>?): List<ProofStep<PlainTextGoal>> {
         val currentProofText = (currentProof as? PlainTextProof)?.proofText ?: "{?}"
+
+        // Reuse steps already proven for this goal in another proof state:
+        // re-validate each memoized term against the CURRENT state (typechecker
+        // call only, no LLM round). Falls through to LLM generation if nothing
+        // memoized validates here.
+        val memoizedTerms = stepTermCache[goal]
+        if (memoizedTerms != null) {
+            if (memoizedTerms.isEmpty()) {
+                println("No candidates were found for this goal in a previous state (memoized) — not retrying")
+                return emptyList()
+            }
+            println("Reusing ${memoizedTerms.size} memoized step(s) for this goal in a new proof state")
+            val reused = memoizedTerms.mapNotNull { term ->
+                when (val validation = validateTerm(term, goal, currentProofText)) {
+                    is Validation.Success -> validation.step
+                    else -> {
+                        println("Memoized step '$term' does not validate in the new state, discarding it")
+                        null
+                    }
+                }
+            }
+            if (reused.isNotEmpty()) return reused
+        }
+
         val context = goal.contextBindings.joinToString("\n") { "${it.name} : ${it.type}" }
 
-        var currentPrompt = preprompt +
+        val initialPrompt = preprompt +
                 "Signature: $lemmaSignature\n" +
                 "Context: $context\n" +
                 "Expected type: ${goal.expectedType}\n" +
                 "Current proof: $currentProofText\n" +
                 "\nProvide CORRECT COMPLETION EXPRESSION."
+        var currentPromptPadding = "\n"
 
         println("Expected type: ${goal.expectedType}")
         println("Context: $context")
 
-        val failedAttempts = mutableSetOf<String>()
-        val attemptHistory = mutableListOf<Pair<String, String>>()
-        var temperature = 0.7
+        // if (!seekAlternatives) {
+        //    return generateIndependent(goal, currentProofText, currentPrompt)
+       // }
 
-        repeat(maxAttempts) { attempt ->
+        val failedAttempts = mutableSetOf<String>()
+        val attemptErrors = mutableMapOf<String, String>()
+        val attemptHistory = mutableListOf<Pair<String, String>>()
+        val candidates = mutableListOf<ProofStep<PlainTextGoal>>()
+        val acceptedTerms = mutableSetOf<String>()
+        val acceptedTermList = mutableListOf<String>()
+        var temperature = 0.7
+        var consecutiveDuplicates = 0
+
+        for (attempt in 0 until maxAttempts) {
+            if (candidates.size >= maxCandidates) break
             println("Attempt ${attempt + 1} (temperature=$temperature)")
             // LLM dependencies - commented out for build
             // Uncomment later to use JetBrains/koog or other LLM backend
@@ -362,173 +434,419 @@ class CliLLMStepGenerator(
             //    temperature = temperature,
             //)
             //val response = runBlocking { agent.run(currentPrompt) }
-            val response = runBlocking { llmClient.generateResponse(systemPrompt, currentPrompt) }
+            val response = try {
+                runBlocking { llmClient.generateResponse(systemPrompt, initialPrompt + currentPromptPadding, temperature) }
+            } catch (e: Exception) {
+                // Infra failure (unreachable endpoint, auth, ...). Retrying proof
+                // attempts is pointless and slow (~1 min of client backoff each) —
+                // abort the search with a clear diagnosis instead of a raw stack trace.
+                throw LLMUnavailableException(
+                    "LLM API call failed after client retries — check network/VPN/endpoint " +
+                    "(${e.message})"
+                )
+            }
             println("The response:\n${response.chunked(120).joinToString("\n")}")
 
             if (response in failedAttempts) {
-                println("DUPLICATE — already tried this expression, raising temperature")
+                consecutiveDuplicates++
                 temperature = minOf(temperature + 0.1, 1.0)
-                currentPrompt += "\n\nYou already tried: $response\nThis EXACT response was already rejected. " +
-                        //              "Explain why your previous approaches failed, then describe a FUNDAMENTALLY DIFFERENT strategy. " +
-                        "Provide your new attempt."
-                return@repeat
+                println("DUPLICATE — exact same response (x$consecutiveDuplicates), raising temperature to $temperature")
+                currentPromptPadding += "\n\nYou produced the EXACT SAME response again — it was already rejected. " +
+                        rejectedSummary(attemptErrors) +
+                        duplicateEscalation(consecutiveDuplicates) +
+                        "Provide a GENUINELY NEW attempt — do not rephrase a rejected approach."
+                continue
             }
 
             val step = parseStepFromResponse(response)
             if (step == null) {
                 println("Could not extract step from response")
-                currentPrompt += "\n\nYour previous response did not contain a valid step. " +
+                currentPromptPadding += "\n\nYour previous response did not contain a valid step. " +
                         "Use [APPLY name]...[/APPLY], [REWRITE]...[/REWRITE], [CASE]...[/CASE], or [INTRO]...[/INTRO]. " +
                         "Do NOT use ```arend code blocks."
-                return@repeat
+                continue
             }
 
-            val term = when (step.type) {
-                "apply" -> {
-                    val name = step.name!!
-                    val constructed = buildTermFromApply(name, step.args)
-                    if (constructed != null) {
-                        println("Constructed from APPLY: $constructed")
-                        constructed
-                    } else {
-                        val rawArgs = step.args.joinToString(" ") { v ->
-                            if (v.startsWith("{") && v.endsWith("}")) v
-                            else if (v.contains(' ') || v.startsWith("\\")) "($v)" else v
-                        }
-                        val result = "$name $rawArgs".trim()
-                        println("Constructed from APPLY (raw): $result")
-                        result
-                    }
+            val term = when (val construction = buildTermFromStep(step, goal, currentProofText)) {
+                is StepConstruction.Fatal -> {
+                    println(construction.message)
+                    return emptyList()
                 }
-                "rewrite" -> {
-                    val eq = step.rawTerm!!
-                    val result = if (eq.contains(' ') || eq.startsWith("\\")) "rewrite ($eq) {?}" else "rewrite $eq {?}"
-                    println("Constructed from REWRITE: $result")
-                    result
+                is StepConstruction.Failure -> {
+                    failedAttempts.add(response)
+                    currentPromptPadding += construction.feedback
+                    continue
                 }
-                "case" -> {
-                    val splitExpr = step.rawTerm!!
-                    val binding = goal.contextBindings.find { it.name == splitExpr }
-
-                    val cliResponse = cli.typeExpr(moduleDef, goal.id, splitExpr) ?: run {
-                        println("CLI invocation error for '$splitExpr'")
-                        return emptyList()
-                    }
-
-                    if (cliResponse.error != null) {
-                        println("Using case with split expression '$splitExpr' resulted in error: ${cliResponse.error}")
-                        currentPrompt += "\n\nTypechecking split expression $splitExpr resulted in error: ${cliResponse.error}\n\n" +
-                                // "In 1-2 sentences, explain what caused this error. " +
-                                // "Then, write a corrected plan. Keep parts that worked. " +
-                                "Provide your next attempt."
-                        failedAttempts.add(response)
-                        return@repeat
-                    }
-
-                    val typeName = cliResponse.data?.datatype?.typename ?: run {
-                        println("Cannot recognize the type of '$splitExpr' as a datatype")
-                        currentPrompt += "\n\nCannot recognize the type of '$splitExpr' as a datatype\n\n" +
-                                // "In 1-2 sentences, explain what caused this error. " +
-                                // "Then, write a corrected plan. Keep parts that worked. " +
-                                "Provide your next attempt."
-                        failedAttempts.add(response)
-                        return@repeat
-                    }
-                    val dataModule = cliResponse.data.datatype.module
-                    val isVariable = binding != null
-                    val isTopLevel = currentProofText.trim() == "{?}"
-                    val result = buildCaseExpression(splitExpr, typeName, dataModule, topLevel = isTopLevel, isVariable = isVariable)
-                    println("Constructed from CASE: $result")
-                    result ?: run {
-                        println("Could not build case expression for '${splitExpr}'")
-                        currentPrompt += "\n\nCould not build case expression for '${splitExpr}'\n\n" +
-                                // "In 1-2 sentences, explain what caused this error. " +
-                                // "Then, write a corrected plan. Keep parts that worked. " +
-                                "Provide your next attempt."
-                        failedAttempts.add(response)
-                        return@repeat
-                    }
-                }
-                "intro" -> {
-                    val result = buildIntroExpression(step.args, goal)
-                    println("Constructed from INTRO: $result")
-                    result
-                }
-                else -> {
-                    println("Unknown step type: ${step.type}")
-                    return@repeat
-                }
+                is StepConstruction.Term -> construction.value
             }
             println("Final term: $term")
 
+            // pmap with an identity function is a definitional NO-OP: it re-creates
+            // the same goal (reported as an unreduced beta-form the string-based
+            // no-progress guards cannot recognize) and loops forever. Reject early.
+            if (IDENTITY_PMAP.containsMatchIn(term)) {
+                println("Rejecting no-op step: pmap with an identity function changes nothing")
+                failedAttempts.add(response)
+                currentPromptPadding += "\n\nYour step uses pmap with an identity function (pmap (\\lam x => x)) — " +
+                        "a definitional NO-OP that just re-creates the same goal. " +
+                        "Use the equality directly, or pmap a function that actually transforms the sides.\n"
+                continue
+            }
+
             val normalizedTerm = term.replace("\\s+".toRegex(), " ").trim()
             if (normalizedTerm in failedAttempts) {
-                println("DUPLICATE — already tried this expression, raising temperature")
+                consecutiveDuplicates++
                 temperature = minOf(temperature + 0.1, 1.0)
-                currentPrompt += "\n\nYou already tried: $term\nThis EXACT expression was already rejected. " +
-          //              "Explain why your previous approaches failed, then describe a FUNDAMENTALLY DIFFERENT strategy. " +
-                        "Provide your new attempt."
-                return@repeat
+                println("DUPLICATE — term '$normalizedTerm' already rejected (x$consecutiveDuplicates), raising temperature to $temperature")
+                val prevError = attemptErrors[normalizedTerm]
+                currentPromptPadding += "\n\nYou already proposed '$term' — it was rejected" +
+                        (if (prevError != null) " with this error:\n$prevError\n" else ".\n") +
+                        rejectedSummary(attemptErrors) +
+                        duplicateEscalation(consecutiveDuplicates) +
+                        "Do NOT propose it again. Provide a genuinely different step."
+                continue
             }
-
-            val goalIndex = goal.id.toIntOrNull() ?: 0
-            val wrappedTerm = if (term.contains(' ')) "($term)" else term
-            val fullBody = PlainTextProof.replaceNthGoal(currentProofText, goalIndex, wrappedTerm)
-            if (fullBody == null) {
-                println("Could not find goal ${goal.id} in proof text")
-                return@repeat
-            }
-
-            try {
-                val applyResult = cli.applyStep(moduleDef, fullBody)
-                if (applyResult.success) {
-                    println("applyStep succeeded! Proof: $fullBody")
-                    val newGoals = applyResult.goals.map { g ->
-                        PlainTextGoal(g.id, g.expectedType, g.context, moduleDef)
-                    }
-                    val newProof = PlainTextProof(cli, moduleDef, fullBody, newGoals)
-                    return listOf(ProofStep(newProof, 1.0))
+            if (normalizedTerm in acceptedTerms) {
+                if (seekAlternatives) {
+                    consecutiveDuplicates++
+                    temperature = minOf(temperature + 0.1, 1.0)
+                    println("DUPLICATE — term '$normalizedTerm' already ACCEPTED (x$consecutiveDuplicates), raising temperature to $temperature")
+                    currentPromptPadding += "\n\nYou already proposed '$term' — it was ACCEPTED as a candidate. " +
+                            duplicateEscalation(consecutiveDuplicates) +
+                            "Provide a DIFFERENT step, not an accepted one."
+                } else {
+                    temperature = minOf(temperature + 0.1, 1.0)
+                    println("DUPLICATE — term '$normalizedTerm' already ACCEPTED, raising temperature to $temperature")
                 }
+                continue
+            }
 
-                val errors = applyResult.errors
-                if (errors.isNotEmpty()) {
+            when (val validation = validateTerm(term, goal, currentProofText)) {
+                is Validation.Success -> {
+                    // No-progress guard: a step whose ONLY subgoal is identical (same
+                    // type and context) to the current goal sends the search into a
+                    // regress loop (e.g. pmap (\lam x => x) on an equality goal).
+                    val newGoals = validation.step.proof.goals()
+                    if (newGoals.size == 1 && newGoals[0] == goal) {
+                        println("Step leaves an identical subgoal — no progress, rejecting")
+                        failedAttempts.add(normalizedTerm)
+                        attemptErrors[normalizedTerm] = "Step leaves a subgoal identical to the goal (no progress)"
+                        currentPromptPadding += "\n\nWRONG guess (#${failedAttempts.size}): $term\n" +
+                                "It typechecks but its only subgoal is IDENTICAL to the current goal — no progress. " +
+                                "Provide a step that actually reduces the goal.\n"
+                        continue
+                    }
+                    // Dead-subgoal pruning: leading into a goal the LLM already
+                    // exhausted in a previous state (memoized as empty) makes this
+                    // step a known dead end.
+                    if (newGoals.any { stepTermCache[it]?.isEmpty() == true }) {
+                        println("Step leads into an already-exhausted goal — rejecting")
+                        failedAttempts.add(normalizedTerm)
+                        attemptErrors[normalizedTerm] = "Step leads into an already-exhausted goal (dead end)"
+                        currentPromptPadding += "\n\nWRONG guess (#${failedAttempts.size}): $term\n" +
+                                "It typechecks but leads into a subgoal that was already tried and exhausted with no candidates — a known dead end. " +
+                                "Provide a step that avoids it.\n"
+                        continue
+                    }
+                    candidates.add(validation.step)
+                    acceptedTerms.add(normalizedTerm)
+                    acceptedTermList.add(normalizedTerm)
+                    consecutiveDuplicates = 0
+                    println("Candidate #${candidates.size} accepted: $term")
+                    if (seekAlternatives) {
+                        currentPromptPadding += "\n\nACCEPTED as candidate #${candidates.size}: $term\n" +
+                                "This step is correct and recorded. Now provide a DIFFERENT step for the SAME goal " +
+                                "(a different lemma, tactic, or strategy). Do NOT repeat accepted or rejected approaches."
+                    } else {
+                        currentPromptPadding = "\n"
+                    }
+                    continue
+                }
+                is Validation.Error -> {
                     failedAttempts.add(normalizedTerm)
-                    val errorMsg = errors.joinToString("\n")
+                    consecutiveDuplicates = 0
+                    val errorMsg = validation.errorMsg
+                    attemptErrors[normalizedTerm] = errorMsg
                     println("Errors: $errorMsg")
 
                     val progressNote = buildProgressNote(attemptHistory, errorMsg, term)
                     attemptHistory.add(Pair(term, errorMsg))
 
-                    val inferenceHint = if (errorMsg.contains("Cannot infer parameter"))
-                        "\nHINT: To fix 'Cannot infer parameter X', provide it as an implicit arg wrapped in {braces} in your [APPLY] step. " +
-                        "Example: [APPLY natUnit] {k} [/APPLY] constructs natUnit {k} {?}.\n"
+                    val inferenceHint = if (ARG_INFERENCE_ERROR.containsMatchIn(errorMsg))
+                        "\nHINT: To fix 'Cannot infer parameter X', provide X as an implicit arg wrapped in {braces} in your [APPLY] step, " +
+                        "positionally, in the order of the \"implicits:\" list (include ALL implicits before X — you cannot skip earlier ones). " +
+                        "Pin the implicit that is NOT already determined by the goal: for goal k = 1 with a : Inv k in context, " +
+                        "[APPLY natUnit] {a.inv} [/APPLY] constructs natUnit {a.inv} {?} with subgoal a.inv * k = 1, whereas " +
+                        "{k} would create the CIRCULAR subgoal k * k = 1. " +
+                        "For *> pin the path endpoints: [APPLY *>] {Nat} {n} {k * k|n.inv} {k} [/APPLY].\n"
                     else ""
 
-                    currentPrompt += "\n\n${progressNote}WRONG guess (#${failedAttempts.size}): $term\nErrors:\n$errorMsg\n$inferenceHint\n" +
+                    currentPromptPadding += "\n\n${progressNote}WRONG guess (#${failedAttempts.size}): $term\nErrors:\n$errorMsg\n$inferenceHint\n" +
                             "Provide your corrected attempt."
+                    continue
                 }
-            } catch (e: Exception) {
-                failedAttempts.add(normalizedTerm)
-                val errorMsg = e.message ?: "unknown error"
-                println("Exception during validation: $errorMsg")
+                is Validation.Crashed -> {
+                    failedAttempts.add(normalizedTerm)
+                    consecutiveDuplicates = 0
+                    val errorMsg = validation.errorMsg
+                    attemptErrors[normalizedTerm] = errorMsg
+                    println("Exception during validation: $errorMsg")
 
-                val progressNote = buildProgressNote(attemptHistory, errorMsg, term)
-                attemptHistory.add(Pair(term, errorMsg))
+                    val progressNote = buildProgressNote(attemptHistory, errorMsg, term)
+                    attemptHistory.add(Pair(term, errorMsg))
 
-                currentPrompt += "\n\n${progressNote}Previous guess: $term\nResulted in error: $errorMsg\n\n" +
-            //            "In 1-2 sentences, explain what caused this error. " +
-            //            "Then, write a corrected plan. Keep parts that worked. " +
-                        "Provide your next attempt."
+                    currentPromptPadding += "\n\n${progressNote}Previous guess: $term\nResulted in error: $errorMsg\n\n" +
+                            "Provide your next attempt."
+                    continue
+                }
             }
         }
 
-        return emptyList()
+        // Memoize the outcome either way: found terms for reuse in other states,
+        // or an empty list recording that the LLM exhausted this goal — avoids
+        // re-burning maxAttempts on the same goal in every new proof state.
+        stepTermCache[goal] = acceptedTermList
+        return candidates
+    }
+
+    /**
+     * Independent-attempts mode ([seekAlternatives] = false): every attempt uses the
+     * SAME fresh prompt — the model never sees error history or previous successes.
+     * Distinct valid candidates are collected; duplicates are filtered mechanically
+     * and diversity comes from the temperature ramp, not from instructions.
+     */
+    private fun generateIndependent(
+        goal: PlainTextGoal,
+        currentProofText: String,
+        basePrompt: String
+    ): List<ProofStep<PlainTextGoal>> {
+        val candidates = mutableListOf<ProofStep<PlainTextGoal>>()
+        val acceptedTerms = mutableSetOf<String>()
+        var temperature = 0.7
+
+        for (attempt in 0 until maxAttempts) {
+            if (candidates.size >= maxCandidates) break
+            println("Attempt ${attempt + 1} (independent, temperature=$temperature)")
+            val response = try {
+                runBlocking { llmClient.generateResponse(systemPrompt, basePrompt, temperature) }
+            } catch (e: Exception) {
+                throw LLMUnavailableException(
+                    "LLM API call failed after client retries — check network/VPN/endpoint " +
+                    "(${e.message})"
+                )
+            }
+            temperature = minOf(temperature + 0.1, 1.0)
+            println("The response:\n${response.chunked(120).joinToString("\n")}")
+
+            val step = parseStepFromResponse(response)
+            if (step == null) {
+                println("Could not extract step from response")
+                continue
+            }
+
+            val term = when (val construction = buildTermFromStep(step, goal, currentProofText)) {
+                is StepConstruction.Fatal -> {
+                    println(construction.message)
+                    return candidates
+                }
+                is StepConstruction.Failure -> {
+                    println(construction.feedback)
+                    continue
+                }
+                is StepConstruction.Term -> construction.value
+            }
+            println("Final term: $term")
+
+            val normalizedTerm = term.replace("\\s+".toRegex(), " ").trim()
+            if (normalizedTerm in acceptedTerms) {
+                println("Already have this candidate, skipping")
+                continue
+            }
+
+            when (val validation = validateTerm(term, goal, currentProofText)) {
+                is Validation.Success -> {
+                    candidates.add(validation.step)
+                    acceptedTerms.add(normalizedTerm)
+                    println("Candidate #${candidates.size} accepted (independent): $term")
+                }
+                is Validation.Error -> println("Errors: ${validation.errorMsg}")
+                is Validation.Crashed -> println("Exception during validation: ${validation.errorMsg}")
+            }
+        }
+        return candidates
+    }
+
+    /** Outcome of turning a parsed step into a candidate term (includes CLI calls for CASE). */
+    private sealed interface StepConstruction {
+        data class Term(val value: String) : StepConstruction
+        /** Recoverable failure; [feedback] is the prompt text the history-based loop feeds back. */
+        data class Failure(val feedback: String) : StepConstruction
+        /** Unrecoverable CLI failure — give up on the goal. */
+        data class Fatal(val message: String) : StepConstruction
+    }
+
+    /** Outcome of validating a candidate term via applyStep. */
+    private sealed interface Validation {
+        data class Success(val step: ProofStep<PlainTextGoal>) : Validation
+        /** Typechecker rejected the term. */
+        data class Error(val errorMsg: String) : Validation
+        /** Validation itself threw (transport/protocol failure). */
+        data class Crashed(val errorMsg: String) : Validation
+    }
+
+    private fun buildTermFromStep(step: ParsedStep, goal: PlainTextGoal, currentProofText: String): StepConstruction {
+        return when (step.type) {
+            "apply" -> {
+                val name = step.name!!
+                val constructed = buildTermFromApply(name, step.args)
+                if (constructed != null) {
+                    println("Constructed from APPLY: $constructed")
+                    StepConstruction.Term(constructed)
+                } else {
+                    val rawArgs = step.args.joinToString(" ") { v ->
+                        if (v.startsWith("{") && v.endsWith("}")) v
+                        else if (v.contains(' ') || v.startsWith("\\")) "($v)" else v
+                    }
+                    val result = "$name $rawArgs".trim()
+                    println("Constructed from APPLY (raw): $result")
+                    StepConstruction.Term(result)
+                }
+            }
+            "rewrite" -> {
+                val eq = step.rawTerm!!
+                val result = if (eq.contains(' ') || eq.startsWith("\\")) "rewrite ($eq) {?}" else "rewrite $eq {?}"
+                println("Constructed from REWRITE: $result")
+                StepConstruction.Term(result)
+            }
+            "case" -> {
+                val splitExpr = step.rawTerm!!
+
+                if (splitExpr.contains("{?}")) {
+                    println("Split expression $splitExpr should not contain goals {?}")
+                    return StepConstruction.Failure(
+                        "\n\nSplit expression $splitExpr should not contain goals {?}\n\n" +
+                                "Provide your next attempt."
+                    )
+                }
+
+                // Nested-duplicate guard: the same expression is already case-split in
+                // the current proof (an ancestor of this goal). The expected type does
+                // not change between a case and its own branches — the context only
+                // gains the pattern variable — so re-splitting nests forever without
+                // progress. String-level comparison for now (whitespace- and
+                // paren-insensitive); TODO: compare split expressions semantically via CLI.
+                fun squash(s: String) = s.replace("(", " ").replace(")", " ").replace("\\s+".toRegex(), " ").trim()
+                val normalizedProof = squash(currentProofText)
+                val normalizedSplit = squash(splitExpr)
+                if (normalizedProof.contains("\\case $normalizedSplit \\with") ||
+                    normalizedProof.contains("\\case \\elim $normalizedSplit \\with") ||
+                    normalizedProof.contains("\\elim $normalizedSplit |")) {
+                    println("Nested duplicate CASE on '$splitExpr' — already split in an ancestor of this goal")
+                    return StepConstruction.Failure(
+                        "\n\n'$splitExpr' is ALREADY case-split in an ancestor of the current goal. " +
+                        "The expected type does not change between a case and its own branches (the context only gains the pattern variable), " +
+                        "so splitting it again only nests forever without progress. " +
+                        "Use the hypotheses bound by the branch pattern instead, or split a DIFFERENT expression.\n\n" +
+                        "Provide your next attempt."
+                    )
+                }
+
+                val binding = goal.contextBindings.find { it.name == splitExpr }
+
+                val cliResponse = cli.typeExpr(moduleDef, goal.id, splitExpr, currentProofText)
+                    ?: return StepConstruction.Fatal("CLI invocation error for '$splitExpr'")
+
+                if (cliResponse.error != null) {
+                    println("Using case with split expression '$splitExpr' resulted in error: ${cliResponse.error}")
+                    return StepConstruction.Failure(
+                        "\n\nTypechecking split expression $splitExpr resulted in error: ${cliResponse.error}\n\n" +
+                                "Provide your next attempt."
+                    )
+                }
+
+                val typeName = cliResponse.data?.datatype?.typename
+                if (typeName == null) {
+                    println("Cannot recognize the type of '$splitExpr' as a datatype")
+                    return StepConstruction.Failure(
+                        "\n\nCannot recognize the type of '$splitExpr' as a datatype\n\n" +
+                                "Provide your next attempt."
+                    )
+                }
+                val dataModule = cliResponse.data.datatype.module
+                val isVariable = binding != null
+                val isTopLevel = currentProofText.trim() == "{?}"
+                val result = buildCaseExpression(splitExpr, typeName, dataModule, topLevel = isTopLevel, isVariable = isVariable)
+                println("Constructed from CASE: $result")
+                if (result == null) {
+                    println("Could not build case expression for '${splitExpr}'")
+                    return StepConstruction.Failure(
+                        "\n\nCould not build case expression for '${splitExpr}'\n\n" +
+                                "Provide your next attempt."
+                    )
+                }
+                StepConstruction.Term(result)
+            }
+            "intro" -> {
+                val result = buildIntroExpression(step.args, goal)
+                println("Constructed from INTRO: $result")
+                StepConstruction.Term(result)
+            }
+            else -> {
+                println("Unknown step type: ${step.type}")
+                StepConstruction.Failure(
+                    "\n\nUnknown step type '${step.type}'. Use [APPLY name]...[/APPLY], [REWRITE]...[/REWRITE], " +
+                            "[CASE]...[/CASE], or [INTRO]...[/INTRO].\n\nProvide your next attempt."
+                )
+            }
+        }
+    }
+
+    private fun validateTerm(term: String, goal: PlainTextGoal, currentProofText: String): Validation {
+        val goalIndex = goal.id.toIntOrNull() ?: 0
+        val wrappedTerm = if (term.contains(' ')) "($term)" else term
+        val fullBody = PlainTextProof.replaceNthGoal(currentProofText, goalIndex, wrappedTerm)
+            ?: return Validation.Error("Could not find goal ${goal.id} in proof text")
+
+        return try {
+            val applyResult = cli.applyStep(moduleDef, fullBody)
+            if (applyResult.success) {
+                println("applyStep succeeded! Proof: $fullBody")
+                val newGoals = applyResult.goals.map { g ->
+                    PlainTextGoal(g.id, g.expectedType, g.context, moduleDef)
+                }
+                // Score = number of new holes: hole pressure steers best-first toward
+                // finishing branches (0 new goals) before growing *>/pmap chains.
+                Validation.Success(ProofStep(PlainTextProof(cli, moduleDef, fullBody, newGoals), newGoals.size.toDouble()))
+            } else {
+                Validation.Error(applyResult.errors.joinToString("\n"))
+            }
+        } catch (e: Exception) {
+            Validation.Crashed(e.message ?: "unknown error")
+        }
     }
 
     private fun errorKey(error: String): String {
         return error.lines()
             .filter { it.trimStart().startsWith("Expected type:") || it.trimStart().startsWith("Actual type:") }
             .joinToString("\n") { it.trim() }
+    }
+
+    /** Compact list of recently rejected terms with their errors, for duplicate feedback. */
+    private fun rejectedSummary(attemptErrors: Map<String, String>): String {
+        if (attemptErrors.isEmpty()) return ""
+        val items = attemptErrors.entries.toList().takeLast(3).joinToString("\n") { (term, error) ->
+            val key = errorKey(error).ifBlank { error.lineSequence().firstOrNull { it.isNotBlank() } ?: "" }
+            "- $term  =>  $key"
+        }
+        return "Rejected approaches so far:\n$items\n"
+    }
+
+    /** Escalating warning once the model keeps repeating rejected approaches. */
+    private fun duplicateEscalation(count: Int): String {
+        if (count < 2) return ""
+        return "WARNING: you have repeated an already-rejected approach $count times. " +
+                "Repeating rejected steps only wastes attempts. STOP — pick a fundamentally different approach " +
+                "(a different lemma, [CASE]-split on an expression, or [REWRITE] first).\n"
     }
 
     private fun buildProgressNote(
@@ -548,6 +866,13 @@ class CliLLMStepGenerator(
                         "Your attempt '${differentAttempt.first}' previously got PAST this error — " +
                         "use that expression as your starting point and fix only the remaining issue.\n\n"
             }
+            val sameCount = history.count { errorKey(it.second) == currentKey }
+            if (sameCount >= 2) {
+                return "STUCK: You have hit the SAME error ${sameCount + 1} times in a row. " +
+                        "Small variations of this step will not fix it — the STEP ITSELF is wrong. " +
+                        "Abandon this approach and try something fundamentally different " +
+                        "(a different lemma, [CASE]-split on an expression, or [REWRITE] first).\n\n"
+            }
             return ""
         }
 
@@ -566,7 +891,18 @@ class CliLLMStepGenerator(
     }
 
     companion object {
-        const val INCLUDE_PLANNING_INSTRUCTIONS = false
+        const val INCLUDE_PLANNING_INSTRUCTIONS = true
+
+        /** Matches Arend's FunctionArgInferenceError in both variants:
+         *  "Cannot infer parameter 'x' of definition 'f'" (named) and
+         *  "Cannot infer the 3rd parameter of definition 'f'" (unnamed). */
+        private val ARG_INFERENCE_ERROR =
+            Regex("""Cannot infer (parameter '|the \d+(?:st|nd|rd|th) parameter)""")
+
+        /** pmap applied to an identity lambda (any variable name, any paren nesting):
+         *  a definitional no-op. */
+        private val IDENTITY_PMAP =
+            Regex("""pmap\s*\(*\s*\\lam\s+(\S+)\s*=>\s*\1\s*\)*""")
         private fun buildSystemPrompt(): String = """
 You are an expert in the Arend proof assistant. Your task is to fill proof holes ({?}) one step at a time.
 You will be given the signature of the lemma being proved, the expected type of the current goal, and its context bindings.
@@ -581,9 +917,10 @@ Use one of the following step types:
 ### 1. [APPLY name] — apply a function, lemma, or constructor
 List the argument VALUES you need to provide, one per line, in the order shown in the "provide:" section.
 Do NOT write "name: value" — just write the value.
-Propositional arguments (equality proofs, proof terms) are ALWAYS automatically filled as {?} subgoals — do NOT provide them.
+Propositional arguments (equality proofs, proof terms) are ALWAYS automatically filled as {?} subgoals — NEVER provide them; a proof you provide for them is IGNORED.
 Only provide non-propositional arguments (data, functions, elements).
-To specify implicit arguments, wrap them in {braces}. They are inserted before the explicit args.
+To specify implicit arguments, wrap them in {braces}, positionally, in the order shown in the "implicits:" section.
+They are inserted before the explicit args. You cannot skip earlier implicits — include ALL of them up to the last one you need to pin.
 
 Example — applying pmap (provide: f):
 [APPLY pmap]
@@ -639,6 +976,7 @@ If goal is A -> B, this constructs: \lam _ => {?}
 ### 4. [CASE] — case split on a variable or expression
 Provide the variable name or expression to case-split on. The system determines the constructors and generates the full \case expression with {?} holes for each branch.
 Do NOT write \case yourself — the system constructs it. Do NOT use [APPLY \case] — always use [CASE].
+Do NOT use goals {?} in split expression.
 For variables, \case \elim is used (substitutes in the return type). For expressions, \case without \elim.
 
 Example — case split on a variable:
@@ -696,6 +1034,18 @@ pmap f p : f a = f b when p : a = b (congruence).
 transport B p b : B a' when p : a = a' and b : B a.
 
 ## Building Equality Chains
+
+Both proofs of *> are propositional, so [APPLY *>] with no args leaves the chain midpoint
+uninferrable and FAILS with "Cannot infer parameter 'a''". NEVER give the proofs — instead,
+pin the path ENDPOINTS as implicit args (in "implicits:" order, starting from the first):
+[APPLY *>]
+{Nat}
+{n}
+{k * k|n.inv}
+{k}
+[/APPLY]
+This constructs: *> {Nat} {n} {k * k|n.inv} {k} {?} {?}  — with determined subgoals
+n = k * k|n.inv and k * k|n.inv = k, each fillable in the next steps.
 
 Direction matters! In p *> q, the RIGHT side of p must equal the LEFT side of q.
   If p : a = b and q : c = b, you CANNOT compose p *> q. Use p *> inv q instead.
@@ -792,7 +1142,7 @@ Congruence: pmap f proof, pmap (\lam x => expr) proof
 2. All keywords start with \. There are no keywords without \.
 3. Pattern matching on a variable ALWAYS needs \elim: \case \elim x \with { | 0 => ... | suc n => ... }. Without \elim, idp WILL FAIL.
 4. Constructors are matched by name: | 0 => ..., | suc n => ..., | nil => ..., | :: a t => ...
-5. Do NOT nest \case on the same variable.
+5. NEVER case-split the same expression twice: a [CASE] on an expression already split in an ancestor branch is REJECTED. The expected type does not change between a case and its own branches — the context only gains the pattern variable — so the repeated split nests forever without progress. Use the hypotheses bound by the branch pattern instead, or split a DIFFERENT expression.
 6. Do NOT wrap output in ```arend or any markdown.
 7. Do NOT invent keywords. Only use syntax listed above.
 8. For induction (recursive calls to the lemma being proved), ALWAYS use top-level \elim, NOT \case \elim.
@@ -801,16 +1151,17 @@ Congruence: pmap f proof, pmap (\lam x => expr) proof
 11. When a previous attempt fails, fix ONLY the error. Use {?} for subparts you haven't verified. Do NOT try to fill all holes AND fix errors at the same time.
 12. When a previous attempt made progress (got a different error), KEEP the parts that worked. Change ONLY the part that caused the new error.
 13. NEVER use [APPLY \case] or [APPLY \lam] or [APPLY \let]. For case splitting use [CASE], for lambda introduction use [INTRO]. [APPLY] is ONLY for named functions, lemmas, and constructors.
+14. NEVER use pmap with an identity function (pmap (\lam x => x) ...) — it is a definitional no-op that re-creates the same goal. Such steps are REJECTED.
 """.trimIndent()
 
         private fun planningInstructions(): String = """
- First, output a short plan explaining your strategy. Then provide the step.
+ Before the step tag, output a SHORT plan: 1-2 sentences MAX, naming only the tactic you will use and why. Do NOT restate the goal, context, or background. Keep the total response under 60 words. Then immediately provide the step tag.
 
 Use {?} for subexpressions where a nontrivial proof is expected (but NEVER for the whole expression).
 
 # Error Recovery
 
-When your attempt fails, you MUST: (1) explain the error in 1-2 sentences, (2) write a corrected plan, (3) give the corrected step.
+When your attempt fails, you MUST: (1) explain the error in ONE sentence, (2) give a ONE-sentence corrected plan, (3) give the corrected step tag. No other text.
 
 ## Example: Type mismatch — wrong constructor argument
 

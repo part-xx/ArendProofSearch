@@ -42,10 +42,24 @@ class FakeCli : CliApi {
         return signatureInfoResults[name]
     }
 
-    var typeExprResults = mutableMapOf<String, String>()
+    /** Per-expression scripted typeExpr responses; expressions not present return null. */
+    val typeExprResponses = mutableMapOf<String, TypeExprResponse>()
+    val typeExprCalls = mutableListOf<String>()
 
-    override fun typeExpr(moduleDef: String, goalId: String, expression: String): TypeExprResponse? {
-        return null
+    override fun typeExpr(moduleDef: String, goalId: String, expression: String, proofBody: String?): TypeExprResponse? {
+        typeExprCalls.add(expression)
+        return typeExprResponses[expression]
+    }
+}
+
+/** LLM client that returns a fixed sequence of responses, for testing generate(). */
+class ScriptedLLMClient(responses: List<String>) : typechecker.LLMClient {
+    private val queue = ArrayDeque(responses)
+    val prompts = mutableListOf<String>()
+
+    override suspend fun generateResponse(systemPrompt: String, userPrompt: String, temperature: Double?): String {
+        prompts.add(userPrompt)
+        return queue.removeFirst()
     }
 }
 
@@ -527,7 +541,6 @@ class StepParsingTest {
     @Test
     fun `buildCaseExpression uses case elim for expression even at top level`() {
         val cli = FakeCli()
-        cli.typeExprResults["decideEq x y"] = "Dec (x = y)"
         cli.signatureInfoResults["Dec"] = SignatureInfoResponse(
             name = "Dec",
             params = listOf(ParamInfo("P", "\\Prop", true, false)),
@@ -557,7 +570,6 @@ class StepParsingTest {
     @Test
     fun `buildCaseExpression handles expression without elim`() {
         val cli = FakeCli()
-        cli.typeExprResults["decideEq x y"] = "Dec (x = y)"
         cli.signatureInfoResults["Dec"] = SignatureInfoResponse(
             name = "Dec",
             params = listOf(ParamInfo("P", "\\Prop", true, false)),
@@ -668,6 +680,180 @@ class StepParsingTest {
         val goal = PlainTextGoal("0", "\\Pi (n : Nat) -> Nat -> n = n", emptyList(), "M:D")
         val result = gen.buildIntroExpression(emptyList(), goal)
         assertEquals("\\lam n _ => {?}", result)
+    }
+}
+
+class CaseRecoveryTest {
+    @Test
+    fun `generate recovers from failed case attempts and succeeds on valid case`() {
+        val cli = FakeCli()
+        cli.signatureInfoResults["Nat"] = SignatureInfoResponse(
+            name = "Nat",
+            constructors = listOf(
+                ConstructorInfo("0"),
+                ConstructorInfo("suc", listOf(ConstructorParam("n", "Nat", true)))
+            )
+        )
+        // Recovery path 1: typeExpr fails on the first split expression.
+        // Recovery path 2: the second expression's type is not a datatype.
+        // The third attempt is a proper datatype variable.
+        cli.typeExprResponses["decideEq x y"] =
+            TypeExprResponse(null, "[ERROR] Cannot resolve reference 'decideEq'")
+        cli.typeExprResponses["\\lam x => x"] =
+            TypeExprResponse(TypeExprData(type = "Nat -> Nat", datatype = null))
+        cli.typeExprResponses["n"] =
+            TypeExprResponse(TypeExprData(type = "Nat", datatype = Datatype("Nat", "Prelude")))
+
+        cli.applyStepResult = ApplyStepResponse(
+            success = true,
+            goals = listOf(
+                GoalInfo("0", expectedType = "Nat"),
+                GoalInfo("1", expectedType = "Nat")
+            )
+        )
+
+        val llm = ScriptedLLMClient(listOf(
+            "[CASE]decideEq x y[/CASE]",   // typeExpr error -> retried
+            "[CASE]\\lam x => x[/CASE]",   // not a datatype -> retried
+            "[CASE]n[/CASE]",              // valid -> accepted as candidate #1
+            "[CASE]n[/CASE]",              // same as accepted -> duplicate-of-accepted
+            "[CASE]n[/CASE]"               // same again -> attempts exhausted
+        ))
+
+        val gen = typechecker.cli.proofstep.CliLLMStepGenerator(cli, "M:D", maxAttempts = 5, llmClient = llm)
+        val goal = PlainTextGoal("0", "Nat", listOf(ContextBinding("n", "Nat")), "M:D")
+        val proof = PlainTextProof(cli, "M:D", "{?}", listOf(goal))
+
+        val steps = gen.generate(goal, proof)
+
+        // Both failed CASE attempts were retried, then the valid one went through
+        assertEquals(listOf("decideEq x y", "\\lam x => x", "n"), cli.typeExprCalls)
+        assertEquals(1, steps.size)
+        assertEquals("(\\elim n | 0 => {?} | suc n => {?})", steps[0].proof.toString())
+
+        // The retry feedback carried the actual failure reasons back to the model
+        assertTrue(
+            llm.prompts[1].contains("Typechecking split expression decideEq x y resulted in error: [ERROR] Cannot resolve reference 'decideEq'"),
+            "second prompt should contain the typeExpr error, got:\n${llm.prompts[1]}"
+        )
+        assertTrue(
+            llm.prompts[2].contains("Cannot recognize the type of '\\lam x => x' as a datatype"),
+            "third prompt should contain the not-a-datatype feedback, got:\n${llm.prompts[2]}"
+        )
+        // After a success, the generator asks for a DIFFERENT step and rejects repeats of accepted ones
+        assertTrue(
+            llm.prompts[3].contains("ACCEPTED as candidate #1"),
+            "fourth prompt should announce the accepted candidate, got:\n${llm.prompts[3]}"
+        )
+        assertTrue(
+            llm.prompts[4].contains("it was ACCEPTED as a candidate"),
+            "fifth prompt should reject the repeat of an accepted step, got:\n${llm.prompts[4]}"
+        )
+    }
+
+    @Test
+    fun `generate collects multiple distinct candidates`() {
+        val cli = FakeCli()
+        cli.signatureInfoResults["Nat"] = SignatureInfoResponse(
+            name = "Nat",
+            constructors = listOf(
+                ConstructorInfo("0"),
+                ConstructorInfo("suc", listOf(ConstructorParam("n", "Nat", true)))
+            )
+        )
+        cli.typeExprResponses["n"] =
+            TypeExprResponse(TypeExprData(type = "Nat", datatype = Datatype("Nat", "Prelude")))
+        cli.typeExprResponses["m"] =
+            TypeExprResponse(TypeExprData(type = "Nat", datatype = Datatype("Nat", "Prelude")))
+        cli.applyStepResult = ApplyStepResponse(
+            success = true,
+            goals = listOf(GoalInfo("0", expectedType = "Nat"), GoalInfo("1", expectedType = "Nat"))
+        )
+
+        val llm = ScriptedLLMClient(listOf(
+            "[CASE]n[/CASE]",
+            "[CASE]m[/CASE]"
+        ))
+
+        val gen = typechecker.cli.proofstep.CliLLMStepGenerator(
+            cli, "M:D", maxAttempts = 5, maxCandidates = 2, llmClient = llm
+        )
+        val goal = PlainTextGoal("0", "Nat", listOf(
+            ContextBinding("n", "Nat"), ContextBinding("m", "Nat")
+        ), "M:D")
+        val proof = PlainTextProof(cli, "M:D", "{?}", listOf(goal))
+
+        val steps = gen.generate(goal, proof)
+
+        assertEquals(2, steps.size)
+        assertEquals("(\\elim n | 0 => {?} | suc n => {?})", steps[0].proof.toString())
+        assertEquals("(\\elim m | 0 => {?} | suc m => {?})", steps[1].proof.toString())
+        assertEquals(2, llm.prompts.size, "stops asking once maxCandidates is reached")
+        assertTrue(llm.prompts[1].contains("ACCEPTED as candidate #1"))
+        assertTrue(llm.prompts[1].contains("DIFFERENT"))
+    }
+
+    @Test
+    fun `independent mode runs attempts with fresh prompt and filters duplicates`() {
+        val cli = FakeCli()
+        cli.signatureInfoResults["Nat"] = SignatureInfoResponse(
+            name = "Nat",
+            constructors = listOf(
+                ConstructorInfo("0"),
+                ConstructorInfo("suc", listOf(ConstructorParam("n", "Nat", true)))
+            )
+        )
+        cli.typeExprResponses["n"] =
+            TypeExprResponse(TypeExprData(type = "Nat", datatype = Datatype("Nat", "Prelude")))
+        cli.typeExprResponses["m"] =
+            TypeExprResponse(TypeExprData(type = "Nat", datatype = Datatype("Nat", "Prelude")))
+        cli.applyStepResult = ApplyStepResponse(
+            success = true,
+            goals = listOf(GoalInfo("0", expectedType = "Nat"), GoalInfo("1", expectedType = "Nat"))
+        )
+
+        val llm = ScriptedLLMClient(listOf(
+            "[CASE]n[/CASE]",   // accepted -> candidate #1
+            "[CASE]n[/CASE]",   // same term -> filtered mechanically (no feedback to model)
+            "[CASE]m[/CASE]"    // accepted -> candidate #2
+        ))
+
+        val gen = typechecker.cli.proofstep.CliLLMStepGenerator(
+            cli, "M:D", maxAttempts = 5, maxCandidates = 2, seekAlternatives = false, llmClient = llm
+        )
+        val goal = PlainTextGoal("0", "Nat", listOf(
+            ContextBinding("n", "Nat"), ContextBinding("m", "Nat")
+        ), "M:D")
+        val proof = PlainTextProof(cli, "M:D", "{?}", listOf(goal))
+
+        val steps = gen.generate(goal, proof)
+
+        assertEquals(2, steps.size)
+        assertEquals("(\\elim n | 0 => {?} | suc n => {?})", steps[0].proof.toString())
+        assertEquals("(\\elim m | 0 => {?} | suc m => {?})", steps[1].proof.toString())
+
+        // History erasure: every attempt sees the exact same prompt — the model is
+        // NOT told about previous successes and NOT asked for a different attempt.
+        assertEquals(3, llm.prompts.size)
+        assertTrue(llm.prompts.all { it == llm.prompts[0] }, "independent attempts must share one fresh prompt")
+        assertTrue(!llm.prompts[0].contains("ACCEPTED"))
+        assertTrue(!llm.prompts[0].contains("DIFFERENT"))
+    }
+
+    @Test
+    fun `generate does not retry a case step when typeExpr returns null`() {
+        // Null means the CLI layer itself is broken (transport failure) — the
+        // generator gives up on the goal rather than burning LLM attempts.
+        val cli = FakeCli() // typeExprResponses empty -> typeExpr returns null
+        val llm = ScriptedLLMClient(listOf("[CASE]n[/CASE]"))
+        val gen = typechecker.cli.proofstep.CliLLMStepGenerator(cli, "M:D", maxAttempts = 5, llmClient = llm)
+        val goal = PlainTextGoal("0", "Nat", listOf(ContextBinding("n", "Nat")), "M:D")
+        val proof = PlainTextProof(cli, "M:D", "{?}", listOf(goal))
+
+        val steps = gen.generate(goal, proof)
+
+        assertTrue(steps.isEmpty())
+        assertEquals(1, llm.prompts.size, "should not retry after a null typeExpr response")
     }
 }
 

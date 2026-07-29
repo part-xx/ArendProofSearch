@@ -63,7 +63,12 @@ fun runCliSearch(args: Array<String>) {
         val search = BestFirstSearch<PlainTextGoal>(generator)
 
         println("Starting proof search...")
-        val result = search.search(initialProof)
+        val result = try {
+            search.search(initialProof)
+        } catch (e: typechecker.LLMUnavailableException) {
+            println("\nProof search aborted: ${e.message}")
+            return
+        }
 
         if (result != null) {
             println("\nFound proof!")
