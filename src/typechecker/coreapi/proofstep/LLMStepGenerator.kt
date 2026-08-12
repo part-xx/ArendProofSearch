@@ -387,7 +387,7 @@ class LLMStepGenerator(
             val moduleRef = FullModuleReferable(moduleLocation)
             val functionRef = factory.global(moduleRef, "llm_goal_" + term.hashCode().xor(goal.expectedType.toString().hashCode()), Precedence.DEFAULT, null, null)
             val concreteParameters = branchTC.context.map {
-              val typeExpr = ToAbstractVisitor.convert(it.value.typeExpr, PrettyPrinterConfig.DEFAULT)
+              val typeExpr = ToAbstractVisitor.convert(it.value.type, PrettyPrinterConfig.DEFAULT)
               Concrete.TelescopeParameter(it.value, true, listOf(it.key), typeExpr, false)
             }
 

@@ -11,7 +11,6 @@ import org.arend.core.definition.FunctionDefinition
 import org.arend.typechecking.visitor.CheckTypeVisitor
 import org.arend.core.expr.*
 import org.arend.core.subst.ExprSubstitution
-import org.arend.core.subst.SubstVisitor
 import org.arend.ext.core.level.LevelSubstitution
 import org.arend.ext.concrete.definition.FunctionKind
 import org.arend.ext.concrete.expr.ConcreteArgument
@@ -46,7 +45,7 @@ class AppGenerator(private val server: ArendServer, private val premises: List<C
         is Constructor -> {
           val dataParams = mutableListOf<DependentLink>()
           def.dataType.getTypeWithParams(dataParams, def.dataType.makeIdLevels())
-          val dataArgs = dataParams.map { typechecker.generateNewInferenceVariable(it.name, it.typeExpr, goal.sourceNode, true) as Expression }
+          val dataArgs = dataParams.map { typechecker.generateNewInferenceVariable(it.name, it.type, goal.sourceNode, true) as Expression }
           ConCallExpression.make(def, levels, dataArgs, emptyList<Expression>())
         }
         else -> def.getDefCall(levels, emptyList<Expression>())
@@ -69,7 +68,7 @@ class AppGenerator(private val server: ArendServer, private val premises: List<C
         result = TypedSingleDependentLink(
           link.isExplicit,
           link.name,
-          link.type.subst(SubstVisitor(substitution, LevelSubstitution.EMPTY)),
+          link.type.subst(substitution, LevelSubstitution.EMPTY),
           false
         )
         singleParameters.add(result)
@@ -83,7 +82,7 @@ class AppGenerator(private val server: ArendServer, private val premises: List<C
 
       singleParameters.reverse()
       for (param in singleParameters) {
-        body = LamExpression(param.type.getSortOfType(), param, body)
+        body = LamExpression(param, body)
       }
 
       return body
@@ -103,8 +102,8 @@ class AppGenerator(private val server: ArendServer, private val premises: List<C
         break
       }
       if (param.isExplicit) {
-        val paramType = coreParam.type.getExpr().normalize(NormalizationMode.WHNF) as? UniverseExpression
-        if (paramType != null && paramType.sort == org.arend.core.sort.Sort.PROP) {
+        val paramType = coreParam.type.normalize(NormalizationMode.WHNF) as? UniverseExpression
+        if (paramType != null && paramType.sortExpression.isProp) {
           for (i in 0..<param.refList.size) {
             args.add(factory.arg(factory.goal(), true))
           }

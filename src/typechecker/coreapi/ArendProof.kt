@@ -50,7 +50,7 @@ open class ArendProof(private val theorem: Concrete.FunctionDefinition, private 
         for (binding in exprContext) {
           if (context.contains(binding)) { continue }
           context.add(binding)
-          exprQueue.addLast(binding.typeExpr)
+          exprQueue.addLast(binding.type)
         }
       }
     }
