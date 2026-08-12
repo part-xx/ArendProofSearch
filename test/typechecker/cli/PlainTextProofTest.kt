@@ -306,6 +306,34 @@ class StepParsingTest {
     }
 
     @Test
+    fun `parseStepFromResponse extracts REFINE step`() {
+        val gen = makeGenerator()
+        val response = """
+            Plan: The goal is a pair, give it as a term with holes.
+            [REFINE](mod-lem p {?}, rec-lem p {?})[/REFINE]
+        """.trimIndent()
+        val step = gen.parseStepFromResponse(response)
+        assertNotNull(step)
+        assertEquals("refine", step.type)
+        assertEquals("(mod-lem p {?}, rec-lem p {?})", step.rawTerm)
+    }
+
+    @Test
+    fun `parseStepFromResponse extracts multi-line REFINE step`() {
+        val gen = makeGenerator()
+        val response = """
+            [REFINE]\case \elim n, p \with {
+              | 0, p => {?}
+              | suc n, p => {?}
+            }[/REFINE]
+        """.trimIndent()
+        val step = gen.parseStepFromResponse(response)
+        assertNotNull(step)
+        assertEquals("refine", step.type)
+        assertTrue(step.rawTerm!!.startsWith("\\case \\elim n, p \\with {"))
+    }
+
+    @Test
     fun `parseStepFromResponse extracts CASE step`() {
         val gen = makeGenerator()
         val response = """
@@ -684,6 +712,33 @@ class StepParsingTest {
 }
 
 class CaseRecoveryTest {
+    @Test
+    fun `generate uses a REFINE term verbatim and rejects a bare hole`() {
+        val cli = FakeCli()
+        cli.applyStepResult = ApplyStepResponse(
+            success = true,
+            goals = listOf(GoalInfo("0", expectedType = "Nat"), GoalInfo("1", expectedType = "Nat"))
+        )
+
+        val llm = ScriptedLLMClient(listOf(
+            "[REFINE]{?}[/REFINE]",                          // a lone hole is not a step -> retried
+            "[REFINE](mod-lem p {?}, rec-lem p {?})[/REFINE]" // term with holes -> used as-is
+        ))
+
+        val gen = typechecker.cli.proofstep.CliLLMStepGenerator(cli, "M:D", maxAttempts = 2, maxCandidates = 1, llmClient = llm)
+        val goal = PlainTextGoal("0", "\\Sigma Nat Nat", emptyList(), "M:D")
+        val proof = PlainTextProof(cli, "M:D", "{?}", listOf(goal))
+
+        val steps = gen.generate(goal, proof)
+
+        assertEquals(1, steps.size)
+        assertEquals("((mod-lem p {?}, rec-lem p {?}))", steps[0].proof.toString())
+        assertTrue(
+            llm.prompts[1].contains("was just {?}"),
+            "the retry prompt should explain why a bare hole was rejected, got:\n${llm.prompts[1]}"
+        )
+    }
+
     @Test
     fun `generate recovers from failed case attempts and succeeds on valid case`() {
         val cli = FakeCli()

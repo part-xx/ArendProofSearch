@@ -68,6 +68,20 @@ class CliLLMStepGenerator(
     //private val llmModel: LLModel = createLiteLLMModel(liteLLMModelId)
 
     private val sigInfoCache = mutableMapOf<String, SignatureInfoResponse>()
+
+    /** A \class / \record premise: the fields it declares and the classes it extends. */
+    private data class ClassPremise(val name: String, val parents: List<String>, val fields: List<String>)
+
+    /** field name -> its declared text, used when the CLI has no signature for it. */
+    private val fieldDeclarations = mutableMapOf<String, String>()
+    private val classPremises: List<ClassPremise> =
+        premises.filter { isClassOrRecord(it) }.map { parseClassPremise(it) }
+    /**
+     * Classes themselves are never shown to the model — only their fields are, each
+     * annotated with the classes it can be accessed on (the declaring one plus every
+     * premise class transitively extending it).
+     */
+    private val fieldOwners: Map<String, List<String>> = computeFieldOwners()
     /**
      * Validated step terms per semantic goal ([PlainTextGoal] equality ignores the
      * positional id). Unlike ProofSteps, terms are goal-relative, so they can be
@@ -86,7 +100,9 @@ class CliLLMStepGenerator(
         fetchPremiseSignatures()
 
         val premisesBlock = if (premises.isNotEmpty())
-            "Available functions (use [APPLY name] to apply):\n${formatPremises()}\n"
+            "Available functions (use [APPLY name] to apply):\n${formatPremises()}\n" +
+                    "Entries marked [field of A, B] are record/class fields: apply them on an instance " +
+                    "of one of those classes with dot notation, e.g. [APPLY inst.field].\n"
         else ""
 
         println("Premises: ")
@@ -100,18 +116,19 @@ class CliLLMStepGenerator(
     private fun fetchPremiseSignatures() {
         for (premise in premises) {
             val name = extractPremiseName(premise) ?: continue
-            val info = cli.signatureInfo(moduleDef, name)
-            if (info != null) sigInfoCache[name] = info
+            cacheSignature(name)
 
-            if (isRecordClassOrData(premise)) {
-                for (fieldName in extractFieldNames(premise)) {
-                    if (fieldName !in sigInfoCache) {
-                        val fieldInfo = cli.signatureInfo(moduleDef, fieldName)
-                        if (fieldInfo != null) sigInfoCache[fieldName] = fieldInfo
-                    }
-                }
+            if (isDataPremise(premise)) {
+                for (constructor in extractBarNames(premise)) cacheSignature(constructor)
             }
         }
+        for (field in fieldOwners.keys) cacheSignature(field)
+    }
+
+    private fun cacheSignature(name: String) {
+        if (name in sigInfoCache) return
+        val info = cli.signatureInfo(moduleDef, name)
+        if (info != null) sigInfoCache[name] = info
     }
 
     private fun extractPremiseName(premise: String): String? {
@@ -119,29 +136,136 @@ class CliLLMStepGenerator(
         return match?.groupValues?.get(1)
     }
 
-    private fun isRecordClassOrData(premise: String): Boolean {
+    private fun isClassOrRecord(premise: String): Boolean {
         val trimmed = premise.trimStart()
-        return trimmed.startsWith("\\class") || trimmed.startsWith("\\record") ||
-                trimmed.startsWith("\\data") || trimmed.startsWith("\\truncated")
+        return trimmed.startsWith("\\class") || trimmed.startsWith("\\record")
     }
 
-    private fun extractFieldNames(premise: String): List<String> {
+    private fun isDataPremise(premise: String): Boolean {
+        val trimmed = premise.trimStart()
+        return trimmed.startsWith("\\data") || trimmed.startsWith("\\truncated")
+    }
+
+    /** Names introduced by `| name ...` clauses (data constructors, class fields). */
+    private fun extractBarNames(premise: String): List<String> {
         return Regex("""^\s*\|\s+(\S+)""", RegexOption.MULTILINE)
             .findAll(premise)
             .map { it.groupValues[1] }
             .toList()
     }
 
-    private fun formatPremises(): String {
-        return premises.map { premise ->
-            val name = extractPremiseName(premise)
-            val info = name?.let { sigInfoCache[it] }
-            if (info != null && info.resultType != null) {
-                formatPremiseWithInfo(name, info)
-            } else {
-                "  $premise"
+    /**
+     * Splits a class/record premise into its name, its `\extends` parents and the
+     * fields it declares itself — both the parenthesized header parameters
+     * (`(\coerce val : M) (elem inv : M)`) and the `| field : type` clauses.
+     * Field IMPLEMENTATIONS (`| elem => ide`) declare nothing new and are skipped.
+     */
+    private fun parseClassPremise(premise: String): ClassPremise {
+        val name = extractPremiseName(premise) ?: ""
+        val header = premise.substringBefore("|")
+
+        val parents = Regex("""\\extends\s+([^|\n]+)""").find(header)
+            ?.groupValues?.get(1)
+            ?.split(",")
+            ?.map { it.trim() }
+            ?.filter { it.isNotEmpty() }
+            ?: emptyList()
+
+        val fields = mutableListOf<String>()
+        for (group in topLevelParenGroups(header.substringBefore("\\extends"))) {
+            val colonIdx = group.indexOf(':')
+            if (colonIdx < 0) continue
+            val declared = group.substring(0, colonIdx).trim().split("\\s+".toRegex())
+                .filter { it.isNotEmpty() && !it.startsWith("\\") }
+            for (field in declared) {
+                fields.add(field)
+                fieldDeclarations.putIfAbsent(field, "$field : ${group.substring(colonIdx + 1).trim()}")
             }
-        }.joinToString("\n")
+        }
+        for (line in premise.lines()) {
+            val match = Regex("""^\s*\|\s+(\S+)\s*(.*)$""").find(line) ?: continue
+            val body = match.groupValues[2]
+            if (body.contains("=>")) continue
+            val field = match.groupValues[1]
+            fields.add(field)
+            fieldDeclarations.putIfAbsent(field, "$field $body".trim())
+        }
+        return ClassPremise(name, parents, fields.distinct())
+    }
+
+    /** Contents of the top-level `(...)` groups of [s], in order (implicit `{...}` ones are not fields to apply). */
+    private fun topLevelParenGroups(s: String): List<String> {
+        val groups = mutableListOf<String>()
+        var i = 0
+        while (i < s.length) {
+            if (s[i] == '(') {
+                val close = findMatchingParen(s, i)
+                if (close < 0) break
+                groups.add(s.substring(i + 1, close))
+                i = close + 1
+            } else i++
+        }
+        return groups
+    }
+
+    /**
+     * Maps every field declared by a class/record premise to the classes it is
+     * available on: the declaring class first, then each premise class that extends
+     * it (transitively), in premise order.
+     */
+    private fun computeFieldOwners(): Map<String, List<String>> {
+        val byName = classPremises.associateBy { it.name }
+
+        fun ancestorsOf(cls: ClassPremise): List<String> {
+            val seen = linkedSetOf<String>()
+            fun visit(cur: ClassPremise) {
+                for (parent in cur.parents) {
+                    if (seen.add(parent)) byName[parent]?.let { visit(it) }
+                }
+            }
+            visit(cls)
+            return seen.toList()
+        }
+
+        val owners = linkedMapOf<String, MutableList<String>>()
+        for (cls in classPremises) {
+            for (field in cls.fields) owners.getOrPut(field) { mutableListOf() }.add(cls.name)
+            for (ancestor in ancestorsOf(cls)) {
+                val inherited = byName[ancestor]?.fields ?: continue
+                for (field in inherited) owners.getOrPut(field) { mutableListOf() }.add(cls.name)
+            }
+        }
+        return owners.mapValues { (_, names) -> names.distinct() }
+    }
+
+    private fun formatPremises(): String {
+        val lines = premises
+            .filter { !isClassOrRecord(it) }
+            .map { premise ->
+                val name = extractPremiseName(premise)
+                val info = name?.let { sigInfoCache[it] }
+                if (info != null && info.resultType != null) {
+                    formatPremiseWithInfo(name, info)
+                } else {
+                    "  $premise"
+                }
+            }
+            .toMutableList()
+        lines.addAll(formatClassFields())
+        return lines.joinToString("\n")
+    }
+
+    /** Class/record premises are shown as their fields only, each tagged with its owning classes. */
+    private fun formatClassFields(): List<String> {
+        return fieldOwners.map { (field, owners) ->
+            val info = sigInfoCache[field]
+            val body = if (info != null && info.resultType != null) {
+                formatPremiseWithInfo(field, info)
+            } else {
+                "  ${fieldDeclarations[field] ?: field}"
+            }
+            "$body  [field of ${owners.joinToString(", ")}]"
+        }
     }
 
     private fun formatPremiseWithInfo(name: String, info: SignatureInfoResponse): String {
@@ -347,6 +471,14 @@ class CliLLMStepGenerator(
             }
         }
 
+        val refinePattern = Regex("""\[REFINE\](.*?)\[/REFINE\]""", RegexOption.DOT_MATCHES_ALL)
+        for (m in refinePattern.findAll(response)) {
+            val term = m.groupValues[1].trim()
+            if (term.isNotEmpty()) {
+                candidates.add(Candidate(m.range.first, ParsedStep("refine", null, emptyList(), term)))
+            }
+        }
+
         val casePattern = Regex("""\[CASE\](.*?)\[/CASE\]""", RegexOption.DOT_MATCHES_ALL)
         for (m in casePattern.findAll(response)) {
             val caseExpr = m.groupValues[1].trim()
@@ -462,7 +594,8 @@ class CliLLMStepGenerator(
             if (step == null) {
                 println("Could not extract step from response")
                 currentPromptPadding += "\n\nYour previous response did not contain a valid step. " +
-                        "Use [APPLY name]...[/APPLY], [REWRITE]...[/REWRITE], [CASE]...[/CASE], or [INTRO]...[/INTRO]. " +
+                        "Use [APPLY name]...[/APPLY], [REWRITE]...[/REWRITE], [CASE]...[/CASE], [INTRO]...[/INTRO], " +
+                        "or [REFINE]...[/REFINE]. " +
                         "Do NOT use ```arend code blocks."
                 continue
             }
@@ -712,6 +845,20 @@ class CliLLMStepGenerator(
                     StepConstruction.Term(result)
                 }
             }
+            "refine" -> {
+                val term = step.rawTerm!!
+                // A lone hole is not a step: it re-creates the goal unchanged.
+                if (term == "{?}") {
+                    println("REFINE term is a bare goal — not a step")
+                    return StepConstruction.Failure(
+                        "\n\nYour [REFINE] term was just {?}, which is not a step — it leaves the goal unchanged. " +
+                                "Give the expression that fills the goal, with {?} only for the subproofs it leaves open.\n\n" +
+                                "Provide your next attempt."
+                    )
+                }
+                println("Constructed from REFINE: $term")
+                StepConstruction.Term(term)
+            }
             "rewrite" -> {
                 val eq = step.rawTerm!!
                 val result = if (eq.contains(' ') || eq.startsWith("\\")) "rewrite ($eq) {?}" else "rewrite $eq {?}"
@@ -795,7 +942,7 @@ class CliLLMStepGenerator(
                 println("Unknown step type: ${step.type}")
                 StepConstruction.Failure(
                     "\n\nUnknown step type '${step.type}'. Use [APPLY name]...[/APPLY], [REWRITE]...[/REWRITE], " +
-                            "[CASE]...[/CASE], or [INTRO]...[/INTRO].\n\nProvide your next attempt."
+                            "[CASE]...[/CASE], [INTRO]...[/INTRO], or [REFINE]...[/REFINE].\n\nProvide your next attempt."
                 )
             }
         }
@@ -991,6 +1138,22 @@ Example — case split on a function result:
 [CASE]p.isIrr (inv k|n.inv-right)[/CASE]
 The system generates: \case p.isIrr (inv k|n.inv-right) \with { | byLeft a => {?} | byRight b => {?} }
 
+### 5. [REFINE] — give the step as a term with holes
+For steps the tags above cannot express. Write the expression that fills the current {?},
+putting {?} everywhere a subproof is left open; each hole becomes one of the next goals.
+NEVER write [REFINE]{?}[/REFINE] — a lone hole leaves the goal unchanged and is rejected.
+
+Use it for:
+  - a tuple for a \Sigma goal:            [REFINE](mod-lem p {?}, rec-lem p {?})[/REFINE]
+  - a projection:                         [REFINE](toSigma t).1[/REFINE]
+  - a hole in a NON-FINAL argument:       [REFINE]f {?} k|n[/REFINE]
+  - applying the RESULT of a hypothesis:  [REFINE]p.notInv ide-isInv[/REFINE]
+  - \let / \have:                         [REFINE]\let d => k|n.inv \in {?}[/REFINE]
+  - one \case on SEVERAL expressions:     [REFINE]\case \elim n, p \with { | 0, p => {?} | suc n, p => {?} }[/REFINE]
+
+Prefer [APPLY], [CASE], [INTRO] and [REWRITE] whenever they fit: they fill propositional
+arguments and write the case clauses for you. Reach for [REFINE] only when they cannot.
+
 """ + if (INCLUDE_PLANNING_INSTRUCTIONS) planningInstructions() else """""" + """
 # Arend Syntax Reference
 
@@ -1150,7 +1313,7 @@ Congruence: pmap f proof, pmap (\lam x => expr) proof
 10. \let uses => (fat arrow), NEVER = (equals sign). Write \let x => e \in body, NOT \let x = e.
 11. When a previous attempt fails, fix ONLY the error. Use {?} for subparts you haven't verified. Do NOT try to fill all holes AND fix errors at the same time.
 12. When a previous attempt made progress (got a different error), KEEP the parts that worked. Change ONLY the part that caused the new error.
-13. NEVER use [APPLY \case] or [APPLY \lam] or [APPLY \let]. For case splitting use [CASE], for lambda introduction use [INTRO]. [APPLY] is ONLY for named functions, lemmas, and constructors.
+13. NEVER use [APPLY \case] or [APPLY \lam] or [APPLY \let]. For case splitting use [CASE], for lambda introduction use [INTRO], for \let/\have and other terms use [REFINE]. [APPLY] is ONLY for named functions, lemmas, and constructors.
 14. NEVER use pmap with an identity function (pmap (\lam x => x) ...) — it is a definitional no-op that re-creates the same goal. Such steps are REJECTED.
 """.trimIndent()
 
