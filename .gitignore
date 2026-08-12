@@ -34,3 +34,6 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### Local config with API keys — copy from gradle.properties.template ###
+gradle.properties

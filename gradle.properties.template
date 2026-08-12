@@ -1,0 +1,30 @@
+# Copy to gradle.properties before building — the build reads the *Version properties
+# below through `by project`, so configuration fails without it.
+#
+# The API keys are read at runtime by loadProperty() in CliLLMStepGenerator.kt, and the
+# corresponding environment variables win over them:
+#   OPENAI_LIKE_API_KEY  OPENAI_LIKE_BASE_URL  OPENAI_LIKE_MODEL
+#   OPENAI_LIKE_MAX_TOKENS  OPENAI_LIKE_ENABLE_THINKING
+# Prefer the environment for secrets; gradle.properties is untracked so a key left here
+# stays local, but the environment keeps it out of the working tree entirely.
+
+kotlin.code.style=official
+
+litellmApiKey=
+llmBaseUrl=https://api.deepseek.com
+llmApiKey=
+llmModel=deepseek-chat
+
+openaiLikeApiKey=
+openaiLikeBaseUrl=
+openaiLikeModel=
+
+ktorVersion=3.0.3
+openaiVersion=2.20.1
+logbackVersion=1.5.18
+otelVersion=1.51.0
+otelSemconvIncubatingVersion=1.34.0-alpha
+koogVersion=0.3.0
+
+# Set this if the build must use a specific JDK, e.g.
+# org.gradle.java.home=/path/to/jdk
