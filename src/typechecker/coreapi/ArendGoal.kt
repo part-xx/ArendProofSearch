@@ -35,7 +35,7 @@ class ArendGoal(
   // An equation's type is printed too: `x = {Nat} y` and `x = y` in `Fin n` print alike, and are different problems
   // (`fin_nat-inj` turns one into the other, which must not look like a regress)
   override fun toString(): String {
-    val equationType = RewriteGenerator.equationType(expectedType)?.let { " in type $it" } ?: ""
+    val equationType = if (System.getenv("AREND_PS_NO_EQUATION_TYPE") != null) "" else RewriteGenerator.equationType(expectedType)?.let { " in type $it" } ?: ""
     return "$expectedType$equationType in context ${typechecker.context.values.joinToString { "${it.name} : ${it.type}" }}"
   }
 

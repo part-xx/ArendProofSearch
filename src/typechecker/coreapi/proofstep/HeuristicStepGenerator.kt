@@ -356,7 +356,7 @@ class HeuristicStepGenerator(
       // `x = y` between bare parameters is generic, unless the parameters are of the goal's equation's own type and the
       // lemma asks for an equation between them in another: `fin_nat-inj : x = {Nat} y -> x = y` for `x y : Fin n` is
       // how arend-lib proves equations in `Fin` (`mod_suc`, `fin_mod_id`, `nat_fin_=`), not a generic lemma
-      val injective = score <= 1 && goalEquationHead != null && injectivityLemma(definition, goalEquationHead)
+      val injective = score <= 1 && goalEquationHead != null && System.getenv("AREND_PS_NO_INJECTIVITY") == null && injectivityLemma(definition, goalEquationHead)
       val genericPenalty = if (penalizeGeneric && score <= 1 && closingBonus == 0.0 && !injective) GENERIC_PENALTY else 0.0
       val injectivityBonus = if (injective) INJECTIVITY_BONUS else 0.0
       val theory = definition.ref.location?.modulePath?.firstName
@@ -375,13 +375,18 @@ class HeuristicStepGenerator(
 
   /**
    * Whether [definition] concludes `x = y` for bare parameters of a type headed by [equationHead] from an explicit
-   * parameter that is an equation too: injectivity of a coercion, `fin_nat-inj`, `pos-inj`.
+   * parameter equating the same `x` and `y` in another type: injectivity of a coercion, `fin_nat-inj : x = {Nat} y -> x = y`.
    */
   private fun injectivityLemma(definition: CallableDefinition, equationHead: Any): Boolean {
     val (left, right) = ConclusionMatcher.conclusion(definition)?.let { RewriteGenerator.equationSidesAsWritten(it) } ?: return false
     if (left !is org.arend.core.expr.ReferenceExpression || right !is org.arend.core.expr.ReferenceExpression || left.binding == right.binding) return false
     if (PremiseRetriever.headKey(left.binding.type) != equationHead) return false
-    return RelationFixGenerator.explicitParameters(definition).any { RewriteGenerator.equationSidesAsWritten(it.type) != null }
+    // The hypothesis equates the same two variables (in another type): `unsuc : suc n = suc m -> n = m` is not this, and
+    // rewarded it would be applied again and again, each time growing the equation
+    return RelationFixGenerator.explicitParameters(definition).any { parameter ->
+      val sides = RewriteGenerator.equationSidesAsWritten(parameter.type) ?: return@any false
+      (sides.first as? org.arend.core.expr.ReferenceExpression)?.binding == left.binding && (sides.second as? org.arend.core.expr.ReferenceExpression)?.binding == right.binding
+    }
   }
 
   /** Whether an explicit parameter of [definition] is shaped like one of [hypothesisTypes], beyond its head. */
@@ -600,7 +605,7 @@ class HeuristicStepGenerator(
       val concat = concatRef
       if (concat != null && inv != null) steps += timed("path", emptyList()) { PathGenerator(moduleLocation, concat, inv, lemmas = rewriteLemmas.keys.toList(), lemmaCosts = rewriteLemmas).generate(goal, currentProof) }
       // Chains through a hypothesis function or a lemma with hypotheses, their arguments left as goals: `{?} <=∘ mon {?}`
-      if (chainRefs.isNotEmpty() && goal.expectedType !is org.arend.core.expr.PiExpression && ConclusionMatcher.relationSides(goal.expectedType) != null) {
+      if (chainRefs.isNotEmpty() && System.getenv("AREND_PS_NO_INSTANCE_CHAINS") == null && goal.expectedType !is org.arend.core.expr.PiExpression && ConclusionMatcher.relationSides(goal.expectedType) != null) {
         val pool = if (RewriteGenerator.equationSides(goal.expectedType) != null) timed("resolve chain lemmas") { resolvePremises(goal, equationCandidates, memo = "hint") }
           else timed("resolve chain lemmas") { resolvePremises(goal, candidates, limit = Int.MAX_VALUE, memo = "fix") }
         steps += timed("instance chains", emptyList()) { InstanceChainGenerator(moduleLocation, chainRefs, inv, pool).generate(goal, currentProof) }

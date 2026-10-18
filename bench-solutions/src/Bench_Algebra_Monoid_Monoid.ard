@@ -30,31 +30,31 @@
 \import Algebra.Monoid
 \open Monoid
 
--- proved by proof search (final run (current code, 10 s per lemma), 588 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 295 ms)
 \lemma pow_+ {A : Monoid} {a : A} {n m : Nat} : pow a (n + m) = pow a n * pow a m \elim m   | zero => equation   | suc m => equation.monoid {pow_+ {A} {a} {n} {m}}
--- proved by proof search (final run (current code, 10 s per lemma), 318 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 188 ms)
 \lemma pow_* {A : Monoid} {a : A} {n m : Nat} : pow a (n Nat.* m) = pow (pow a n) m \elim m   | zero => idp   | suc m => rewrite Monoid.pow_+ (equation.monoid {pow_* {A} {a} {n} {m}})
--- proved by proof search (final run (current code, 10 s per lemma), 279 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 145 ms)
 \lemma pow-comm1 {A : Monoid} {a b : A} (p : a * b = b * a) {n : Nat} : pow a n * b = b * pow a n \elim n   | zero => equation   | suc n => equation.monoid {(p, pow-comm1 {A} {a} {b} p {n})}
--- proved by proof search (final run (current code, 10 s per lemma), 154 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 98 ms)
 \lemma pow-comm2 {A : Monoid} {a b : A} (p : a * b = b * a) {n m : Nat} : pow a n * pow b m = pow b m * pow a n => Monoid.pow-comm1 (equation.monoid {Monoid.pow-comm1 (inv p)})
--- proved by proof search (final run (current code, 10 s per lemma), 317 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 160 ms)
 \lemma pow-comm {A : Monoid} {a b : A} (p : a * b = b * a) {n : Nat} : pow (a * b) n = pow a n * pow b n \elim n   | zero => equation   | suc n => equation.monoid {(pow-comm {A} {a} {b} p {n}, Monoid.pow-comm1 (inv p))}
--- proved by proof search (final run (current code, 10 s per lemma), 248 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 122 ms)
 \lemma pow-left {A : Monoid} {a : A} {n : Nat} : a * pow a n = pow a n * a \elim n   | zero => equation   | suc n => equation.monoid {pow-left {A} {a} {n}}
--- proved by proof search (final run (current code, 10 s per lemma), 1252 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 877 ms)
 \lemma BigProd-ext {A : Monoid} {n : Nat} {l l' : Array A n} (p : \Pi (i : Fin n) -> l i = l' i) : BigProd l = BigProd l' => AddMonoid.BigSum-ext {AddMonoid.fromMonoid A} {_} {_} {_} p
--- proved by proof search (final run (current code, 10 s per lemma), 322 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 225 ms)
 \lemma BigProd_ide {A : Monoid} {l : Array A} (p : \Pi (j : Fin l.len) -> l j = ide) : BigProd l = ide => AddMonoid.BigSum_zro {AddMonoid.fromMonoid A} {_} p
--- proved by proof search (final run (current code, 10 s per lemma), 241 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 167 ms)
 \lemma BigProd-unique {A : Monoid} {l : Array A} (i : Fin l.len) (p : \Pi (j : Fin l.len) -> i /= j -> l j = 1) : BigProd l = l i \elim l, i, p   | nil, i, p => idp   | :: a l, i, p => AddMonoid.BigSum-unique {AddMonoid.fromMonoid A} {_} _ p
--- proved by proof search (final run (current code, 10 s per lemma), 142 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 84 ms)
 \lemma BigProd_++ {A : Monoid} {l l' : Array A} : BigProd (l ++ l') = BigProd l * BigProd l' => AddMonoid.BigSum_++ {AddMonoid.fromMonoid A} {_} {_}
--- proved by proof search (final run (current code, 10 s per lemma), 159 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 100 ms)
 \lemma BigProd_suc {A : Monoid} {n : Nat} {l : Array A (suc n)} : BigProd l = BigProd (\new Array A n (\lam i => l i)) * l (n Nat.mod suc n) => AddMonoid.BigSum_suc {AddMonoid.fromMonoid A} {_} {_}
--- proved by proof search (final run (current code, 10 s per lemma), 569 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 291 ms)
 \lemma BigProd_replicate {A : Monoid} {x : A} {n : Nat} : BigProd (replicate n x) = pow x n \elim n   | zero => idp   | suc n => rewrite Monoid.BigProd_suc (equation.monoid {BigProd_replicate {A} {x} {n}})
--- proved by proof search (final run (current code, 10 s per lemma), 35 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 28 ms)
 \lemma IsCentral_* {A : Monoid} {x y : A} (xc : IsCentral x) (yc : IsCentral y) : IsCentral (x * y) => \lam y' => equation.monoid {(yc y', xc y')}
--- proved by proof search (final run (current code, 10 s per lemma), 308 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 188 ms)
 \lemma IsCentral_pow {A : Monoid} {x : A} (xc : IsCentral x) {n : Nat} : IsCentral (pow x n) => \lam y => Monoid.pow-comm1 (xc _)

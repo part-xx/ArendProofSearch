@@ -19,6 +19,7 @@
 \import Algebra.Meta
 \import Logic.Meta
 \import Arith.Int
+\import Data.Fin
 \open Nat
 \open LinearlyOrderedAbMonoid
 \open NatOrder
@@ -28,115 +29,119 @@
 \open NatSemiring \hiding (<_*_positive-left, <_+-left)
 \open Monoid(LDiv)
 
--- proved by proof search (final run (current code, 10 s per lemma), 487 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 515 ms)
 \lemma suc_pred {n : Nat} (n/=0 : n /= 0) : suc (pred n) = n => triEquals (\case \elim n, \elim n/=0 \with {  | zero, n/=0 => contradiction  | suc n, n/=0 => Arith.Int.IntRing.minus__})
--- proved by proof search (final run (current code, 10 s per lemma), 71 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 67 ms)
 \lemma -'0 {n : Nat} : n -' 0 = n \elim n   | zero => idp   | suc n => idp
--- proved by proof search (final run (current code, 10 s per lemma), 167 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 133 ms)
 \lemma -'+ {n m : Nat} : n + m -' m = n \elim m   | zero => Arith.Nat.-'0   | suc m => -'+
--- proved by proof search (final run (current code, 10 s per lemma), 90 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 78 ms)
 \lemma -'id {n : Nat} : n -' n = 0 => Arith.Nat.-'=0 linarith
--- proved by proof search (final run (current code, 10 s per lemma), 192 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 145 ms)
 \lemma -'-'l {a b c : Nat} : a -' b -' c = a -' (b + c) \elim a, b   | zero, b => idp   | suc a, zero => idp   | suc a, suc b => -'-'l
--- proved by proof search (final run (current code, 10 s per lemma), 87 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 82 ms)
 \lemma -'_< {n m : Nat} (p : 0 < n -' m) : m < n \elim n, m, p   | zero, m, p => contradiction   | suc n, zero, p => p   | suc n, suc m, p => suc<suc (-'_< p)
--- proved by proof search (final run (current code, 10 s per lemma), 99 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 98 ms)
 \lemma <_-' {n m : Nat} (p : m < n) : 0 < n -' m \elim n, m, p   | zero, m, p => contradiction   | suc n, zero, p => p   | suc n, suc m, p => \case p \with {     | suc<suc x => <_-' x   }
--- proved by proof search (final run (current code, 10 s per lemma), 45 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 42 ms)
 \lemma id<suc {n : Nat} : n < suc n \elim n   | zero => zero<suc   | suc n => suc<suc id<suc
 -- proved by proof search (reruns after the printer fix for recursive calls under a lambda, 227 ms)
 \lemma id/=suc {n : Nat} : n /= suc n \elim n   | zero => \lam p => contradiction   | suc n => \lam p => id/=suc {n} (pmap pred p)
--- proved by proof search (final run (current code, 10 s per lemma), 36 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 33 ms)
 \lemma nonZero>0 {n : Nat} (n/=0 : n /= 0) : 0 < n \elim n, n/=0   | zero, n/=0 => contradiction   | suc n, n/=0 => zero<suc
 -- proved by proof search (final run (current code, 10 s per lemma), 55 ms)
 \lemma fin_< {n : Nat} (x : Fin n) : x < n \elim n, x   | zero, x => contradiction   | suc n, zero => zero<suc   | suc n, suc x => suc<suc (fin_< _)
--- proved by proof search (final run (current code, 10 s per lemma), 166 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 138 ms)
 \lemma toFin=id {k n : Nat} {p : k < n} : toFin k p = {Nat} k \elim k, n, p   | k, zero, p => contradiction   | zero, suc n, p => idp   | suc k, suc n, p => pmap suc toFin=id
--- proved by proof search (final run (current code, 10 s per lemma), 139 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 164 ms)
 \lemma toFin=fin {n : Nat} {k : Fin n} : toFin k (fin_< k) = k \elim n, k   | zero, k => contradiction   | suc n, zero => idp   | suc n, suc k => pmap (\lam (z : Fin n) => suc z) toFin=fin
--- proved by proof search (final run (current code, 10 s per lemma), 90 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 84 ms)
 \lemma mod_Fin=mod {k n : Nat} {p : 0 < n} : mod_Fin k p = {Nat} k mod n \elim n, p   | zero, p => contradiction   | suc n, p => idp
 -- proved by proof search (reruns after the printer fix for recursive calls under a lambda, 252 ms)
 \lemma fin_nat-inj {n : Nat} {x y : Fin n} (p : x = {Nat} y) : x = y \elim n, x, y, p   | zero, x, y, p => contradiction   | suc n, zero, zero, p => idp   | suc n, zero, suc y, p => contradiction   | suc n, suc x, zero, p => contradiction   | suc n, suc x, suc y, p => rewrite (fin_nat-inj {n} {x} {y} (pmap pred p)) idp
 -- proved by proof search (reruns after the printer fix for recursive calls under a lambda, 3300 ms)
 \lemma fin_nat-ineq {n : Nat} {x y : Fin n} (p : Not (x = y)) : Not (x = {Nat} y) \elim n, x, y, p   | zero, x, y, p => contradiction   | suc n, zero, y, p => \lam p' => (\case \elim y, \elim p, \elim p' \with {     | zero, p, p' => contradiction     | suc y, p, p' => contradiction   })   | suc n, suc x, zero, p => contradiction   | suc n, suc x, suc y, p => \lam p' => (\case pmap pred p' \with {     | q => p (Arith.Nat.fin_nat-inj p')   })
--- proved by proof search (final run (current code, 10 s per lemma), 5 ms)
-\lemma zero<=_ {x : Nat} : 0 <= x => linarith
 -- proved by proof search (final run (current code, 10 s per lemma), 6 ms)
+\lemma zero<=_ {x : Nat} : 0 <= x => linarith
+-- proved by proof search (final run (current code, 10 s per lemma), 8 ms)
 \lemma suc<=suc {x y : Nat} (p : x <= y) : suc x <= suc y => linarith
 \lemma -'-'r {n m k : Nat} (k<=m : k <= m) (m<=n : m <= n) : n -' (m -' k) = n -' m + k => {?}
--- proved by proof search (final run (current code, 10 s per lemma), 378 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 384 ms)
 \lemma -'-'r_id {n k : Nat} (k<=n : k <= n) : n -' (n -' k) = k \elim n, k, k<=n   | zero, k, k<=n => linarith   | suc n, zero, k<=n => Arith.Nat.-'id   | suc n, suc k, k<=n => -'_inv k<=n
--- proved by proof search (final run (current code, 10 s per lemma), 2245 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 2347 ms)
 \lemma <=_exists {n m : Nat} (p : n <= m) : n + (m -' n) = m \elim n, m, p   | n, zero, p => linarith   | zero, suc m, p => idp   | suc n, suc m, p => rewrite (<=_exists {n} {m} linarith) idp
--- proved by proof search (final run (current code, 10 s per lemma), 859 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 878 ms)
 \lemma -'<=id {n m : Nat} : n -' m <= n \elim n, m   | zero, m => linarith   | suc n, zero => linarith   | suc n, suc m => -'<=id {n} {m} <=∘ linarith
--- proved by proof search (final run (current code, 10 s per lemma), 1030 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 1067 ms)
 \lemma -'_<=+ {n m : Nat} : n <= (n -' m) + m \elim n, m   | zero, m => linarith   | suc n, zero => linarith   | suc n, suc m => Arith.Nat.suc<=suc -'_<=+
--- proved by proof search (final run (current code, 10 s per lemma), 1717 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 1942 ms)
 \lemma -'+-comm {n m k : Nat} (p : m <= n) : n + k -' m = n -' m + k \elim k   | zero => idp   | suc k => rewriteI (-'+-comm {_} {_} {k} p) (-'_suc linarith)
--- proved by proof search (final run (current code, 10 s per lemma), 3448 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 3524 ms)
 \lemma -'-monotone-left {n m k : Nat} (p : n <= m) : n -' k <= m -' k \elim n, m, k, p   | zero, m, k, p => linarith   | suc n, zero, k, p => linarith   | suc n, suc m, zero, p => p   | suc n, suc m, suc k, p => -'-monotone-left linarith
--- proved by proof search (final run (current code, 10 s per lemma), 2560 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 2608 ms)
 \lemma -'-monotone-right {n m k : Nat} (p : m <= n) : k -' n <= k -' m \elim n, m, k, p   | n, m, zero, p => linarith   | n, zero, suc k, p => Arith.Nat.-'<=id   | zero, suc m, suc k, p => linarith   | suc n, suc m, suc k, p => -'-monotone-right linarith
--- proved by proof search (final run (current code, 10 s per lemma), 1040 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 1069 ms)
 \lemma -'_<-monotone-left {n m k : Nat} (p : n < m) (q : k < m) : n -' k < m -' k \elim n, m, k, p, q   | zero, m, k, p, q => Arith.Nat.<_-' q   | suc n, zero, k, p, q => contradiction   | suc n, suc m, zero, p, q => p   | suc n, suc m, suc k, p, q => \case p \with {     | suc<suc x => -'_<-monotone-left x (unsuc< q)   }
--- proved by proof search (final run (current code, 10 s per lemma), 314 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 318 ms)
 \lemma -'_<= {n m : Nat} (p : n -' m = 0) : n <= m \elim n, m, p   | zero, m, p => linarith   | suc n, zero, p => contradiction   | suc n, suc m, p => Arith.Nat.suc<=suc (-'_<= p)
 \lemma -'_+_<= {n m k : Nat} (p : n + m <= k) : n <= k -' m => {?}
--- proved by proof search (final run (current code, 10 s per lemma), 1105 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 1133 ms)
 \lemma -'=0 {n m : Nat} (p : n <= m) : n -' m = 0 \elim n, m, p   | zero, m, p => idp   | suc n, zero, p => linarith   | suc n, suc m, p => -'=0 linarith
 \lemma <=_* {n m k l : Nat} (n<=m : n <= m) (k<=l : k <= l) : n * k <= m * l => {?}
 \lemma monotone-diagonal (f : Nat -> Nat) (mon : \Pi (n : Nat) -> suc (f n) <= f (suc n)) {n : Nat} : n <= f n => {?}
 \lemma sequence-monotone {X : Preorder} {f : Nat -> X} (fm : \Pi {n : Nat} -> f n X.<= f (suc n)) {n k : Nat} (p : n <= k) : f n X.<= f k => {?}
 \lemma sequence-anti-monotone {X : Preorder} {f : Nat -> X} (fm : \Pi {n : Nat} -> f (suc n) X.<= f n) {n k : Nat} (p : n <= k) : f k X.<= f n => {?}
--- proved by proof search (final run (current code, 10 s per lemma), 51 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 50 ms)
 \lemma suc_<_<= {n m : Nat} (p : n < m) : suc n <= m \elim m, p   | zero, p => contradiction   | suc m, p => Arith.Nat.<_suc_<= linarith
--- proved by proof search (final run (current code, 10 s per lemma), 419 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 450 ms)
 \lemma <_suc_<= {n m : Nat} (p : n < suc m) : n <= m \elim n, m, p   | zero, m, p => linarith   | suc n, zero, p => linarith   | suc n, suc m, p => \case p \with {     | suc<suc x => Arith.Nat.suc_<_<= x   }
--- proved by proof search (final run (current code, 10 s per lemma), 3 ms)
-\lemma suc_<=_< {n m : Nat} (p : suc n <= m) : n < m => linarith
 -- proved by proof search (final run (current code, 10 s per lemma), 4 ms)
+\lemma suc_<=_< {n m : Nat} (p : suc n <= m) : n < m => linarith
+-- proved by proof search (final run (current code, 10 s per lemma), 3 ms)
 \lemma <=_<_suc {n m : Nat} (p : n <= m) : n < suc m => linarith
--- proved by proof search (final run (current code, 10 s per lemma), 2 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 4 ms)
 \lemma id<=suc {n : Nat} : n <= suc n => linarith
 \lemma n*_+_<n {n q r : Nat} (p : n * q + r < n) : q = 0 => {?}
 \lemma mod-unique {n q r q' r' : Nat} (r<n : r < n) (r'<n : r' < n) (p : n * q + r = n * q' + r') : r = r' => {?}
 \lemma div-unique {n q r q' r' : Nat} (r<n : r < n) (r'<n : r' < n) (n/=0 : n /= 0) (p : n * q + r = n * q' + r') : q = q' => {?}
--- proved by proof search (final run (current code, 10 s per lemma), 1000 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 917 ms)
 \lemma mod<=left {n m : Nat} : n mod m <= n => transport (\lam z => n mod m <= {_} z) (divModProp n m) linarith
--- proved by proof search (final run (current code, 10 s per lemma), 500 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 480 ms)
 \lemma mod<right {n m : Nat} (m/=0 : m /= 0) : n mod m < m => Arith.Nat.suc_<=_< (\case \elim m, \elim m/=0 \with {  | zero, m/=0 => contradiction  | suc m, m/=0 => Arith.Nat.<_suc_<= (Arith.Nat.fin_< _)})
 \lemma div_< {n m : Nat} (n<m : n < m) : n div m = 0 => {?}
 \lemma mod_< {n m : Nat} (n<m : n < m) : n mod m = n => {?}
--- proved by proof search (final run (current code, 10 s per lemma), 1369 ms)
-\lemma toFin'=id {k n : Nat} (p : k < n) : toFin' p = {Nat} k \elim k, n, p   | zero, zero, p => contradiction   | zero, suc n, p => idp   | suc k, zero, p => contradiction   | suc k, suc n, p => rewriteI (toFin'=id {k} {n} (unsuc< p)) (Arith.Nat.fin_mod_id _)
--- proved by proof search (final run (current code, 10 s per lemma), 125 ms)
-\lemma mod_Fin_< {n k : Nat} {p : 0 < n} (q : k < n) : mod_Fin k p = {Nat} k => rewrite Arith.Nat.mod_Fin=mod (Arith.Nat.mod_< q)
--- proved by proof search (final run (current code, 10 s per lemma), 53 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 66 ms)
+\lemma toFin'=id {k n : Nat} (p : k < n) : toFin' p = {Nat} k \elim n, p   | zero, p => contradiction   | suc n, p => Arith.Nat.mod_< p
+-- proved by proof search (final run (current code, 10 s per lemma), 66 ms)
+\lemma mod_Fin_< {n k : Nat} {p : 0 < n} (q : k < n) : mod_Fin k p = {Nat} k \elim n, p, q   | zero, p, q => contradiction   | suc n, p, q => Arith.Nat.mod_< q
+-- proved by proof search (final run (current code, 10 s per lemma), 58 ms)
 \lemma mod_Fin=id {n : Nat} {k : Fin n} {p : 0 < n} : mod_Fin k p = k \elim n, k, p   | zero, k, p => contradiction   | suc n, k, p => Arith.Nat.fin_mod_id _
-\lemma fin_mod_id {n : Nat} (x : Fin (suc n)) : x mod suc n = x => {?}
+-- proved by proof search (final run (current code, 10 s per lemma), 142 ms)
+\lemma fin_mod_id {n : Nat} (x : Fin (suc n)) : x mod suc n = x => Data.Fin.nat_fin_= (Arith.Nat.mod_< (Arith.Nat.fin_< _))
 \lemma natUnit {n m : Nat} (p : n * m = 1) : m = 1 => {?}
 \lemma natAssociates-areEqual {n m : Nat} (n|m : LDiv n m) (m|n : LDiv m n) : n = m => {?}
 \lemma ldiv_<= {n m : Nat} (m/=0 : m /= 0) (n|m : LDiv n m) : n <= m => {?}
 \lemma ldiv*div=id {n m : Nat} (m|n : LDiv m n) : m * (n div m) = n => {?}
 \lemma div_mod {n m : Nat} (m|n : LDiv m n) : n mod m = 0 => {?}
--- proved by proof search (final run (current code, 10 s per lemma), 59 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 63 ms)
 \lemma id_mod {n : Nat} : n mod n = 0 => Arith.Nat.div_mod Monoid.LDiv.id-div
 \lemma div_*<=id {n m : Nat} : n div m * m <= n => {?}
 \lemma id<pow2 {n : Nat} : n < Monoid.pow 2 n => {?}
--- proved by proof search (final run (current code, 10 s per lemma), 86 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 67 ms)
 \lemma n*_+_mod_n {n q r : Nat} (r<n : r < n) : (n * q + r) mod n = {Nat} r => Arith.Nat.n*_+_mod_n=mod.nat *> Arith.Nat.mod_< r<n
-\lemma n*_+_mod_n=mod {n q r : Nat} : (suc n * q + r) mod suc n = r mod suc n => {?}
+-- proved by proof search (final run (current code, 10 s per lemma), 78 ms)
+\lemma n*_+_mod_n=mod {n q r : Nat} : (suc n * q + r) mod suc n = r mod suc n => Data.Fin.nat_fin_= Arith.Nat.n*_+_mod_n=mod.nat
 -- proved by proof search (final run (current code, 10 s per lemma), 89 ms)
 \lemma mod_+-left {n a b : Nat} : (a mod suc n + b) mod suc n = (a + b) mod suc n => Arith.Nat.mod_+-cong-right (Arith.Nat.fin_mod_id _)
--- proved by proof search (final run (current code, 10 s per lemma), 94 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 79 ms)
 \lemma mod_+-right {n a b : Nat} : (a + b mod suc n) mod suc n = (a + b) mod suc n => Arith.Nat.mod_+-cong-left (Arith.Nat.fin_mod_id _)
-\lemma mod_*-left {n a b : Nat} : (a mod suc n * b) mod suc n = (a * b) mod suc n => {?}
+-- proved by proof search (final run (current code, 10 s per lemma), 1804 ms)
+\lemma mod_*-left {n a b : Nat} : (a mod suc n * b) mod suc n = (a * b) mod suc n \elim b   | zero => idp   | suc b => Arith.Nat.mod_+-right *> Arith.Nat.mod_+-cong-right mod_*-left
 \lemma mod_*-right {n a b : Nat} : (a * b mod suc n) mod suc n = (a * b) mod suc n => {?}
 \lemma mod_+-cong-left {n c a b : Nat} (p : a mod suc n = b mod suc n) : (c + a) mod suc n = (c + b) mod suc n => {?}
 \lemma mod_+-cong-right {n c a b : Nat} (p : a mod suc n = b mod suc n) : (a + c) mod suc n = (b + c) mod suc n => {?}
-\lemma mod_suc {n : Nat} (i : Nat) (p : i < suc n) : suc (i mod suc n) = suc i mod suc (suc n) => {?}
+-- proved by proof search (final run (current code, 10 s per lemma), 4144 ms)
+\lemma mod_suc {n : Nat} (i : Nat) (p : i < suc n) : suc (i mod suc n) = suc i mod suc (suc n) => Arith.Nat.fin_nat-inj (pmap suc (Arith.Nat.mod_< p) *> inv (Arith.Nat.mod_< (suc<suc p)))
 \lemma div_suc-lem {n m : Nat} (m/=0 : m /= 0) : (n + m) div m = suc (n div m) => {?}
 \lemma n*_+_div_n=div {m q r : Nat} (m/=0 : m /= 0) : (m * q + r) div m = q + r div m => {?}
 \lemma *_div=id {m q : Nat} (m/=0 : m /= 0) : (q * m) div m = q => {?}

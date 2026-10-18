@@ -9,20 +9,21 @@
 \import Meta
 \import Paths.Meta
 \import Arith.Nat
+\import Set.Fin
 
--- proved by proof search (final run (current code, 10 s per lemma), 51 ms)
-\lemma unfsuc {n : Nat} {x y : Fin n} (p : suc x = suc y) : x = y => pmap (fpred x) p
--- proved by proof search (final run (current code, 10 s per lemma), 83 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 46 ms)
+\lemma unfsuc {n : Nat} {x y : Fin n} (p : suc x = suc y) : x = y => Set.Fin.FinSet.suc-isInj _ _ p
+-- proved by proof search (final run (current code, 10 s per lemma), 81 ms)
 \lemma fsuc/= {n : Nat} {x y : Fin n} (p : x /= y) : fsuc x /= fsuc y \elim n, x, y, p   | zero, x, y, p => \lam p' => contradiction   | suc n, x, y, p => \lam p' => p (Data.Fin.unfsuc p')
 -- proved by proof search (final run (current code, 10 s per lemma), 1 ms)
 \lemma fsuc/=0 {n : Nat} {x : Fin n} : fsuc x /= 0 => contradiction
--- proved by proof search (final run (current code, 10 s per lemma), 230 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 257 ms)
 \lemma fsuc/=-conv {n : Nat} {x y : Fin n} (p : fsuc x /= fsuc y) : x /= y \elim n, x, y, p   | zero, x, y, p => \lam p' => contradiction   | suc n, zero, zero, p => \lam p' => contradiction   | suc n, zero, suc y, p => \lam p' => contradiction   | suc n, suc x, y, p => \lam p' => p (rewrite p' idp)
--- proved by proof search (final run (current code, 10 s per lemma), 139 ms)
-\lemma nat_fin_= {n : Nat} {x y : Fin n} (p : x = {Nat} y) : x = y \elim n, x, y, p   | zero, x, y, p => contradiction   | suc n, zero, zero, p => idp   | suc n, zero, suc y, p => contradiction   | suc n, suc x, zero, p => contradiction   | suc n, suc x, suc y, p => rewrite (nat_fin_= {n} {x} {y} (pmap pred p)) idp
--- proved by proof search (final run (current code, 10 s per lemma), 2160 ms)
-\lemma fin_nat_/= {n : Nat} {x y : Fin n} (p : x /= y) : (x : Nat) /= y \elim n, x, y, p   | zero, x, y, p => contradiction   | suc n, zero, y, p => \lam p' => (\case \elim y, \elim p, \elim p' \with {     | zero, p, p' => contradiction     | suc y, p, p' => contradiction   })   | suc n, suc x, zero, p => contradiction   | suc n, suc x, suc y, p => \lam p' => (\case pmap pred p' \with {     | q => p (Arith.Nat.fin_nat-inj p')   })
--- proved by proof search (final run (current code, 10 s per lemma), 106 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 41 ms)
+\lemma nat_fin_= {n : Nat} {x y : Fin n} (p : x = {Nat} y) : x = y => Arith.Nat.fin_nat-inj p
+-- proved by proof search (final run (current code, 10 s per lemma), 80 ms)
+\lemma fin_nat_/= {n : Nat} {x y : Fin n} (p : x /= y) : (x : Nat) /= y \elim n, x, y, p   | zero, x, y, p => contradiction   | suc n, x, y, p => \lam p' => p (Data.Fin.nat_fin_= p')
+-- proved by proof search (final run (current code, 10 s per lemma), 104 ms)
 \lemma fsuc_fpred {n : Nat} {x : Fin (suc n)} {d : Fin n} (p : x /= 0) : fsuc (fpred d x) = x \elim x, p   | zero, p => contradiction   | suc x, p => idp
--- proved by proof search (final run (current code, 10 s per lemma), 105 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 90 ms)
 \lemma fsuc_fpredP {n : Nat} {x : Fin (suc n)} (p : x /= 0) : fsuc (fpredP x p) = x \elim x, p   | zero, p => contradiction   | suc x, p => idp

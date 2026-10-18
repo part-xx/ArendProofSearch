@@ -1,6 +1,6 @@
 # Proof-search solutions for the arend-lib benchmark
 
-Best proof found for each of the 300 benchmark lemmas across the recorded runs: **209 proved (69%)**. Each `src/Bench_*.ard` module restates the lemmas of one arend-lib module (or class) with the found proof as its body; unproved lemmas keep `{?}`. The library typechecks against arend-lib (goals are not errors).
+Best proof found for each of the 300 benchmark lemmas across the recorded runs: **216 proved (72%)**. Each `src/Bench_*.ard` module restates the lemmas of one arend-lib module (or class) with the found proof as its body; unproved lemmas keep `{?}`. The library typechecks against arend-lib (goals are not errors).
 
 | module | proved |
 |---|---|
@@ -15,18 +15,18 @@ Best proof found for each of the 300 benchmark lemmas across the recorded runs: 
 | Bench_Algebra_Ordered_AbsAbGroup | 0 / 3 |
 | Bench_Algebra_Ordered_LatticeAbGroup | 8 / 13 |
 | Bench_Algebra_Ordered_PosetAddGroup | 1 / 4 |
-| Bench_Algebra_Ring_PseudoRing | 5 / 7 |
+| Bench_Algebra_Ring_PseudoRing | 7 / 7 |
 | Bench_Algebra_Ring_Ring | 0 / 2 |
 | Bench_Algebra_Semiring_Semiring | 1 / 1 |
 | Bench_Arith_Int | 15 / 19 |
-| Bench_Arith_Nat | 42 / 71 |
+| Bench_Arith_Nat | 46 / 71 |
 | Bench_Data_Bool | 2 / 2 |
 | Bench_Data_Fin | 8 / 8 |
 | Bench_Data_List | 9 / 16 |
 | Bench_Logic | 14 / 19 |
 | Bench_Order_Lattice_BottomDistributiveLattice | 2 / 2 |
 | Bench_Order_Lattice_BottomJoinSemilattice | 7 / 9 |
-| Bench_Order_Lattice_DistributiveLattice | 2 / 4 |
+| Bench_Order_Lattice_DistributiveLattice | 3 / 4 |
 | Bench_Order_Lattice_JoinSemilattice | 10 / 11 |
 | Bench_Order_Lattice_Lattice | 1 / 1 |
 | Bench_Order_Lattice_MeetSemilattice | 9 / 10 |
@@ -109,6 +109,8 @@ Best proof found for each of the 300 benchmark lemmas across the recorded runs: 
 | Algebra_Ring_PseudoRing | `negative_*` | `=> rewrite PseudoRing.negative_*-left (rewrite PseudoRing.negative_*-right AddGroup.negative-isInv)` | final run (current code, 10 s per lemma) |
 | Algebra_Ring_PseudoRing | `ldistr_-` | `=> unfold (-) (rewriteI PseudoRing.negative_*-right ldistr)` | final run (current code, 10 s per lemma) |
 | Algebra_Ring_PseudoRing | `rdistr_-` | `=> unfold (-) (rewriteI PseudoRing.negative_*-left rdistr)` | final run (current code, 10 s per lemma) |
+| Algebra_Ring_PseudoRing | `*_sum_diff` | `=> rewrite rdistr (rewrite PseudoRing.ldistr_- (rewrite PseudoRing.ldistr_- (equation.abGroup {AddGroup.toZero (inv p)})))` | final run (current code, 10 s per lemma) |
+| Algebra_Ring_PseudoRing | `*_diff_sum` | `=> rewrite ldistr (rewrite PseudoRing.rdistr_- (rewrite PseudoRing.rdistr_- (equation.abGroup {p})))` | final run (current code, 10 s per lemma) |
 | Algebra_Semiring_Semiring | `natCoef-comm` | `=> Algebra.Ring.RingHom.natComm _ _` | final run (current code, 10 s per lemma) |
 | Arith_Int | `iabs_*` | `\elim x, y   \| pos x, pos x' => idp   \| pos x, neg x'' => idp   \| neg zero, pos x => idp   \| neg zero, neg x' => idp   \| neg (suc x'), pos x => idp   \| neg (suc x'), neg x'' => idp` | final run (current code, 10 s per lemma) |
 | Arith_Int | `ldiv_iabs` | `=> Algebra.Domain.Euclidean.ldiv_int_nat _` | final run (current code, 10 s per lemma) |
@@ -160,21 +162,25 @@ Best proof found for each of the 300 benchmark lemmas across the recorded runs: 
 | Arith_Nat | `id<=suc` | `=> linarith` | final run (current code, 10 s per lemma) |
 | Arith_Nat | `mod<=left` | `=> transport (\lam z => n mod m <= {_} z) (divModProp n m) linarith` | final run (current code, 10 s per lemma) |
 | Arith_Nat | `mod<right` | `=> Arith.Nat.suc_<=_< (\case \elim m, \elim m/=0 \with {  \| zero, m/=0 => contradiction  \| suc m, m/=0 => Arith.Nat.<_suc_<= (Arith.Nat.fin_< _)})` | final run (current code, 10 s per lemma) |
-| Arith_Nat | `toFin'=id` | `\elim k, n, p   \| zero, zero, p => contradiction   \| zero, suc n, p => idp   \| suc k, zero, p => contradiction   \| suc k, suc n, p => rewriteI (toFin'=id {k} {n} (unsuc< p)) (Arith.Nat.fin_mod_id _)` | final run (current code, 10 s per lemma) |
-| Arith_Nat | `mod_Fin_<` | `=> rewrite Arith.Nat.mod_Fin=mod (Arith.Nat.mod_< q)` | final run (current code, 10 s per lemma) |
+| Arith_Nat | `toFin'=id` | `\elim n, p   \| zero, p => contradiction   \| suc n, p => Arith.Nat.mod_< p` | final run (current code, 10 s per lemma) |
+| Arith_Nat | `mod_Fin_<` | `\elim n, p, q   \| zero, p, q => contradiction   \| suc n, p, q => Arith.Nat.mod_< q` | final run (current code, 10 s per lemma) |
 | Arith_Nat | `mod_Fin=id` | `\elim n, k, p   \| zero, k, p => contradiction   \| suc n, k, p => Arith.Nat.fin_mod_id _` | final run (current code, 10 s per lemma) |
+| Arith_Nat | `fin_mod_id` | `=> Data.Fin.nat_fin_= (Arith.Nat.mod_< (Arith.Nat.fin_< _))` | final run (current code, 10 s per lemma) |
 | Arith_Nat | `id_mod` | `=> Arith.Nat.div_mod Monoid.LDiv.id-div` | final run (current code, 10 s per lemma) |
 | Arith_Nat | `n*_+_mod_n` | `=> Arith.Nat.n*_+_mod_n=mod.nat *> Arith.Nat.mod_< r<n` | final run (current code, 10 s per lemma) |
+| Arith_Nat | `n*_+_mod_n=mod` | `=> Data.Fin.nat_fin_= Arith.Nat.n*_+_mod_n=mod.nat` | final run (current code, 10 s per lemma) |
 | Arith_Nat | `mod_+-left` | `=> Arith.Nat.mod_+-cong-right (Arith.Nat.fin_mod_id _)` | final run (current code, 10 s per lemma) |
 | Arith_Nat | `mod_+-right` | `=> Arith.Nat.mod_+-cong-left (Arith.Nat.fin_mod_id _)` | final run (current code, 10 s per lemma) |
+| Arith_Nat | `mod_*-left` | `\elim b   \| zero => idp   \| suc b => Arith.Nat.mod_+-right *> Arith.Nat.mod_+-cong-right mod_*-left` | final run (current code, 10 s per lemma) |
+| Arith_Nat | `mod_suc` | `=> Arith.Nat.fin_nat-inj (pmap suc (Arith.Nat.mod_< p) *> inv (Arith.Nat.mod_< (suc<suc p)))` | final run (current code, 10 s per lemma) |
 | Data_Bool | `not-isInv` | `\elim b   \| false => idp   \| true => idp` | final run (current code, 10 s per lemma) |
 | Data_Bool | `true/=false` | `=> contradiction` | final run (current code, 10 s per lemma) |
-| Data_Fin | `unfsuc` | `=> pmap (fpred x) p` | final run (current code, 10 s per lemma) |
+| Data_Fin | `unfsuc` | `=> Set.Fin.FinSet.suc-isInj _ _ p` | final run (current code, 10 s per lemma) |
 | Data_Fin | `fsuc/=` | `\elim n, x, y, p   \| zero, x, y, p => \lam p' => contradiction   \| suc n, x, y, p => \lam p' => p (Data.Fin.unfsuc p')` | final run (current code, 10 s per lemma) |
 | Data_Fin | `fsuc/=0` | `=> contradiction` | final run (current code, 10 s per lemma) |
 | Data_Fin | `fsuc/=-conv` | `\elim n, x, y, p   \| zero, x, y, p => \lam p' => contradiction   \| suc n, zero, zero, p => \lam p' => contradiction   \| suc n, zero, suc y, p => \lam p' => contradiction   \| suc n, suc x, y, p => \lam p' => p (rewrite p' idp)` | final run (current code, 10 s per lemma) |
-| Data_Fin | `nat_fin_=` | `\elim n, x, y, p   \| zero, x, y, p => contradiction   \| suc n, zero, zero, p => idp   \| suc n, zero, suc y, p => contradiction   \| suc n, suc x, zero, p => contradiction   \| suc n, suc x, suc y, p => rewrite (nat_fin_= {n} {x} {y} (pmap pred p)) idp` | final run (current code, 10 s per lemma) |
-| Data_Fin | `fin_nat_/=` | `\elim n, x, y, p   \| zero, x, y, p => contradiction   \| suc n, zero, y, p => \lam p' => (\case \elim y, \elim p, \elim p' \with {     \| zero, p, p' => contradiction     \| suc y, p, p' => contradiction   })   \| suc n, suc x, zero, p => contradiction   \| suc n, suc x, suc y, p => \lam p' => (\case pmap pred p' \with {     \| q => p (Arith.Nat.fin_nat-inj p')   })` | final run (current code, 10 s per lemma) |
+| Data_Fin | `nat_fin_=` | `=> Arith.Nat.fin_nat-inj p` | final run (current code, 10 s per lemma) |
+| Data_Fin | `fin_nat_/=` | `\elim n, x, y, p   \| zero, x, y, p => contradiction   \| suc n, x, y, p => \lam p' => p (Data.Fin.nat_fin_= p')` | final run (current code, 10 s per lemma) |
 | Data_Fin | `fsuc_fpred` | `\elim x, p   \| zero, p => contradiction   \| suc x, p => idp` | final run (current code, 10 s per lemma) |
 | Data_Fin | `fsuc_fpredP` | `\elim x, p   \| zero, p => contradiction   \| suc x, p => idp` | final run (current code, 10 s per lemma) |
 | Data_List | `length_++` | `\elim l   \| nil => idp   \| :: x l => pmap suc length_++` | final run (current code, 10 s per lemma) |
@@ -210,6 +216,7 @@ Best proof found for each of the 300 benchmark lemmas across the recorded runs: 
 | Order_Lattice_BottomJoinSemilattice | `BigJoin_++` | `=> AddMonoid.BigSum_++ {toMonoid A} {_} {_}` | final run (current code, 10 s per lemma) |
 | Order_Lattice_BottomJoinSemilattice | `BigJoin_join` | `=> AbMonoid.BigSum_+ {toMonoid A} {_} {_} {_}` | final run (current code, 10 s per lemma) |
 | Order_Lattice_DistributiveLattice | `meet-ldistr` | `=> <=-antisymmetric ldistr>= Lattice.ldistr<=` | final run (current code, 10 s per lemma) |
+| Order_Lattice_DistributiveLattice | `meet-rdistr` | `=> MeetSemilattice.meet-comm *>  rewrite DistributiveLattice.meet-ldistr (rewrite MeetSemilattice.meet-comm (pmap ((∨) {A} (y ∧ {A} x)) MeetSemilattice.meet-comm))` | final run (current code, 10 s per lemma) |
 | Order_Lattice_DistributiveLattice | `rdistr>=` | `=> rewriteI DistributiveLattice.meet-rdistr <=-refl` | final run (current code, 10 s per lemma) |
 | Order_Lattice_JoinSemilattice | `Big_join-cond` | `=> JoinSemilattice.Big_<=_join _` | final run (current code, 10 s per lemma) |
 | Order_Lattice_JoinSemilattice | `join-monotone` | `=> join-univ (p <=∘ join-left) (q <=∘ join-right)` | final run (current code, 10 s per lemma) |

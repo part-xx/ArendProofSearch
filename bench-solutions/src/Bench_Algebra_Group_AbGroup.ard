@@ -22,11 +22,11 @@
 
 \lemma sum-cancel-left {A : AbGroup} {x y z : A} : x + z - (x + y) = z - y => {?}
 \lemma sum-cancel-right {A : AbGroup} {x y z : A} : z + x - (y + x) = z - y => {?}
--- proved by proof search (final run (current code, 10 s per lemma), 1827 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 953 ms)
 \lemma diff-cancel-left {A : AbGroup} {x y z : A} : x - z - (x - y) = y - z => rewrite AbGroup.negative_+-comm AbGroup.sum-cancel-left *> AddGroup.negative_-
--- proved by proof search (final run (current code, 10 s per lemma), 133 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 84 ms)
 \lemma negative_+-comm {A : AbGroup} {x y : A} : negative (x + y) = negative x - y => rewrite AddGroup.negative_+ equation
--- proved by proof search (final run (current code, 10 s per lemma), 1918 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 916 ms)
 \lemma diff_sum {A : AbGroup} {x y z : A} : x - (y + z) = x - y - z => pmap ((+) {A} x) AbGroup.negative_+-comm *> inv +-assoc
--- proved by proof search (final run (current code, 10 s per lemma), 2171 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 1091 ms)
 \lemma diff_diff {A : AbGroup} {x y z : A} : x - (y - z) = x - y + z => AbGroup.diff_sum *> pmap ((+) {A} (x - {_} y)) AddGroup.negative-isInv
