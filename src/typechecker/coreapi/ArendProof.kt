@@ -227,6 +227,11 @@ open class ArendProof(
 
   companion object {
     /**
+     * Steps checked within the whole proof: those with a meta whose success depends on more than its own goal, and those
+     * binding variables (`\case`, `\lam`), whose subgoals' contexts the whole proof's typecheck names apart (`x'`, `x''`).
+     */
+    private val STRUCTURE_SENSITIVE = Regex("(^|[^A-Za-z0-9_'.-])(rewrite|rewriteI|rewriteF|unfold|mcases|simplify|equation|linarith|contradiction|using|usingOnly)([^A-Za-z0-9_'-]|$)|\\\\(case|lam|let|have|Pi|Sigma)\\b")
+    /**
      * The goals of [proof], from the goal errors its typechecking reports: each carries the
      * typechecking context at the `{?}`. Deferred metas such as `unfold` typecheck their argument
      * on a copy of the typechecker, so a visitor's `visitGoal` would miss the goals inside them.
@@ -276,7 +281,11 @@ open class ArendProof(
     val proofArd = proof as? ArendProof ?: return null
     val goalExpr = goalExpressions[goal] ?: return null
 
-    val substVisitor = ProofCopier()
+    // Where each `{?}` ends up in the copied tree: the proof's remaining goals and the step's own keep their goal objects
+    val copies = java.util.IdentityHashMap<Concrete.Expression, Concrete.Expression>()
+    val substVisitor = object : ProofCopier() {
+      override fun visitGoal(expr: Concrete.GoalExpression, params: Void?): Concrete.Expression = super.visitGoal(expr, params).also { copies[expr] = it }
+    }
     val goalContext = goal.typechecker.context
     for (param in proofArd.theorem.parameters) {
       for (ref in param.referableList) {
@@ -296,22 +305,33 @@ open class ArendProof(
         if (expr == goalExpr) {
           return substitutedProof
         }
-        return super.visitGoal(expr, params)
+        return super.visitGoal(expr, params).also { copies[expr] = it }
       }
     }, null) ?: return null
+    val newTheorem = goal.typechecker.factory.function(theorem.ref, theorem.kind, theorem.parameters, theorem.resultType, theorem.resultTypeLevel, goal.typechecker.factory.body(newProof)) as? Concrete.FunctionDefinition ?: return null
 
-    // The whole proof has to typecheck against the original goal; its remaining goals are not errors
+    // The remaining goals of this proof and the step's goals, with their `{?}` nodes in the new tree
+    val merged = LinkedHashMap<ArendGoal, Concrete.Expression>()
+    for ((g, node) in goalExpressions) if (g != goal) merged[g] = copies[node] ?: return null
+    for ((g, node) in proofArd.goalExpressions) merged[g] = copies[node] ?: return null
+
+    // The whole proof has to typecheck against the original goal as a unit: a step typechecked alone against its goal
+    // can still fail in place, when a meta in it (`rewrite`, `unfold`, `equation`) runs before the surrounding term has
+    // fixed what it needs; its remaining goals are not errors
+    // Tried on 2026-10-19: plugging meta-free, binder-free steps in without this check (`merged` as the goals) lost
+    // `id<isuc`, `ldistr<=` and `Dec_||` in the benchmark for a quarter of the time; every step is checked
+    if (merged.isEmpty() && false) return ArendProof(newTheorem, this.goal, merged)
     val collector = GoalCollector(this.goal)
     val typechecker = CheckTypeVisitor.loadTypecheckingContext(this.goal.typechecker.saveTypecheckingContext(), collector)
     val typed = try { StepBuilder.withDeadline { typechecker.finalize(typechecker.typecheck(newProof, this.goal.expectedType), newProof) } } catch (e: Exception) { null }
     // A goal a meta left of its own, outside the proof's `{?}`s, could never be filled
     if (typed == null || collector.hasErrors() || StepBuilder.hasForeignGoals(collector.errors, newProof)) {
+      if (System.getProperty("proofsearch.debug") == "true") println("Rejected as a whole: $newProof -- ${collector.errors.filter { it.level == org.arend.ext.error.GeneralError.Level.ERROR }.map { it.shortMessage }}")
       return null
     }
-
-    val newTheorem = goal.typechecker.factory.function(theorem.ref, theorem.kind, theorem.parameters, theorem.resultType, theorem.resultTypeLevel, goal.typechecker.factory.body(newProof)) as? Concrete.FunctionDefinition ?: return null
     return ArendProof(newTheorem, this.goal, collector.goals)
   }
+
 }
 
 /**
