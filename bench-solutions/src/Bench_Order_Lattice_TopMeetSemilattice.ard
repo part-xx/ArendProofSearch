@@ -22,9 +22,9 @@
 \import Logic.Meta
 \open TopMeetSemilattice
 
--- proved by proof search (final run (current code, 10 s per lemma), 2 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 3 ms)
 \lemma top-right {A : TopMeetSemilattice} {x : A} : x ∧ top = x => equation
 -- proved by proof search (final run (current code, 10 s per lemma), 38 ms)
 \lemma BigMeet-cond {A : TopMeetSemilattice} {l : Array A} (j : Fin l.len) : BigMeet l <= l j => MeetSemilattice.Big_<=_meet1 _
--- proved by proof search (final run (current code, 10 s per lemma), 412 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 950 ms)
 \lemma BigMeet-univ {A : TopMeetSemilattice} {l : Array A} {x : A} (p : \Pi (j : Fin l.len) -> x <= l j) : x <= BigMeet l => MeetSemilattice.Big_meet-univ top-univ p

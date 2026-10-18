@@ -142,7 +142,9 @@ class RewriteGeneratorTest {
     assumeTrue(TestLibrary.cliJar != null && TestLibrary.arendLibsDir != null, "Arend CLI jar or arend-lib not found")
     val cli = CliProcessApi(TestLibrary.testLibStdDir, TestLibrary.cliJar!!, listOf(TestLibrary.arendLibsDir!!))
     val retriever = EquationRetriever(cli, maxSymbols = 2)
-    TestRewrite.assertProves(TestRewrite.search("rewrite-twice", generator(rewriteRetrievers = listOf(retriever))), "rewrite -'0 (rewrite -'0 idp)")
+    // With the daemon's retrieval, `-'+-comm` with its hypothesis closed by `linarith` is as short as rewriting with `-'0` twice
+    val retrieved = TestRewrite.assertProves(TestRewrite.search("rewrite-twice", generator(rewriteRetrievers = listOf(retriever))))
+    assertTrue(retrieved == "rewrite -'0 (rewrite -'0 idp)" || retrieved == "rewrite (-'+-comm linarith) idp", retrieved)
   }
 
   @Test

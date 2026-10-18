@@ -24,13 +24,13 @@
 \open Monoid(Inv)
 \open DiscreteField
 
--- proved by proof search (final run (current code, 10 s per lemma), 19 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 27 ms)
 \lemma finv-left {A : DiscreteField} {x : A} (x/=0 : x /= 0) : finv x * x = 1 => equation.cRing {finv-right x/=0}
--- proved by proof search (final run (current code, 10 s per lemma), 29 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 39 ms)
 \lemma finv-Inv {A : DiscreteField} {x : A} (x/=0 : x /= 0) : Inv (finv x) x => Monoid.Inv.lmake _ (equation.cRing {DiscreteField.finv-left x/=0})
--- proved by proof search (final run (current code, 10 s per lemma), 29 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 37 ms)
 \lemma nonZero-Inv {A : DiscreteField} {x : A} (x/=0 : x /= 0) : Inv x (finv x) => Monoid.Inv.lmake _ (equation.cRing {DiscreteField.finv-left x/=0})
--- proved by proof search (final run (current code, 10 s per lemma), 163 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 208 ms)
 \lemma finv/=0 {A : DiscreteField} {x : A} (x/=0 : x /= 0) : finv x /= 0 => Algebra.Semiring.NonZeroSemiring.inv-nonZero (DiscreteField.finv-Inv x/=0)
 \lemma finv_* {A : DiscreteField} {x y : A} : finv (x * y) = finv y * finv x => {?}
 \lemma finv_finv {A : DiscreteField} {x : A} : finv (finv x) = x => {?}

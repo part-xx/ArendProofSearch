@@ -188,6 +188,21 @@ class ChainsTest {
       )
     }
     val source = TestChains.assertProves(TestChains.search("mod_suc'", chaining, maxExpansions = 600, focusFirstGoal = true, openGoalCost = 1.0, maxDepth = 20))
-    assertTrue(source.contains("inv (mod_< (suc<suc p))") && source.contains("pmap suc (mod_< p)"), source)
+    // The left end is `pmap suc (mod_< p)` or, since rewriting takes a lemma's hypothesis from the context, `rewrite (mod_< p)`
+    assertTrue(source.contains("inv (mod_< (suc<suc p))") && (source.contains("pmap suc (mod_< p)") || source.contains("rewrite (mod_< p)")), source)
+  }
+
+  @Test
+  fun `a chain ends with a lemma instantiated from the context and a rewrite takes its hypothesis from it`() {
+    val module = TestChains.module
+    val chaining = { _: ArendGoal ->
+      HeuristicStepGenerator(
+        module.server.getCheckerFor(listOf(module.location)), module.server, module.libraryName, module.location.modulePath,
+        retrievers = listOf(FixedPremiseRetriever(listOf("div_<"))), rewriteRetrievers = listOf(FixedPremiseRetriever(listOf("div_<", "Nat.divModProp"))),
+        splitters = emptyList(), closingMetas = HeuristicStepGenerator.BASIC_CLOSING_METAS,
+      )
+    }
+    val source = TestChains.assertProves(TestChains.search("mod_<'", chaining, maxExpansions = 600, focusFirstGoal = true, openGoalCost = 1.0, maxDepth = 20))
+    assertTrue(source.contains("rewrite (div_< n<m) idp") && source.contains("divModProp n m"), source)
   }
 }

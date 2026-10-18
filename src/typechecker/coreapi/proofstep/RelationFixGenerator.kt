@@ -46,6 +46,20 @@ class RelationFixGenerator(
     /** The explicit parameters of a lemma or a class field. */
     fun explicitParameters(definition: CallableDefinition): List<DependentLink> = allParameters(definition).filter { it.isExplicit }
 
+    /**
+     * Whether [parameter] of [lemma] is a hypothesis rather than an element: nothing after it depends on it, in
+     * particular not the conclusion (`n<m : n < m` of `div_<`, whose conclusion `n div m = 0` mentions `n` and `m`
+     * but not the proof). Propositions count regardless.
+     */
+    fun isHypothesisParameter(lemma: CallableDefinition, parameter: DependentLink): Boolean {
+      if (LemmaHints.isProposition(parameter.type)) return true
+      val conclusion = ConclusionMatcher.conclusion(lemma) ?: return false
+      if (StepBuilder.occurs(parameter, conclusion)) return false
+      val all = allParameters(lemma)
+      val index = all.indexOf(parameter)
+      return all.drop(index + 1).none { StepBuilder.occurs(parameter, it.type) }
+    }
+
     /** All parameters of a lemma or a class field, implicit ones included. */
     fun allParameters(definition: CallableDefinition): List<DependentLink> = when (definition) {
       is FunctionDefinition -> DependentLink.Helper.toList(definition.parameters)

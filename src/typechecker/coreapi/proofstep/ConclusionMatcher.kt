@@ -170,7 +170,8 @@ object ConclusionMatcher {
     fun sideScore(side: Expression): Int? {
       if (side is ReferenceExpression) return null
       val vars = FreeVariablesCollector.getFreeVariables(side)
-      return index.candidates(side).mapNotNull { score(side, it, vars, 0) }.filter { it > 0 }.maxOrNull()
+      val candidates = index.candidates(side)
+      return candidates.mapNotNull { score(side, it, vars, 0) }.filter { it > 0 }.maxOrNull()
     }
     return sideScore(left) to sideScore(right)
   }
@@ -187,7 +188,9 @@ object ConclusionMatcher {
     /** The subterms [side] may match: those with its head, or all of them when its head is a variable. */
     fun candidates(side: Expression): List<Expression> {
       val key = headKey(side) ?: return all
-      return byHead[key].orEmpty()
+      // The goal may hold the side's computed form: `n div m` as the projection `(divMod n m).1` in a subgoal
+      val unfoldedKey = headKey(whnf(side)).takeIf { it != null && it != key }
+      return byHead[key].orEmpty() + (unfoldedKey?.let { byHead[it] }.orEmpty())
     }
 
     companion object {
@@ -199,6 +202,7 @@ object ConclusionMatcher {
           is IntegerExpression -> if (current.isZero) Prelude.ZERO else Prelude.SUC
           is DefCallExpression -> current.definition
           is PathTypeExpression -> Prelude.PATH
+          is org.arend.core.expr.ProjExpression -> "proj" to current.field
           else -> null
         }
       }

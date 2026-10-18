@@ -160,6 +160,7 @@ class InductionTest {
     val steps = TestInduction.withGoal("monotone-diagonal'") { goal -> chaining(goal).generate(goal, null).map { it.proof.toString() } }
     assertTrue(steps.none { it.contains("mon ") }, steps.toString())
     val source = TestInduction.assertProves(TestInduction.search("monotone-diagonal'", chaining, maxExpansions = 600, focusFirstGoal = true, openGoalCost = 1.0, maxDepth = 20))
-    assertTrue(source.contains("suc<=suc (monotone-diagonal' _ mon) <=∘ mon n"), source)
+    // The chain writes its middle term: `suc<=suc IH <=∘ {_} {_} {suc (f n)} {_} mon n`
+    assertTrue(source.contains("suc<=suc (monotone-diagonal' _ mon") && source.contains("<=∘ {_} {_} {suc (f n)} {_} mon n"), source)
   }
 }

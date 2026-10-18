@@ -139,9 +139,19 @@ class RewriteGenerator(
       val (leftScore, rightScore) = ConclusionMatcher.rewriteSideScores(lemma, goal.expectedType) ?: continue
       val sides = lemmaSides(lemma)
       val permutative = sides != null && PremiseRetriever.head(sides.first) != null && PremiseRetriever.head(sides.first) == PremiseRetriever.head(sides.second)
-      val cost = (lemmaCosts[lemma] ?: LEMMA_COST) + (if (permutative) PERMUTATIVE_COST else 0.0)
-      if (leftScore != null && !undoes(metas.rewrite, lemma.ref.refName)) add(rewriteStep(metas.rewrite, factory.ref(lemma.ref)), cost)
-      if (rightScore != null && !undoes(metas.rewriteI, lemma.ref.refName)) add(rewriteStep(metas.rewriteI, factory.ref(lemma.ref)), cost)
+      // A lemma with hypotheses gets a goal for each, `rewrite (div_< {?})` (`mod_<`): the meta finds the equation's
+      // sides in the goal, the hypothesis `n < m` is proved afterwards
+      // A lemma with hypotheses gets each a goal, `rewrite (div_< {?})`, or a context hypothesis shaped like it,
+      // `rewrite (div_< n<m)` (`mod_<`): the meta finds the equation's sides in the goal either way
+      val explicit = RelationFixGenerator.explicitParameters(lemma)
+      if (explicit.any { !RelationFixGenerator.isHypothesisParameter(lemma, it) }) continue
+      val baseCost = (lemmaCosts[lemma] ?: LEMMA_COST) + (if (permutative) PERMUTATIVE_COST else 0.0)
+      val lists = if (explicit.isEmpty()) null else InstanceChainGenerator.argumentLists(goal, explicit, RelationFixGenerator.allParameters(lemma).toSet()) { true }
+      val equations = lists?.map { factory.app(factory.ref(lemma.ref), true, it.expressions) to baseCost + it.holes * AppGenerator.SUBGOAL_COST } ?: listOf(factory.ref(lemma.ref) to baseCost)
+      for ((equation, cost) in equations) {
+        if (leftScore != null && !undoes(metas.rewrite, lemma.ref.refName)) add(rewriteStep(metas.rewrite, equation), cost)
+        if (rightScore != null && !undoes(metas.rewriteI, lemma.ref.refName)) add(rewriteStep(metas.rewriteI, equation), cost)
+      }
     }
     return steps
   }

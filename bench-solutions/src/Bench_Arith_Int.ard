@@ -26,25 +26,25 @@
 \open Monoid(LDiv)
 
 \lemma iabs=abs {x : Int} : pos (iabs x) = IntRing.abs x => {?}
--- proved by proof search (final run (current code, 10 s per lemma), 891 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 822 ms)
 \lemma iabs_* {x y : Int} : iabs (x * y) = iabs x * iabs y \elim x, y   | pos x, pos x' => idp   | pos x, neg x'' => idp   | neg zero, pos x => idp   | neg zero, neg x' => idp   | neg (suc x'), pos x => idp   | neg (suc x'), neg x'' => idp
 \lemma <_+1_<= {x y : Int} (p : x < y + 1) : x <= y => {?}
 -- proved by proof search (final run (current code, 10 s per lemma), 22 ms)
 \lemma ldiv_iabs {x y : Int} (d : LDiv x y) : LDiv (iabs x) (iabs y) (iabs d.inv) => Algebra.Domain.Euclidean.ldiv_int_nat _
--- proved by proof search (final run (current code, 10 s per lemma), 1456 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 1330 ms)
 \lemma id<isuc {x : Int} : x < isuc x \elim x   | pos x => linarith   | neg zero => linarith   | neg (suc x') => linarith
 \lemma isuc_<_<= {x y : Int} (p : x < y) : isuc x <= y => {?}
--- proved by proof search (final run (current code, 10 s per lemma), 384 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 404 ms)
 \lemma pos_iabs {x y : Nat} (y<=x : y <= x) : pos (iabs (x Nat.- y)) = x Nat.- y \elim x, y, y<=x   | zero, y, y<=x => linarith   | suc x, zero, y<=x => idp   | suc x, suc y, y<=x => iabs.ofPos linarith
--- proved by proof search (final run (current code, 10 s per lemma), 560 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 600 ms)
 \lemma neg_iabs {x y : Nat} (x<=y : x <= y) : neg (iabs (x Nat.- y)) = x Nat.- y \elim x, y, x<=y   | zero, y, x<=y => idp   | suc x, zero, x<=y => linarith   | suc x, suc y, x<=y => neg_iabs linarith
--- proved by proof search (final run (current code, 10 s per lemma), 401 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 397 ms)
 \lemma iabs_-_suc {n i : Nat} (p : i <= n) : iabs (suc n Nat.- i) = suc (iabs (n Nat.- i)) \elim n, i, p   | n, zero, p => idp   | zero, suc i, p => linarith   | suc n, suc i, p => iabs_-_suc linarith
 -- proved by proof search (final run (current code, 10 s per lemma), 1 ms)
 \lemma zro-id=neg {n : Nat} : 0 Nat.- n = neg n => idp
--- proved by proof search (final run (current code, 10 s per lemma), 292 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 322 ms)
 \lemma -'=- {n m : Nat} (p : m <= n) : pos (n -' m) = n Nat.- m \elim n, m, p   | zero, m, p => linarith   | suc n, zero, p => idp   | suc n, suc m, p => -'=- linarith
--- proved by proof search (final run (current code, 10 s per lemma), 49 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 44 ms)
 \lemma unpos {n m : Nat} (p : pos n = pos m) : n = m => pmap iabs p
 -- proved by proof search (final run (current code, 10 s per lemma), 4 ms)
 \lemma pos<pos {n m : Nat} (p : n < m) : pos n < pos m => linarith
@@ -54,8 +54,8 @@
 \lemma pos<=pos {n m : Nat} (p : n <= m) : pos n <= pos m => linarith
 -- proved by proof search (final run (current code, 10 s per lemma), 3 ms)
 \lemma neg<=pos {n m : Nat} : neg n <= pos m => linarith
--- proved by proof search (final run (current code, 10 s per lemma), 75 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 72 ms)
 \lemma pos/<=neg {n m : Nat} (p : pos n <= neg m) : m = 0 => Arith.Int.unpos linarith
--- proved by proof search (final run (current code, 10 s per lemma), 3 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 4 ms)
 \lemma neg<=neg {n m : Nat} (p : n <= m) : neg m <= neg n => linarith
 \lemma signum_iabs_eq {x y : Int} (p : signum x = signum y) (q : iabs x = iabs y) : x = y => {?}

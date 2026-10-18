@@ -82,3 +82,6 @@
 
 -- Arith/Nat.ard mod_suc: a chain ending with a library lemma whose hypothesis is left as a goal, `pmap suc (mod_< p) *> inv (mod_< (suc<suc p))`
 \lemma mod_suc' {n : Nat} (i : Nat) (p : i < suc n) : suc (i mod suc n) = suc i mod suc (suc n) => {?}
+
+-- Arith/Nat.ard mod_<: a chain ending with a Prelude lemma instantiated from the context, `inv (pmap (m * __ + _) (div_< n<m)) *> divModProp n m`
+\lemma mod_<' {n m : Nat} (n<m : n < m) : n mod m = n => {?}

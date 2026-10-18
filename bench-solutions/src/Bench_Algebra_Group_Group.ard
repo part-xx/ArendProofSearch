@@ -20,7 +20,7 @@
 \import Algebra.Group
 \open Group
 
--- proved by proof search (final run (current code, 10 s per lemma), 51 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 46 ms)
 \lemma inverse-isInv {A : Group} {x : A} : inverse (inverse x) = x => AddGroup.negative-isInv {AddGroup.fromGroup A} {_}
--- proved by proof search (final run (current code, 10 s per lemma), 85 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 73 ms)
 \lemma inverse_* {A : Group} {x y : A} : inverse (x * y) = inverse y * inverse x => AddGroup.negative_+ {AddGroup.fromGroup A} {_} {_}

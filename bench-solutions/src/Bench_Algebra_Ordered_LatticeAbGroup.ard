@@ -28,19 +28,19 @@
 \lemma modularity {A : LatticeAbGroup} {x y : A} : x + y = (x ∨ y) + (x ∧ y) => {?}
 -- proved by proof search (final run (current code, 10 s per lemma), 26 ms)
 \lemma abs>=id {A : LatticeAbGroup} {x : A} : x <= abs x => join-left
--- proved by proof search (final run (current code, 10 s per lemma), 36 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 35 ms)
 \lemma abs>=neg {A : LatticeAbGroup} {x : A} : negative x <= abs x => join-right
--- proved by proof search (final run (current code, 10 s per lemma), 238 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 243 ms)
 \lemma abs_negative {A : LatticeAbGroup} {x : A} : abs (negative x) = abs x => unfold abs (rewrite AddGroup.negative-isInv JoinSemilattice.join-comm)
 \lemma abs_abs {A : LatticeAbGroup} {x : A} : abs (abs x) = abs x => {?}
 \lemma abs_+ {A : LatticeAbGroup} {x y : A} : abs (x + y) <= abs x + abs y => {?}
--- proved by proof search (final run (current code, 10 s per lemma), 100 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 175 ms)
 \lemma abs_- {A : LatticeAbGroup} {x y : A} : abs (x - y) = abs (y - x) => rewriteI AddGroup.negative_- LatticeAbGroup.abs_negative
--- proved by proof search (final run (current code, 10 s per lemma), 711 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 124 ms)
 \lemma abs_-left {A : LatticeAbGroup} {x y : A} : abs x - abs y <= abs (x - y) => rewrite LatticeAbGroup.abs_- LatticeAbGroup.abs_-right
--- proved by proof search (final run (current code, 10 s per lemma), 655 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 126 ms)
 \lemma abs_-right {A : LatticeAbGroup} {x y : A} : abs y - abs x <= abs (x - y) => rewrite LatticeAbGroup.abs_- LatticeAbGroup.abs_-left
--- proved by proof search (final run (current code, 10 s per lemma), 80 ms)
-\lemma abs>=_- {A : LatticeAbGroup} {x y : A} : y - x <= abs (x - y) => rewriteI AddGroup.negative_- LatticeAbGroup.abs>=neg
--- proved by proof search (final run (current code, 10 s per lemma), 679 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 103 ms)
+\lemma abs>=_- {A : LatticeAbGroup} {x y : A} : y - x <= abs (x - y) => rewrite LatticeAbGroup.abs_- LatticeAbGroup.abs>=id
+-- proved by proof search (final run (current code, 10 s per lemma), 756 ms)
 \lemma abs-univ {A : LatticeAbGroup} {x y z : A} (p : x - y <= z) (q : y - x <= z) : abs (x - y) <= z => join-univ p (rewrite AddGroup.negative_- q)

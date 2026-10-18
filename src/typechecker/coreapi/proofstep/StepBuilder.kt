@@ -96,10 +96,15 @@ object StepBuilder {
    */
   private val rejected = HashMap<Long, Failure>()
 
+  /** Metas whose success depends on the goal's structure beyond its text: `rewrite` finds a subexpression that `n div m` and `(divMod n m).1`, printed alike, do not share. */
+  private val structureSensitive = setOf("rewrite", "rewriteI", "rewriteF", "unfold", "mcases", "simplify", "equation", "linarith", "contradiction")
+
   private fun memoKey(goal: ArendGoal, term: ConcreteExpression): Long? {
     val problem = goal.problemText
     // An unsolved inference variable prints the same while standing for different things
     if (problem.contains('?')) return null
+    val text = term.toString()
+    if (text.substringBefore(' ').substringAfterLast('.') in structureSensitive) return null
     return (problem.hashCode().toLong() shl 32) or (term.toString().hashCode().toLong() and 0xffffffffL)
   }
 
@@ -107,7 +112,7 @@ object StepBuilder {
     goal: ArendGoal, currentProof: Proof<ArendGoal>?, term: ConcreteExpression, cost: Double, moduleLocation: ModuleLocation,
     accept: ((Expression) -> Boolean)? = null,
   ): Outcome {
-    if (pastDeadline()) return Outcome(null, Failure.OTHER)
+    if (pastDeadline()) { if (debug) println("Rejected $term : ${goal.expectedType} -- past the deadline"); return Outcome(null, Failure.OTHER) }
     val memo = if (accept == null && !noTermMemo) memoKey(goal, term) else null
     if (memo != null) synchronized(rejected) { rejected[memo] }?.let { remembered ->
       if (!verifyTermMemo) return Outcome(null, remembered)
@@ -116,6 +121,7 @@ object StepBuilder {
       return actual
     }
     val outcome = typecheckStep(goal, currentProof, term, cost, moduleLocation, accept)
+    if (debug && outcome.step == null && outcome.failure == null) println("Rejected $term : ${goal.expectedType} -- the step could not be plugged into the proof")
     // Only a type mismatch is remembered: whether an argument can be inferred (`meet-left` against `x ∧ y <= x`) has turned
     // out to depend on the state, and an exception or an interrupted typecheck says nothing about the term
     if (memo != null && outcome.step == null && outcome.failure == Failure.MISMATCH && !pastDeadline()) synchronized(rejected) {
