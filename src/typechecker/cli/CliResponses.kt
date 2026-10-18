@@ -43,11 +43,14 @@ data class ScopeResponse(
 
 @Serializable
 data class SearchResult(
-    val library: String,
+    val library: String = "",
     val module: String,
     val name: String,
     val kind: String,
-    val signature: String,
+    /** Full signature; only present with `-ps print-full`. */
+    val signature: String = "",
+    /** The matching slice of the signature (`parameters -> codomain`, or just the codomain). */
+    val expression: String = "",
     val location: SearchLocation? = null
 )
 

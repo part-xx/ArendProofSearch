@@ -1,6 +1,7 @@
 plugins {
     kotlin("jvm") version "2.2.0"
     kotlin("plugin.serialization") version "2.2.0"
+    application
 }
 
 // val projectArend = gradle.includedBuild("Arend")
@@ -66,6 +67,10 @@ kotlin {
   jvmToolchain(21)
 }
 
+application {
+  mainClass.set("MainKt")
+}
+
 sourceSets {
   main {
     java {
@@ -89,10 +94,28 @@ val llmModel: String by project
 val openaiLikeApiKey: String by project
 val openaiLikeBaseUrl: String by project
 val openaiLikeModel: String by project
+val llmBackend = providers.gradleProperty("llmBackend").orElse("local")
+val llmRegime = providers.gradleProperty("llmRegime").orElse("qwen3-direct-v1")
+val llmCandidateMode = providers.gradleProperty("llmCandidateMode").orElse("batch")
+val arendLibPath = providers.gradleProperty("arendLibPath").orElse("")
+val localModelPath = providers.gradleProperty("localModelPath")
+  .orElse("../VM_setup/models/qwen3-coder-30b-a3b-arend-direct-v1-production-20260823-001-q5_k_m.gguf")
+val llamaServerExecutable = providers.gradleProperty("llamaServerExecutable").orElse("llama-server")
+val localContextSize = providers.gradleProperty("localContextSize").orElse("8192")
+val localMaxTokens = providers.gradleProperty("localMaxTokens").orElse("512")
+val localStartupTimeoutSeconds = providers.gradleProperty("localStartupTimeoutSeconds").orElse("180")
+val llmMaxAttempts = providers.gradleProperty("llmMaxAttempts").orElse("10")
+val llmMaxCandidates = providers.gradleProperty("llmMaxCandidates").orElse("2")
+val llmBatchTemperature = providers.gradleProperty("llmBatchTemperature").orElse("0.7")
+val llmPremisesFile = providers.gradleProperty("llmPremisesFile").orElse("")
 
 tasks.test {
   useJUnitPlatform()
-  maxHeapSize = "4g"
+  maxHeapSize = "8g"
+  // Proof-search benchmark (BenchmarkTest): -Pbench=true [-Pbench.modules=Bench_A,Bench_B] [-Pbench.limit=N]
+  for (property in listOf("bench", "bench.modules", "bench.names", "bench.limit", "bench.log", "bench.expansions", "bench.seconds", "proofsearch.debug", "proofsearch.timing", "proofsearch.noTermMemo", "proofsearch.noResolveMemo", "proofsearch.verifyTermMemo")) {
+    providers.gradleProperty(property).orNull?.let { systemProperty(property, it) }
+  }
   environment("LITELLM_API_KEY", System.getenv("LITELLM_API_KEY") ?: litellmApiKey)
   systemProperty("llm.base.url", llmBaseUrl)
   systemProperty("llm.api.key", llmApiKey.ifEmpty { litellmApiKey })
@@ -100,11 +123,35 @@ tasks.test {
   environment("OPENAI_LIKE_API_KEY", System.getenv("OPENAI_LIKE_API_KEY") ?: openaiLikeApiKey)
   systemProperty("openai.like.base.url", openaiLikeBaseUrl)
   systemProperty("openai.like.model", openaiLikeModel)
+  systemProperty("llm.backend", llmBackend.get())
+  systemProperty("llm.regime", llmRegime.get())
+  systemProperty("llm.candidate.mode", llmCandidateMode.get())
+  systemProperty("arend.lib.path", arendLibPath.get())
+  systemProperty("local.model.path", localModelPath.get())
+  systemProperty("local.llama.server.executable", llamaServerExecutable.get())
+  systemProperty("local.context.size", localContextSize.get())
+  systemProperty("local.max.tokens", localMaxTokens.get())
+  systemProperty("local.startup.timeout.seconds", localStartupTimeoutSeconds.get())
+  systemProperty("llm.max.attempts", llmMaxAttempts.get())
+  systemProperty("llm.max.candidates", llmMaxCandidates.get())
+  systemProperty("llm.batch.temperature", llmBatchTemperature.get())
+  systemProperty("llm.premises.file", llmPremisesFile.get())
 }
 
 tasks.withType<JavaExec>().configureEach {
   systemProperty("openai.like.api.key", openaiLikeApiKey)
   systemProperty("openai.like.base.url", openaiLikeBaseUrl)
   systemProperty("openai.like.model", openaiLikeModel)
+  systemProperty("llm.backend", llmBackend.get())
+  systemProperty("llm.regime", llmRegime.get())
+  systemProperty("llm.candidate.mode", llmCandidateMode.get())
+  systemProperty("local.model.path", localModelPath.get())
+  systemProperty("local.llama.server.executable", llamaServerExecutable.get())
+  systemProperty("local.context.size", localContextSize.get())
+  systemProperty("local.max.tokens", localMaxTokens.get())
+  systemProperty("local.startup.timeout.seconds", localStartupTimeoutSeconds.get())
+  systemProperty("llm.max.attempts", llmMaxAttempts.get())
+  systemProperty("llm.max.candidates", llmMaxCandidates.get())
+  systemProperty("llm.batch.temperature", llmBatchTemperature.get())
+  systemProperty("llm.premises.file", llmPremisesFile.get())
 }
-

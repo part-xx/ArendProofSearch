@@ -1,0 +1,59 @@
+-- Goals adapted from rewrites in arend-lib (RewriteGenerator tests).
+-- Each comment names the original and gives a proof that typechecks.
+
+\import Algebra.Meta
+\import Algebra.Group
+\import Algebra.Monoid
+\import Arith.Nat
+\import Logic
+\import Meta
+\import Paths
+\import Paths.Meta
+\import Order.PartialOrder
+\open Nat(mod)
+\open NatOrder (<, suc<suc)
+
+-- Algebra/Group/Free.ard:352: rewrite with a hypothesis, then idp
+--   rewrite p idp
+\lemma rewrite-hyp {x y : Nat} (p : x = y) : suc x = suc y => {?}
+
+-- Arith/Nat.ard:542 aux: rewriteI with a hypothesis, then close with another one
+--   rewriteI p q
+\lemma rewriteI-hyp {x y : Nat} (p : 0 = y) (q : x < 1) : x < suc y => {?}
+
+-- Arith/Real/UpperReal.ard:163 real_meet_U: rewrite, then close with a hypothesis
+--   rewrite p h
+\lemma rewrite-then-hyp {A : \Type} {P : A -> \Prop} {a b : A} (p : a = b) (h : P b) : P a => {?}
+
+-- Arith/Nat.ard:253 suc<=suc: rewrite, then close with a library lemma
+--   rewrite p id<suc
+\lemma rewrite-then-lemma {x y : Nat} (p : x = y) : x < suc y => {?}
+
+-- Paths/RewriteTest.ard test7: a library equation whose arguments are inferred
+--   rewrite NatSemiring.+-comm idp
+\lemma rewrite-comm (x y : Nat) (f : Nat -> Nat) : f (x + y) = f (y + x) => {?}
+
+-- Algebra/Group.ard:162 translate-is-Equiv: a chain of library rewrites
+--   rewriteI *-assoc (rewrite inverse-left (rewrite ide-left idp))
+\lemma rewrite-chain {G : Group} (h x : G) : inverse h * (h * x) = x => {?}
+
+-- Arith/Nat.ard:299 -'+-comm: the same lemma at two places
+--   rewrite -'0 (rewrite -'0 idp)
+\lemma rewrite-twice {n k : Nat} : n -' 0 + k = (n + k) -' 0 => {?}
+
+-- Arith/Int.ard:429 conv: rewrite in a hypothesis
+--   rewrite p in q
+\lemma rewrite-in {x y : Nat} (p : x = y) (q : x < y) : y < y => {?}
+
+-- a lemma whose left side is a bare variable: rewriting with it would match any Nat
+\lemma expand-zero (n : Nat) : n = n + 0 => idp
+
+-- Logic.ard:114 <->_=, first component: \lam p => ext p; the ext meta turns P = Q into P <-> Q
+\lemma iff-eq {P Q : \Prop} (p : P <-> Q) : P = Q => {?}
+
+-- No rewrite applies: neither side of p occurs in the goal or in another hypothesis of the goal's kind
+\lemma rewrite-irrelevant {x y z : Nat} (p : x = y) (h : z < 5) : z < 5 => {?}
+
+-- Arith/Nat.ard mod<=left: `n` occurs on both sides, so the equation `divModProp n m : m * (n div m) + n mod m = n`
+-- (a bare parameter as a side) is used by transport at the right side only
+\lemma mod<=left' (n m : Nat) : n mod m <= n => {?}

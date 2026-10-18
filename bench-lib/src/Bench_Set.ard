@@ -1,0 +1,25 @@
+-- Lemmas of Set restated with {?} bodies (proof-search benchmark; generated).
+
+\import Data.Bool (Bool, So, false, not, true)
+\import Function.Meta
+\import Logic
+\import Logic.Meta
+\import Logic.Unique
+\import Meta
+\import Paths
+\import Paths.Meta
+\import Set
+\import Algebra.Meta
+
+\lemma dec-separated {E : \Prop} (d : Dec E) (q : Not (Not E)) : E => {?}
+\lemma negated-dec (E : \Prop) {P : NegatedProp} (f : Dec E -> P) : P => {?}
+\lemma dec_decide {E : \Prop} (d : Dec E) : Decide E => {?}
+\lemma dec_yes_reduce {E : \Prop} {d : Dec E} (e : E) : d = yes e => {?}
+\lemma dec_no_reduce {E : \Prop} {d : Dec E} (q : Not E) : d = no q => {?}
+\lemma Dec_|| {A B : \Prop} (d : Dec A) (e : Dec B) : Dec (A || B) => {?}
+\lemma NotDec {P : \Prop} (d : Dec P) : Dec (Not P) => {?}
+\lemma decideEq=_reduce {A : DecSet} {x y : A} (p : x = y) : decideEq x y = yes p => {?}
+\lemma decideEq/=_reduce {A : DecSet} {x y : A} (p : x /= y) : decideEq x y = no p => {?}
+\lemma ==_= {A : DecSet} {a a' : A} (so : So (a == a')) : a = a' => {?}
+\lemma =-dec {A : DecSet} {a a' : A} {so : So (a == a')} : a = a' => {?}
+\lemma /=-dec {A : DecSet} {a a' : A} {so : So (not (a == a'))} : a /= a' => {?}

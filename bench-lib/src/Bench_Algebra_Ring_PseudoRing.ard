@@ -1,0 +1,30 @@
+-- Lemmas of Algebra.Ring (class PseudoRing) restated with {?} bodies (proof-search benchmark; generated).
+
+\import Algebra.Domain.Bezout
+\import Algebra.Group
+\import Algebra.Meta
+\import Algebra.Monoid
+\import Algebra.Monoid.GCD
+\import Algebra.Ring.Ideal
+\import Algebra.Semiring
+\import Arith.Nat
+\import Equiv
+\import Function.Meta ($)
+\import Logic
+\import Logic.Meta
+\import Meta
+\import Paths
+\import Paths.Meta
+\import Relation.Equivalence
+\import Set
+\import Set.Fin
+\import Algebra.Ring
+\open PseudoRing
+
+\lemma negative_*-left {A : PseudoRing} {x y : A} : negative x * y = negative (x * y) => {?}
+\lemma negative_*-right {A : PseudoRing} {x y : A} : x * negative y = negative (x * y) => {?}
+\lemma negative_* {A : PseudoRing} {x y : A} : negative x * negative y = x * y => {?}
+\lemma ldistr_- {A : PseudoRing} {x y z : A} : x * (y - z) = x * y - x * z => {?}
+\lemma rdistr_- {A : PseudoRing} {x y z : A} : (x - y) * z = x * z - y * z => {?}
+\lemma *_sum_diff {A : PseudoRing} {x y : A} (p : x * y = y * x) : (x + y) * (x - y) = x * x - y * y => {?}
+\lemma *_diff_sum {A : PseudoRing} {x y : A} (p : x * y = y * x) : (x - y) * (x + y) = x * x - y * y => {?}

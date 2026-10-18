@@ -1,0 +1,39 @@
+-- Goals for splitting on what the goal is stuck on (mcases) and on compound expressions
+-- (\case e \as x, idp : e = x, the syntax behind `cases (e arg addPath)`).
+
+\import Algebra.Meta
+\import Algebra.Ordered
+\import Arith.Int
+\import Arith.Nat
+\import Data.Bool
+\import Data.List
+\import Logic
+\import Logic.Meta
+\import Meta
+\import Order.PartialOrder
+\import Paths
+\import Paths.Meta
+\import Set
+\open NatOrder
+
+\func eqCount {A : DecSet} (a : A) (l : List A) : Nat \elim l
+  | nil => 0
+  | :: x l => \case decideEq a x \with { | yes _ => suc (eqCount a l) | no _ => eqCount a l }
+
+-- the goal computes to a \case stuck on `decideEq a a`, as count does in Data/List.ard:169 count_++
+--   mcases \with { | yes _ => idp | no n => contradiction }
+\lemma eqCount-self (a : Nat) (l : List Nat) : eqCount a (a :: l) = suc (eqCount a l) => {?}
+
+\func notb (b : Bool) : Bool | true => false | false => true
+
+-- the goal is stuck on `notb (f n)`: the second call of notb; the first call's argument is the whole of it
+--   mcases {(notb, 2)} \with { | true => idp | false => idp }
+\lemma notb-notb (f : Nat -> Bool) (n : Nat) : notb (notb (f n)) = f n => {?}
+
+-- no function of the goal is stuck on `n -' m` as a whole, so the goal has to split on it and keep the equation,
+-- as Arith/Int.ard:392 pos_iabs does with `cases ((x Nat.- y) arg addPath)`
+--   \case n -' m \as x, idp : n -' m = x \with { | 0, p => rewrite p (byLeft idp) | suc k, p => rewrite p (byRight zero<suc) }
+\lemma minus-zero-or-pos (n m : Nat) : (n -' m = 0) || (0 < n -' m) => {?}
+
+-- Arith/Int.ard:392 pos_iabs: cases ((x Nat.- y) arg addPath) \with { | pos n, p => idp | neg (suc n), p => absurd (y<=x (NatSemiring.triLess p)) }
+\lemma pos_iabs' {x y : Nat} (y<=x : y <= x) : pos (iabs (x Nat.- y)) = x Nat.- y => {?}

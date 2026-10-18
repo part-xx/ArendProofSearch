@@ -1,0 +1,14 @@
+-- Lemmas of Order.StrictOrder (class StrictPoset) restated with {?} bodies (proof-search benchmark; generated).
+
+\import Logic
+\import Paths
+\import Set
+\import Order.StrictOrder
+\import Algebra.Meta
+\import Logic.Meta
+\import Meta
+\import Paths.Meta
+\open StrictPoset
+
+\lemma <_/= {A : StrictPoset} {x y : A} (x<y : x < y) : x /= y => {?}
+\lemma >_/= {A : StrictPoset} {x y : A} (y<x : x > y) : x /= y => {?}

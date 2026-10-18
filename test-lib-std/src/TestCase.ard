@@ -1,0 +1,111 @@
+-- Goals adapted from case analyses in arend-lib (CaseGenerator tests).
+-- Each comment names the original and gives a proof that typechecks.
+
+\import Algebra.Meta
+\import Arith.Nat
+\import Data.Array
+\import Data.Bool
+\import Data.Fin
+\import Logic
+\import Logic.Meta
+\import Meta
+\import Order.Lattice
+\import Order.LinearOrder
+\import Order.PartialOrder
+\import Order.StrictOrder
+\import Paths
+\import Paths.Meta
+\import Set
+
+-- Data/Bool.ard:22 not-isInv: split a variable of the goal; both branches compute
+--   \case \elim b \with { | false => idp | true => idp }
+\lemma not-not {b : Bool} : not (not b) = b => {?}
+
+-- Arith/Nat.ard:36 -'0: the same on Nat
+--   \case \elim n \with { | 0 => idp | suc n => idp }
+\lemma minus-zero {n : Nat} : n -' 0 = n => {?}
+
+-- Arith/Nat.ard:31 suc_pred: the hypothesis depends on n, so it is eliminated with it
+--   \case \elim n, \elim n/=0 \with { | 0, n/=0 => contradiction | suc n, n/=0 => idp }
+\lemma suc-pred {n : Nat} (n/=0 : n /= 0) : suc (pred n) = n => {?}
+
+-- Order/LinearOrder.ard:136 #-symmetric: split a disjunction hypothesis
+--   \case h \with { | byLeft a => byRight a | byRight b => byLeft b }
+\lemma or-symm {A B : \Prop} (h : A || B) : B || A => {?}
+
+-- Function.ard:31 factor: split an existential with a nested tuple pattern
+--   \case h \with { | inP (a, p) => p }
+\lemma exists-snd {A : \Type} {P : \Prop} (h : ∃ (a : A) P) : P => {?}
+
+-- Order/LinearOrder.ard:237 <=_/=: split on trichotomy, refute two branches
+--   \case LinearOrder.trichotomy a a' \with { | less r => r | equals r => contradiction | greater r => contradiction }
+\lemma lt-of-le-ne {A : LinearOrder.Dec} {a a' : A} (p : a <= a') (q : a /= a') : a < a' => {?}
+
+-- Set.ard:103 tightness: split on decideEq
+--   \case decideEq x y \with { | yes e => e | no n => contradiction }
+\lemma tightness' {A : DecSet} {x y : A} (h : Not (Not (x = y))) : x = y => {?}
+
+-- Arith/Nat.ard:327 -'_<=: an equation between different constructors
+--   \case p \with {}
+\lemma suc/=0' {n : Nat} (p : suc n = 0) : Empty => {?}
+
+-- Data/Array.ard:882: a hypothesis of an empty type
+--   \case i \with {}
+\lemma fin0-elim (i : Fin 0) : Empty => {?}
+
+-- Arith/Real.ard:474 real_join_L: split on meet-isMin, then rewrite with the branch equation
+--   \case TotalOrder.meet-isMin a b \with { | byLeft p => rewrite p ha | byRight p => rewrite p hb }
+\lemma meet-pred {A : TotalOrder} {P : A -> \Prop} {a b : A} (ha : P a) (hb : P b) : P (a ∧ b) => {?}
+
+-- n does not occur anywhere and Nat is recursive: splitting on it would not help
+\lemma no-split-unused (n : Nat) {b : Bool} : not (not b) = b => {?}
+
+-- a proposition cannot be eliminated into a non-propositional goal
+\func no-split-trunc {A B : \Prop} (h : A || B) : Nat => {?}
+
+-- Data/Fin.ard:23 fsuc/=0: \case __  (a goal of a function type: introduce, then refute)
+\lemma fsuc/=0' {n : Nat} {x : Fin n} : fsuc x /= 0 => {?}
+
+-- a goal of a function type: introduce the argument, then the hypothesis closes it
+\func intro-hyp {A : \Type} {a b : A} (p : a = b) : (b = a) -> (a = b) => {?}
+
+-- Order/Lattice.ard:71 Big_<=_meet0: an array is split into nil and a :: l, like a list
+--   \case \elim l \with { | nil => <=-refl | a :: l => meet-right <=∘ big-meet-left }
+\lemma big-meet-left {L : MeetSemilattice} {l : Array L} {x : L} : Big (∧) x l <= x => {?}
+
+-- Algebra/Monoid.ard:398 BigSum-ext: an array of a variable length is split together with its length
+--   \case \elim n, \elim l, \elim l', \elim p \with { | 0, nil, l', p => idp | suc n, a :: l, l', p => ... }
+\lemma array-ext {A : \Set} {n : Nat} {l l' : Array A n} (p : \Pi (i : Fin n) -> l i = l' i) : l = l' => {?}
+
+-- Logic.ard:133 TSetIm-elim: the hypothesis is a \type, which only unfolds to a truncated \Sigma
+--   \case s \with { | inP (a, p) => rewriteI p (c a) }
+\lemma tsetim-elim {A B : \Set} {C : B -> \Prop} {f : A -> B} (c : \Pi (a : A) -> C (f a)) {b : B} (s : TSetIm f b) : C b => {?}
+
+-- Order/Lattice.ard:81 Big_meet-univ, inner step: the hypothesis applied to a constructor of the variable, f (suc i);
+-- `f _` cannot be inferred, since `(a :: l) ?j` and `l i` do not unify
+\lemma tail-bound {L : MeetSemilattice} {l : Array L} {a y : L} (f : \Pi (i : Fin (suc l.len)) -> y <= (a :: l) i) (i : Fin l.len) : y <= l i => {?}
+
+-- Order/Lattice.ard:81 Big_meet-univ, first argument of meet-univ: the hypothesis applied to a nullary constructor, f 0
+\lemma head-bound {L : MeetSemilattice} {l : Array L} {a y : L} (f : \Pi (i : Fin (suc l.len)) -> y <= (a :: l) i) : y <= a => {?}
+
+-- Order/Lattice.ard Big_<=_join1, cons case: `(a :: l) i` computes once `i` is split, so the goal is stuck on `i`
+\lemma cons-at-stuck {L : JoinSemilattice} (a x : L) (l : Array L) (i : Fin (suc l.len)) : (a :: l) i <= a ∨ x => {?}
+
+-- Arith/Nat.ard id/=suc, fin_nat-inj: a hypothesis between applications of one constructor is mapped over its destructor, pmap pred p
+\lemma unsuc' {n m : Nat} (p : suc n = suc m) : n = m => {?}
+-- the sides have different heads: no destructor applies
+\lemma unsuc-no {n m : Nat} (p : suc n = m) : n = m => {?}
+
+-- Arith/Nat.ard id/=suc, suc case: the mapped hypothesis `pmap pred p : n = suc n` is what the recursive call needs
+\lemma unsuc-forward {n : Nat} (p : suc n = suc (suc n)) : Empty => {?}
+-- Arith/Nat.ard fin_nat-inj, mixed case: `p : 0 = suc y` in Nat, through the coercion of Fin, is absurd
+\lemma fin-absurd {n : Nat} {y : Fin n} (p : 0 = {Nat} suc y) : Empty => {?}
+
+-- Arith/Nat.ard fin_nat-inj: `p : x = {Nat} y` mentions x and y through the coercion of Fin to Nat
+\lemma fin-dep {n : Nat} {x y : Fin n} (p : x = {Nat} y) : x = y => {?}
+
+-- Arith/Nat.ard id/=suc, suc case: the recursive call `id/=suc (pmap pred p)` takes its argument through `/=`, a function type once unfolded
+\lemma not-apply {n : Nat} (q : n = suc n) : Empty => {?}
+
+-- Arith/Nat.ard fin_nat-inj, suc case: `pmap (\lam z => suc z) ...`, since `suc` of Fin alone does not determine its bound
+\lemma fin-suc-cong {n : Nat} {x y : Fin n} (p : x = y) : suc x = {Fin (suc n)} suc y => {?}

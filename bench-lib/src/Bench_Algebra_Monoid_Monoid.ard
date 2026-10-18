@@ -1,0 +1,46 @@
+-- Lemmas of Algebra.Monoid (class Monoid) restated with {?} bodies (proof-search benchmark; generated).
+
+\import Algebra.Meta
+\import Algebra.Monoid.SubMonoid
+\import Algebra.Pointed
+\import Arith.Nat
+\import Data.Array
+\import Data.Array.EPerm
+\import Data.Array.Perm
+\import Data.Fin (fsuc, fsuc/=, nat_fin_=)
+\import Data.Or
+\import Equiv
+\import Equiv.Sigma
+\import Equiv.Univalence.Set
+\import Function
+\import Function.Meta
+\import Logic.Unique
+\import Logic
+\import Logic.Meta
+\import Meta
+\import Order.Biordered
+\import Order.LinearOrder
+\import Order.PartialOrder
+\import Paths
+\import Paths.Meta
+\import Set
+\import Set.Fin
+\import Set.Fin.BoundedPigeonhole
+\import Set.Fin.Instances
+\import Algebra.Monoid
+\open Monoid
+
+\lemma pow_+ {A : Monoid} {a : A} {n m : Nat} : pow a (n + m) = pow a n * pow a m => {?}
+\lemma pow_* {A : Monoid} {a : A} {n m : Nat} : pow a (n Nat.* m) = pow (pow a n) m => {?}
+\lemma pow-comm1 {A : Monoid} {a b : A} (p : a * b = b * a) {n : Nat} : pow a n * b = b * pow a n => {?}
+\lemma pow-comm2 {A : Monoid} {a b : A} (p : a * b = b * a) {n m : Nat} : pow a n * pow b m = pow b m * pow a n => {?}
+\lemma pow-comm {A : Monoid} {a b : A} (p : a * b = b * a) {n : Nat} : pow (a * b) n = pow a n * pow b n => {?}
+\lemma pow-left {A : Monoid} {a : A} {n : Nat} : a * pow a n = pow a n * a => {?}
+\lemma BigProd-ext {A : Monoid} {n : Nat} {l l' : Array A n} (p : \Pi (i : Fin n) -> l i = l' i) : BigProd l = BigProd l' => {?}
+\lemma BigProd_ide {A : Monoid} {l : Array A} (p : \Pi (j : Fin l.len) -> l j = ide) : BigProd l = ide => {?}
+\lemma BigProd-unique {A : Monoid} {l : Array A} (i : Fin l.len) (p : \Pi (j : Fin l.len) -> i /= j -> l j = 1) : BigProd l = l i => {?}
+\lemma BigProd_++ {A : Monoid} {l l' : Array A} : BigProd (l ++ l') = BigProd l * BigProd l' => {?}
+\lemma BigProd_suc {A : Monoid} {n : Nat} {l : Array A (suc n)} : BigProd l = BigProd (\new Array A n (\lam i => l i)) * l (n Nat.mod suc n) => {?}
+\lemma BigProd_replicate {A : Monoid} {x : A} {n : Nat} : BigProd (replicate n x) = pow x n => {?}
+\lemma IsCentral_* {A : Monoid} {x y : A} (xc : IsCentral x) (yc : IsCentral y) : IsCentral (x * y) => {?}
+\lemma IsCentral_pow {A : Monoid} {x : A} (xc : IsCentral x) {n : Nat} : IsCentral (pow x n) => {?}

@@ -1,0 +1,15 @@
+-- Lemmas of Set (class Set#) restated with {?} bodies (proof-search benchmark; generated).
+
+\import Data.Bool (Bool, So, false, not, true)
+\import Function.Meta
+\import Logic
+\import Logic.Meta
+\import Logic.Unique
+\import Meta
+\import Paths
+\import Paths.Meta
+\import Set
+\import Algebra.Meta
+\open Set#
+
+\lemma apartNotEqual {A : Set#} {x y : A} (x#y : x # y) : x /= y => {?}

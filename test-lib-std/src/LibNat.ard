@@ -1,0 +1,40 @@
+-- Lemmas of arend-lib whose proofs only apply definitions, rewrite and split cases.
+-- Each is restated verbatim (class-body lemmas take their class as a parameter); the
+-- comment gives the location and the original proof, with a top-level \elim written as \case \elim.
+
+\import Algebra.Meta
+\import Algebra.Monoid(Monoid)
+\import Algebra.Ordered
+\import Algebra.StrictlyOrdered
+\import Arith.Nat
+\import Data.Bool
+\import Data.Or
+\import Function.Meta
+\import Logic
+\import Meta
+\import Order.Biordered
+\import Order.Lattice
+\import Order.LinearOrder
+\import Order.PartialOrder \hiding (<=)
+\import Paths
+\import Paths.Meta
+\import Set (==, ==_=)
+\open Nat
+\open LinearlyOrderedAbMonoid
+\open NatOrder
+\open LinearOrder \hiding (Dec)
+
+-- Arith/Nat.ard:371: suc_<=_< (suc<=suc p)
+\lemma <=_<_suc' {n m : Nat} (p : n <= m) : n < suc m => {?}
+
+-- Arith/Nat.ard:59: \case \elim p \with { | suc<suc p => p }
+\lemma unsuc<' {n m : Nat} (p : suc n < suc m) : n < m => {?}
+
+-- Arith/Nat.ard:35: \case \elim n \with { | 0 => idp | suc n => idp }
+\lemma -'0' {n : Nat} : n -' 0 = n => {?}
+
+-- Arith/Nat.ard:250: \case <=-dec p \with { | inl x<y => <=-less (suc<suc x<y) | inr p => rewrite p <=-refl }
+\lemma suc<=suc' {x y : Nat} (p : x <= y) : suc x <= suc y => {?}
+
+-- Arith/Nat.ard:240: cases x idp
+\lemma NatBSemilattice-ldistr0' {x : Nat} : x ∧ 0 = 0 => {?}

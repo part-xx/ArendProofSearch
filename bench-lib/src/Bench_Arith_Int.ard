@@ -1,0 +1,45 @@
+-- Lemmas of Arith.Int restated with {?} bodies (proof-search benchmark; generated).
+
+\import Algebra.Group
+\import Algebra.Monoid
+\import Algebra.StrictlyOrdered
+\import Algebra.Pointed
+\import Algebra.Ring
+\import Algebra.Semiring
+\import Arith.Nat
+\import Data.Bool
+\import Data.Or
+\import Function.Meta
+\import Logic
+\import Meta
+\import Order.Biordered
+\import Order.LinearOrder
+\import Order.PartialOrder
+\import Order.StrictOrder
+\import Paths
+\import Paths.Meta
+\import Arith.Int
+\import Algebra.Meta
+\import Logic.Meta
+\open LinearOrder (trichotomy)
+\open Monoid(LDiv)
+
+\lemma iabs=abs {x : Int} : pos (iabs x) = IntRing.abs x => {?}
+\lemma iabs_* {x y : Int} : iabs (x * y) = iabs x * iabs y => {?}
+\lemma <_+1_<= {x y : Int} (p : x < y + 1) : x <= y => {?}
+\lemma ldiv_iabs {x y : Int} (d : LDiv x y) : LDiv (iabs x) (iabs y) (iabs d.inv) => {?}
+\lemma id<isuc {x : Int} : x < isuc x => {?}
+\lemma isuc_<_<= {x y : Int} (p : x < y) : isuc x <= y => {?}
+\lemma pos_iabs {x y : Nat} (y<=x : y <= x) : pos (iabs (x Nat.- y)) = x Nat.- y => {?}
+\lemma neg_iabs {x y : Nat} (x<=y : x <= y) : neg (iabs (x Nat.- y)) = x Nat.- y => {?}
+\lemma iabs_-_suc {n i : Nat} (p : i <= n) : iabs (suc n Nat.- i) = suc (iabs (n Nat.- i)) => {?}
+\lemma zro-id=neg {n : Nat} : 0 Nat.- n = neg n => {?}
+\lemma -'=- {n m : Nat} (p : m <= n) : pos (n -' m) = n Nat.- m => {?}
+\lemma unpos {n m : Nat} (p : pos n = pos m) : n = m => {?}
+\lemma pos<pos {n m : Nat} (p : n < m) : pos n < pos m => {?}
+\lemma neg<neg {n m : Nat} (p : n < m) : neg m < neg n => {?}
+\lemma pos<=pos {n m : Nat} (p : n <= m) : pos n <= pos m => {?}
+\lemma neg<=pos {n m : Nat} : neg n <= pos m => {?}
+\lemma pos/<=neg {n m : Nat} (p : pos n <= neg m) : m = 0 => {?}
+\lemma neg<=neg {n m : Nat} (p : n <= m) : neg m <= neg n => {?}
+\lemma signum_iabs_eq {x y : Int} (p : signum x = signum y) (q : iabs x = iabs y) : x = y => {?}

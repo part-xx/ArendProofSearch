@@ -1,0 +1,29 @@
+-- Lemmas of Algebra.Ordered (class PosetAddGroup) restated with {?} bodies (proof-search benchmark; generated).
+
+\import Algebra.Group
+\import Algebra.Meta
+\import Algebra.Monoid
+\import Algebra.Ring
+\import Algebra.Semiring
+\import Arith.Nat
+\import Data.Array
+\import Function
+\import Function.Meta
+\import Logic
+\import Logic.Meta
+\import Meta
+\import Order.Lattice
+\import Order.PartialOrder
+\import Paths
+\import Paths.Meta
+\import Set
+\import Set.Fin
+\import Set.Fin.Instances
+\import Set.Set
+\import Algebra.Ordered
+\open PosetAddGroup
+
+\lemma negative_<= {A : PosetAddGroup} {x y : A} (x<=y : x <= y) : negative y <= negative x => {?}
+\lemma negative_<=-conv {A : PosetAddGroup} {x y : A} (p : negative y <= negative x) : x <= y => {?}
+\lemma <=_+-cancel-left {A : PosetAddGroup} (x : A) {y z : A} (p : x + y <= x + z) : y <= z => {?}
+\lemma <=_+-cancel-right {A : PosetAddGroup} (z : A) {x y : A} (p : x + z <= y + z) : x <= y => {?}

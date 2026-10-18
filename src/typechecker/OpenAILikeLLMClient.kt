@@ -17,7 +17,7 @@ class OpenAILikeLLMClient(
     private val baseUrl: String = "https://ws-pzity02qkb8f5fja.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1",
     private val maxTokens: Int = 1024,
     private val enableThinking: Boolean = false
-) : LLMClient {
+) : LLMClient, AutoCloseable {
 
     private val httpClient = HttpClient {
         install(HttpTimeout) {
@@ -27,25 +27,28 @@ class OpenAILikeLLMClient(
         }
     }
 
-    override suspend fun generateResponse(systemPrompt: String, userPrompt: String, temperature: Double?): String {
+    override suspend fun generateResponse(systemPrompt: String, userPrompt: String, temperature: Double?): String =
+        generateResponses(systemPrompt, userPrompt, temperature, 1).first()
+
+    override suspend fun generateResponses(
+        systemPrompt: String,
+        userPrompt: String,
+        temperature: Double?,
+        count: Int
+    ): List<String> {
+        require(count > 0) { "Response count must be positive" }
         var lastException: Exception? = null
 
         for (attempt in 1..3) {
             val response = try {
                 withTimeout(120000.milliseconds) {
                     val requestBody = buildJsonObject {
-                        put("model", model)
-                        putJsonArray("messages") {
-                            add(buildJsonObject {
-                                put("role", "system")
-                                put("content", systemPrompt)
-                            })
-                            add(buildJsonObject {
-                                put("role", "user")
-                                put("content", userPrompt)
-                            })
-                        }
+                        // llama-server does not require a model name. Leaving it blank
+                        // lets a managed local server use whichever GGUF it loaded.
+                        if (model.isNotBlank()) put("model", model)
+                        put("messages", chatMessages(systemPrompt, userPrompt))
                         put("max_tokens", maxTokens)
+                        put("n", count)
                         if (temperature != null) put("temperature", temperature)
                         // DashScope/Alibaba compatible-mode extra param: disables long
                         // chain-of-thought on hybrid (Qwen3-style) models. Ignored elsewhere.
@@ -74,17 +77,22 @@ class OpenAILikeLLMClient(
                 val responseBody = response.body<String>()
                 val json = Json.parseToJsonElement(responseBody)
                 val choices = (json as JsonObject)["choices"]?.jsonArray
-                val firstChoice = choices?.firstOrNull()
-                val message = (firstChoice as? JsonObject)?.get("message")?.jsonObject
-                val content = message?.get("content")?.jsonPrimitive?.content
+                val contents = choices.orEmpty().mapNotNull { choice ->
+                    val message = (choice as? JsonObject)?.get("message")?.jsonObject
+                    message?.get("content")?.jsonPrimitive?.contentOrNull
+                }
 
-                content?.let { return stripThinking(it) }
+                if (contents.isNotEmpty()) return contents.map(::stripThinking)
 
                 throw RuntimeException("Failed to parse response: $responseBody")
             }
         }
 
         throw RuntimeException("Error calling API after 3 attempts: ${lastException?.message}", lastException)
+    }
+
+    override fun close() {
+        httpClient.close()
     }
 
     /**
@@ -98,6 +106,23 @@ class OpenAILikeLLMClient(
     }
 
     companion object {
+        /**
+         * Always emits the system role, even when its content is empty. Several
+         * GGUF chat templates inject a default instruction when the system role
+         * is absent; an explicit empty role suppresses that hidden fallback while
+         * retaining the chat token boundaries expected by a chat-templated model.
+         */
+        internal fun chatMessages(systemPrompt: String, userPrompt: String): JsonArray = buildJsonArray {
+            add(buildJsonObject {
+                put("role", "system")
+                put("content", systemPrompt)
+            })
+            add(buildJsonObject {
+                put("role", "user")
+                put("content", userPrompt)
+            })
+        }
+
         fun createFromEnvironment(): OpenAILikeLLMClient {
             val apiKey = System.getenv("OPENAI_LIKE_API_KEY")
                 ?: System.getProperty("openai.like.api.key")

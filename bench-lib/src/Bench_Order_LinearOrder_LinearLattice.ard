@@ -1,0 +1,24 @@
+-- Lemmas of Order.LinearOrder (class LinearLattice) restated with {?} bodies (proof-search benchmark; generated).
+
+\import Data.Array
+\import Data.Or
+\import Function
+\import Function.Meta ($)
+\import Logic
+\import Logic.Meta
+\import Logic.Unique
+\import Meta
+\import Order.Biordered
+\import Order.Lattice
+\import Order.PartialOrder
+\import Order.StrictOrder
+\import Paths
+\import Paths.Meta
+\import Set
+\import Order.LinearOrder
+\import Algebra.Meta
+\open JoinSemilattice
+\open MeetSemilattice
+\open LinearLattice
+
+\lemma Big_meet_< {A : LinearLattice} {l : Array A} {x c : A} (h : Big (∧) x l < c) : (x < c) || ∃ (i : Fin l.len) (l i < c) => {?}

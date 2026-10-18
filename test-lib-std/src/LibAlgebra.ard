@@ -1,0 +1,24 @@
+-- Lemmas of arend-lib whose proofs only apply definitions, rewrite and split cases.
+-- Each is restated verbatim (class-body lemmas take their class as a parameter); the
+-- comment gives the location and the original proof, with a top-level \elim written as \case \elim.
+
+\import Algebra.Meta
+\import Algebra.Group
+\import Algebra.Monoid
+\import Algebra.Ordered
+\import Algebra.Pointed
+\import Logic
+\import Meta
+\import Order.Lattice
+\import Order.PartialOrder
+\import Paths
+\import Paths.Meta
+
+-- Algebra/Group.ard:234: rewriteI x=y negative-right
+\lemma AddGroup-toZero' {G : AddGroup} {x y : G} (x=y : x = y) : x - y = zro => {?}
+
+-- Algebra/Monoid.ard:482: Monoid.pow-comm *-comm
+\lemma CMonoid-pow_*-comm' {M : CMonoid} {a b : M} {n : Nat} : Monoid.pow (a * b) n = Monoid.pow a n * Monoid.pow b n => {?}
+
+-- Algebra/Ordered.ard:138: join-left
+\lemma LatticeAbGroup-abs>=id' {G : LatticeAbGroup} {x : G} : x <= LatticeAbGroup.abs x => {?}

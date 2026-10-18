@@ -46,7 +46,7 @@ fun extractStep(proof: ConcreteExpression): ConcreteExpression? {
 fun processCase(case: Concrete.CaseExpression): Concrete.CaseExpression {
   val arguments = case.arguments.map { arg ->
     val forceElim = arg.expression is Concrete.ReferenceExpression
-    Concrete.CaseArgument(arg.expression, arg.referable, arg.type, arg.isElim || forceElim)
+    Concrete.CaseArgument(arg.expression, arg.referable, arg.type, arg.isElim || forceElim, arg.variance)
   }
   val clauses = ArrayList<Concrete.FunctionClause>()
   for (clause in case.clauses) {

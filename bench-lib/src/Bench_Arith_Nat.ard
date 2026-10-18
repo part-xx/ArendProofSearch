@@ -1,0 +1,100 @@
+-- Lemmas of Arith.Nat restated with {?} bodies (proof-search benchmark; generated).
+
+\import Algebra.Monoid(Monoid)
+\import Algebra.Ordered
+\import Algebra.StrictlyOrdered
+\import Data.Bool
+\import Data.Or
+\import Function.Meta
+\import Logic
+\import Meta
+\import Order.Biordered
+\import Order.Lattice
+\import Order.LinearOrder
+\import Order.PartialOrder \hiding (<=)
+\import Paths
+\import Paths.Meta
+\import Set (==, ==_=)
+\import Arith.Nat
+\import Algebra.Meta
+\import Logic.Meta
+\open Nat
+\open LinearlyOrderedAbMonoid
+\open NatOrder
+\open NatOrder
+\open LinearOrder \hiding (Dec)
+\open LinearlyOrderedSemiring \hiding (Dec)
+\open NatSemiring \hiding (<_*_positive-left, <_+-left)
+\open Monoid(LDiv)
+
+\lemma suc_pred {n : Nat} (n/=0 : n /= 0) : suc (pred n) = n => {?}
+\lemma -'0 {n : Nat} : n -' 0 = n => {?}
+\lemma -'+ {n m : Nat} : n + m -' m = n => {?}
+\lemma -'id {n : Nat} : n -' n = 0 => {?}
+\lemma -'-'l {a b c : Nat} : a -' b -' c = a -' (b + c) => {?}
+\lemma -'_< {n m : Nat} (p : 0 < n -' m) : m < n => {?}
+\lemma <_-' {n m : Nat} (p : m < n) : 0 < n -' m => {?}
+\lemma id<suc {n : Nat} : n < suc n => {?}
+\lemma id/=suc {n : Nat} : n /= suc n => {?}
+\lemma nonZero>0 {n : Nat} (n/=0 : n /= 0) : 0 < n => {?}
+\lemma fin_< {n : Nat} (x : Fin n) : x < n => {?}
+\lemma toFin=id {k n : Nat} {p : k < n} : toFin k p = {Nat} k => {?}
+\lemma toFin=fin {n : Nat} {k : Fin n} : toFin k (fin_< k) = k => {?}
+\lemma mod_Fin=mod {k n : Nat} {p : 0 < n} : mod_Fin k p = {Nat} k mod n => {?}
+\lemma fin_nat-inj {n : Nat} {x y : Fin n} (p : x = {Nat} y) : x = y => {?}
+\lemma fin_nat-ineq {n : Nat} {x y : Fin n} (p : Not (x = y)) : Not (x = {Nat} y) => {?}
+\lemma zero<=_ {x : Nat} : 0 <= x => {?}
+\lemma suc<=suc {x y : Nat} (p : x <= y) : suc x <= suc y => {?}
+\lemma -'-'r {n m k : Nat} (k<=m : k <= m) (m<=n : m <= n) : n -' (m -' k) = n -' m + k => {?}
+\lemma -'-'r_id {n k : Nat} (k<=n : k <= n) : n -' (n -' k) = k => {?}
+\lemma <=_exists {n m : Nat} (p : n <= m) : n + (m -' n) = m => {?}
+\lemma -'<=id {n m : Nat} : n -' m <= n => {?}
+\lemma -'_<=+ {n m : Nat} : n <= (n -' m) + m => {?}
+\lemma -'+-comm {n m k : Nat} (p : m <= n) : n + k -' m = n -' m + k => {?}
+\lemma -'-monotone-left {n m k : Nat} (p : n <= m) : n -' k <= m -' k => {?}
+\lemma -'-monotone-right {n m k : Nat} (p : m <= n) : k -' n <= k -' m => {?}
+\lemma -'_<-monotone-left {n m k : Nat} (p : n < m) (q : k < m) : n -' k < m -' k => {?}
+\lemma -'_<= {n m : Nat} (p : n -' m = 0) : n <= m => {?}
+\lemma -'_+_<= {n m k : Nat} (p : n + m <= k) : n <= k -' m => {?}
+\lemma -'=0 {n m : Nat} (p : n <= m) : n -' m = 0 => {?}
+\lemma <=_* {n m k l : Nat} (n<=m : n <= m) (k<=l : k <= l) : n * k <= m * l => {?}
+\lemma monotone-diagonal (f : Nat -> Nat) (mon : \Pi (n : Nat) -> suc (f n) <= f (suc n)) {n : Nat} : n <= f n => {?}
+\lemma sequence-monotone {X : Preorder} {f : Nat -> X} (fm : \Pi {n : Nat} -> f n X.<= f (suc n)) {n k : Nat} (p : n <= k) : f n X.<= f k => {?}
+\lemma sequence-anti-monotone {X : Preorder} {f : Nat -> X} (fm : \Pi {n : Nat} -> f (suc n) X.<= f n) {n k : Nat} (p : n <= k) : f k X.<= f n => {?}
+\lemma suc_<_<= {n m : Nat} (p : n < m) : suc n <= m => {?}
+\lemma <_suc_<= {n m : Nat} (p : n < suc m) : n <= m => {?}
+\lemma suc_<=_< {n m : Nat} (p : suc n <= m) : n < m => {?}
+\lemma <=_<_suc {n m : Nat} (p : n <= m) : n < suc m => {?}
+\lemma id<=suc {n : Nat} : n <= suc n => {?}
+\lemma n*_+_<n {n q r : Nat} (p : n * q + r < n) : q = 0 => {?}
+\lemma mod-unique {n q r q' r' : Nat} (r<n : r < n) (r'<n : r' < n) (p : n * q + r = n * q' + r') : r = r' => {?}
+\lemma div-unique {n q r q' r' : Nat} (r<n : r < n) (r'<n : r' < n) (n/=0 : n /= 0) (p : n * q + r = n * q' + r') : q = q' => {?}
+\lemma mod<=left {n m : Nat} : n mod m <= n => {?}
+\lemma mod<right {n m : Nat} (m/=0 : m /= 0) : n mod m < m => {?}
+\lemma div_< {n m : Nat} (n<m : n < m) : n div m = 0 => {?}
+\lemma mod_< {n m : Nat} (n<m : n < m) : n mod m = n => {?}
+\lemma toFin'=id {k n : Nat} (p : k < n) : toFin' p = {Nat} k => {?}
+\lemma mod_Fin_< {n k : Nat} {p : 0 < n} (q : k < n) : mod_Fin k p = {Nat} k => {?}
+\lemma mod_Fin=id {n : Nat} {k : Fin n} {p : 0 < n} : mod_Fin k p = k => {?}
+\lemma fin_mod_id {n : Nat} (x : Fin (suc n)) : x mod suc n = x => {?}
+\lemma natUnit {n m : Nat} (p : n * m = 1) : m = 1 => {?}
+\lemma natAssociates-areEqual {n m : Nat} (n|m : LDiv n m) (m|n : LDiv m n) : n = m => {?}
+\lemma ldiv_<= {n m : Nat} (m/=0 : m /= 0) (n|m : LDiv n m) : n <= m => {?}
+\lemma ldiv*div=id {n m : Nat} (m|n : LDiv m n) : m * (n div m) = n => {?}
+\lemma div_mod {n m : Nat} (m|n : LDiv m n) : n mod m = 0 => {?}
+\lemma id_mod {n : Nat} : n mod n = 0 => {?}
+\lemma div_*<=id {n m : Nat} : n div m * m <= n => {?}
+\lemma id<pow2 {n : Nat} : n < Monoid.pow 2 n => {?}
+\lemma n*_+_mod_n {n q r : Nat} (r<n : r < n) : (n * q + r) mod n = {Nat} r => {?}
+\lemma n*_+_mod_n=mod {n q r : Nat} : (suc n * q + r) mod suc n = r mod suc n => {?}
+\lemma mod_+-left {n a b : Nat} : (a mod suc n + b) mod suc n = (a + b) mod suc n => {?}
+\lemma mod_+-right {n a b : Nat} : (a + b mod suc n) mod suc n = (a + b) mod suc n => {?}
+\lemma mod_*-left {n a b : Nat} : (a mod suc n * b) mod suc n = (a * b) mod suc n => {?}
+\lemma mod_*-right {n a b : Nat} : (a * b mod suc n) mod suc n = (a * b) mod suc n => {?}
+\lemma mod_+-cong-left {n c a b : Nat} (p : a mod suc n = b mod suc n) : (c + a) mod suc n = (c + b) mod suc n => {?}
+\lemma mod_+-cong-right {n c a b : Nat} (p : a mod suc n = b mod suc n) : (a + c) mod suc n = (b + c) mod suc n => {?}
+\lemma mod_suc {n : Nat} (i : Nat) (p : i < suc n) : suc (i mod suc n) = suc i mod suc (suc n) => {?}
+\lemma div_suc-lem {n m : Nat} (m/=0 : m /= 0) : (n + m) div m = suc (n div m) => {?}
+\lemma n*_+_div_n=div {m q r : Nat} (m/=0 : m /= 0) : (m * q + r) div m = q + r div m => {?}
+\lemma *_div=id {m q : Nat} (m/=0 : m /= 0) : (q * m) div m = q => {?}
+\lemma div-monotone {n k m : Nat} (p : n <= k) : n div m <= k div m => {?}

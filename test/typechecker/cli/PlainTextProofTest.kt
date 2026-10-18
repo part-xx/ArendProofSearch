@@ -1,14 +1,37 @@
 package typechecker.cli
 
+import typechecker.cli.proofstep.CandidateGenerationMode
+import java.io.ByteArrayOutputStream
+import java.io.PrintStream
+import java.nio.charset.StandardCharsets
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
+private val STDOUT_CAPTURE_LOCK = Any()
+
+private fun captureStdout(block: () -> Unit): String = synchronized(STDOUT_CAPTURE_LOCK) {
+    val original = System.out
+    val captured = ByteArrayOutputStream()
+    try {
+        System.setOut(PrintStream(captured, true, StandardCharsets.UTF_8))
+        block()
+    } finally {
+        System.setOut(original)
+    }
+    captured.toString(StandardCharsets.UTF_8)
+}
+
+private fun occurrenceCount(text: String, value: String): Int =
+    Regex(Regex.escape(value)).findAll(text).count()
+
 class FakeCli : CliApi {
     var findGoalsResult: FindGoalsResponse = FindGoalsResponse("M:D", emptyList())
     var applyStepResult: ApplyStepResponse = ApplyStepResponse(false)
+    var applyStepHandler: ((moduleDef: String, fullBody: String) -> ApplyStepResponse)? = null
     var scopeResult: ScopeResponse = ScopeResponse()
     var proofSearchResult: ProofSearchResponse = ProofSearchResponse()
     val signatureInfoResults = mutableMapOf<String, SignatureInfoResponse>()
@@ -23,7 +46,7 @@ class FakeCli : CliApi {
 
     override fun applyStep(moduleDef: String, fullBody: String): ApplyStepResponse {
         applyStepCalls.add(Pair(moduleDef, fullBody))
-        return applyStepResult
+        return applyStepHandler?.invoke(moduleDef, fullBody) ?: applyStepResult
     }
 
     override fun getScope(moduleDef: String, goalId: String): ScopeResponse {
@@ -55,11 +78,37 @@ class FakeCli : CliApi {
 /** LLM client that returns a fixed sequence of responses, for testing generate(). */
 class ScriptedLLMClient(responses: List<String>) : typechecker.LLMClient {
     private val queue = ArrayDeque(responses)
+    val systemPrompts = mutableListOf<String>()
     val prompts = mutableListOf<String>()
 
     override suspend fun generateResponse(systemPrompt: String, userPrompt: String, temperature: Double?): String {
+        systemPrompts.add(systemPrompt)
         prompts.add(userPrompt)
         return queue.removeFirst()
+    }
+}
+
+/** LLM client exposing a native multi-completion response for batch-mode tests. */
+class ScriptedBatchLLMClient(private val responses: List<String>) : typechecker.LLMClient {
+    val systemPrompts = mutableListOf<String>()
+    val prompts = mutableListOf<String>()
+    val requestedCounts = mutableListOf<Int>()
+    val temperatures = mutableListOf<Double?>()
+
+    override suspend fun generateResponse(systemPrompt: String, userPrompt: String, temperature: Double?): String =
+        error("Batch test must use generateResponses")
+
+    override suspend fun generateResponses(
+        systemPrompt: String,
+        userPrompt: String,
+        temperature: Double?,
+        count: Int
+    ): List<String> {
+        systemPrompts.add(systemPrompt)
+        prompts.add(userPrompt)
+        requestedCounts.add(count)
+        temperatures.add(temperature)
+        return responses
     }
 }
 
@@ -380,6 +429,25 @@ class StepParsingTest {
     }
 
     @Test
+    fun `parseStepsFromResponse extracts a batch in response order`() {
+        val gen = makeGenerator()
+        val steps = gen.parseStepsFromResponse(
+            """
+            1. [REFINE]first[/REFINE]
+            2. [APPLY pmap]
+               \lam x => x
+               [/APPLY]
+            3. [REWRITE]p[/REWRITE]
+            """.trimIndent()
+        )
+
+        assertEquals(listOf("refine", "apply", "rewrite"), steps.map { it.type })
+        assertEquals("first", steps[0].rawTerm)
+        assertEquals("pmap", steps[1].name)
+        assertEquals("p", steps[2].rawTerm)
+    }
+
+    @Test
     fun `buildTermFromApply constructs term with prop args as holes`() {
         val gen = makeGenerator()
         // Manually populate the cache via reflection or by using a real test
@@ -437,6 +505,79 @@ class StepParsingTest {
         val gen = makeGenerator()
         val term = gen.buildTermFromApply("unknown", emptyList())
         assertNull(term)
+    }
+
+    /** `*> {Nat} {a} {b} {?} {?}` would parse as a section, so the head needs parentheses. */
+    @Test
+    fun `buildTermFromApply parenthesizes an operator head`() {
+        val gen = makeGenerator()
+        val info = SignatureInfoResponse(
+            name = "*>",
+            params = listOf(
+                ParamInfo("A", "\\Type", false, false),
+                ParamInfo("a", "A", false, false),
+                ParamInfo("a'", "A", false, false),
+                ParamInfo("a''", "A", false, false),
+                ParamInfo("p", "a = a'", true, true),
+                ParamInfo("q", "a' = a''", true, true)
+            ),
+            resultType = "a = a''"
+        )
+        val cacheField = gen.javaClass.getDeclaredField("sigInfoCache")
+        cacheField.isAccessible = true
+        @Suppress("UNCHECKED_CAST")
+        val cache = cacheField.get(gen) as MutableMap<String, SignatureInfoResponse>
+        cache["*>"] = info
+
+        val term = gen.buildTermFromApply("*>", listOf("{Nat}", "{n}", "{k * k|n.inv}"))
+        assertEquals("(*>) {Nat} {n} {k * k|n.inv} {?} {?}", term)
+    }
+
+    /** An operator whose name is alphanumeric is known only from its premise declaration. */
+    @Test
+    fun `buildTermFromApply parenthesizes an operator declared in a premise`() {
+        val gen = typechecker.cli.proofstep.CliLLMStepGenerator(
+            FakeCli(), "M:D",
+            listOf("\\func \\infixl 8 div (n m : Nat) : Nat => {?hidden_proof}")
+        )
+        val info = SignatureInfoResponse(
+            name = "div",
+            params = listOf(
+                ParamInfo("n", "Nat", true, false),
+                ParamInfo("m", "Nat", true, false)
+            ),
+            resultType = "Nat"
+        )
+        val cacheField = gen.javaClass.getDeclaredField("sigInfoCache")
+        cacheField.isAccessible = true
+        @Suppress("UNCHECKED_CAST")
+        val cache = cacheField.get(gen) as MutableMap<String, SignatureInfoResponse>
+        cache["div"] = info
+
+        assertEquals("(div) 4 2", gen.buildTermFromApply("div", listOf("4", "2")))
+    }
+
+    /** A plain function name is left alone: parentheses there would only add noise. */
+    @Test
+    fun `buildTermFromApply leaves a plain head unparenthesized`() {
+        val gen = makeGenerator()
+        val info = SignatureInfoResponse(
+            name = "inv",
+            params = listOf(
+                ParamInfo("A", "\\Type", false, false),
+                ParamInfo("a", "A", false, false),
+                ParamInfo("a'", "A", false, false),
+                ParamInfo("p", "a = a'", true, true)
+            ),
+            resultType = "a' = a"
+        )
+        val cacheField = gen.javaClass.getDeclaredField("sigInfoCache")
+        cacheField.isAccessible = true
+        @Suppress("UNCHECKED_CAST")
+        val cache = cacheField.get(gen) as MutableMap<String, SignatureInfoResponse>
+        cache["inv"] = info
+
+        assertEquals("inv {?}", gen.buildTermFromApply("inv", emptyList()))
     }
 
     @Test
@@ -725,7 +866,14 @@ class CaseRecoveryTest {
             "[REFINE](mod-lem p {?}, rec-lem p {?})[/REFINE]" // term with holes -> used as-is
         ))
 
-        val gen = typechecker.cli.proofstep.CliLLMStepGenerator(cli, "M:D", maxAttempts = 2, maxCandidates = 1, llmClient = llm)
+        val gen = typechecker.cli.proofstep.CliLLMStepGenerator(
+            cli,
+            "M:D",
+            maxAttempts = 2,
+            maxCandidates = 1,
+            candidateGenerationMode = CandidateGenerationMode.ITERATIVE_FEEDBACK,
+            llmClient = llm
+        )
         val goal = PlainTextGoal("0", "\\Sigma Nat Nat", emptyList(), "M:D")
         val proof = PlainTextProof(cli, "M:D", "{?}", listOf(goal))
 
@@ -775,13 +923,19 @@ class CaseRecoveryTest {
             "[CASE]n[/CASE]"               // same again -> attempts exhausted
         ))
 
-        val gen = typechecker.cli.proofstep.CliLLMStepGenerator(cli, "M:D", maxAttempts = 5, llmClient = llm)
+        // Iterative feedback announces an accepted candidate and calls out repeats.
+        val gen = typechecker.cli.proofstep.CliLLMStepGenerator(
+            cli, "M:D", maxAttempts = 5, maxCandidates = 2,
+            candidateGenerationMode = CandidateGenerationMode.ITERATIVE_FEEDBACK,
+            llmClient = llm
+        )
         val goal = PlainTextGoal("0", "Nat", listOf(ContextBinding("n", "Nat")), "M:D")
         val proof = PlainTextProof(cli, "M:D", "{?}", listOf(goal))
 
         val steps = gen.generate(goal, proof)
 
-        // Both failed CASE attempts were retried, then the valid one went through
+        // Both failed CASE attempts were retried, then the valid one went through. The two
+        // repeats of the accepted step reuse its term rather than typechecking `n` again.
         assertEquals(listOf("decideEq x y", "\\lam x => x", "n"), cli.typeExprCalls)
         assertEquals(1, steps.size)
         assertEquals("(\\elim n | 0 => {?} | suc n => {?})", steps[0].proof.toString())
@@ -830,8 +984,11 @@ class CaseRecoveryTest {
             "[CASE]m[/CASE]"
         ))
 
+        // Iterative feedback asks for a DIFFERENT step after each acceptance.
         val gen = typechecker.cli.proofstep.CliLLMStepGenerator(
-            cli, "M:D", maxAttempts = 5, maxCandidates = 2, llmClient = llm
+            cli, "M:D", maxAttempts = 5, maxCandidates = 2,
+            candidateGenerationMode = CandidateGenerationMode.ITERATIVE_FEEDBACK,
+            llmClient = llm
         )
         val goal = PlainTextGoal("0", "Nat", listOf(
             ContextBinding("n", "Nat"), ContextBinding("m", "Nat")
@@ -849,50 +1006,227 @@ class CaseRecoveryTest {
     }
 
     @Test
-    fun `independent mode runs attempts with fresh prompt and filters duplicates`() {
+    fun `batch mode uses one request and keeps distinct typechecking candidates`() {
         val cli = FakeCli()
-        cli.signatureInfoResults["Nat"] = SignatureInfoResponse(
-            name = "Nat",
-            constructors = listOf(
-                ConstructorInfo("0"),
-                ConstructorInfo("suc", listOf(ConstructorParam("n", "Nat", true)))
-            )
-        )
-        cli.typeExprResponses["n"] =
-            TypeExprResponse(TypeExprData(type = "Nat", datatype = Datatype("Nat", "Prelude")))
-        cli.typeExprResponses["m"] =
-            TypeExprResponse(TypeExprData(type = "Nat", datatype = Datatype("Nat", "Prelude")))
-        cli.applyStepResult = ApplyStepResponse(
-            success = true,
-            goals = listOf(GoalInfo("0", expectedType = "Nat"), GoalInfo("1", expectedType = "Nat"))
-        )
+        cli.applyStepHandler = { _, fullBody ->
+            if ("bad" in fullBody) {
+                ApplyStepResponse(success = false, errors = listOf("Type mismatch"))
+            } else {
+                ApplyStepResponse(success = true, goals = emptyList())
+            }
+        }
 
-        val llm = ScriptedLLMClient(listOf(
-            "[CASE]n[/CASE]",   // accepted -> candidate #1
-            "[CASE]n[/CASE]",   // same term -> filtered mechanically (no feedback to model)
-            "[CASE]m[/CASE]"    // accepted -> candidate #2
+        val llm = ScriptedBatchLLMClient(listOf(
+            "[REFINE]good[/REFINE]\n[REFINE]good[/REFINE]\n[REFINE]bad[/REFINE]",
+            "[REFINE]other[/REFINE]"
         ))
 
         val gen = typechecker.cli.proofstep.CliLLMStepGenerator(
-            cli, "M:D", maxAttempts = 5, maxCandidates = 2, seekAlternatives = false, llmClient = llm
+            cli, "M:D", maxAttempts = 5, maxCandidates = 2,
+            candidateGenerationMode = CandidateGenerationMode.BATCH,
+            llmClient = llm
         )
-        val goal = PlainTextGoal("0", "Nat", listOf(
-            ContextBinding("n", "Nat"), ContextBinding("m", "Nat")
-        ), "M:D")
+        val goal = PlainTextGoal("0", "Nat", emptyList(), "M:D")
         val proof = PlainTextProof(cli, "M:D", "{?}", listOf(goal))
 
         val steps = gen.generate(goal, proof)
 
         assertEquals(2, steps.size)
-        assertEquals("(\\elim n | 0 => {?} | suc n => {?})", steps[0].proof.toString())
-        assertEquals("(\\elim m | 0 => {?} | suc m => {?})", steps[1].proof.toString())
+        assertEquals("good", steps[0].proof.toString())
+        assertEquals("other", steps[1].proof.toString())
+        assertEquals(1, llm.prompts.size, "batch mode must make one LLM request")
+        assertEquals(listOf(2), llm.requestedCounts)
+        assertTrue(llm.prompts.single().contains("up to 3 DISTINCT alternative next proof steps"))
+        assertTrue(!llm.prompts.single().contains("ACCEPTED"), "batch prompt must contain no checker feedback")
+        assertEquals(3, cli.applyStepCalls.size, "duplicate term must be typechecked only once")
+        assertTrue(cli.applyStepCalls.any { "bad" in it.second }, "non-typechecking candidates must be tested and dropped")
+    }
 
-        // History erasure: every attempt sees the exact same prompt — the model is
-        // NOT told about previous successes and NOT asked for a different attempt.
-        assertEquals(3, llm.prompts.size)
-        assertTrue(llm.prompts.all { it == llm.prompts[0] }, "independent attempts must share one fresh prompt")
-        assertTrue(!llm.prompts[0].contains("ACCEPTED"))
-        assertTrue(!llm.prompts[0].contains("DIFFERENT"))
+    @Test
+    fun `fine tuned batch preserves compact prompt and uses native completions`() {
+        val cli = FakeCli().apply {
+            applyStepResult = ApplyStepResponse(success = false, errors = listOf("Type mismatch"))
+        }
+        val llm = ScriptedBatchLLMClient(listOf("[REFINE]natUnit {?}[/REFINE]"))
+        val gen = typechecker.cli.proofstep.CliLLMStepGenerator(
+            cli,
+            "M:D",
+            maxAttempts = 3,
+            maxCandidates = 1,
+            candidateGenerationMode = CandidateGenerationMode.BATCH,
+            promptFormat = typechecker.cli.proofstep.TacticPromptFormat.FINE_TUNED_AREND,
+            llmClient = llm
+        )
+        val goal = PlainTextGoal("0", "x = 1", listOf(ContextBinding("x", "Nat")), "M:D")
+        val proof = PlainTextProof(cli, "M:D", "{?}", listOf(goal))
+
+        gen.generate(goal, proof)
+
+        assertEquals(listOf(3), llm.requestedCounts)
+        assertEquals("", llm.systemPrompts.single())
+        assertEquals("['x : Nat'] [] x = 1", llm.prompts.single())
+    }
+
+    @Test
+    fun `qwen3 direct batch preserves the exact chat training contract`() {
+        val cli = FakeCli().apply {
+            applyStepResult = ApplyStepResponse(success = true, goals = emptyList())
+        }
+        val llm = ScriptedBatchLLMClient(
+            listOf(
+                "[REFINE]idp[/REFINE]",
+                "[APPLY byRight]\n[/APPLY]"
+            )
+        )
+        val premises = listOf(
+            "byRight B : A || B",
+            "\\data \\infixr 2 || (A B : \\Type) : \\Prop\n  | byLeft A\n  | byRight B"
+        )
+        val gen = typechecker.cli.proofstep.CliLLMStepGenerator(
+            cli,
+            "M:D",
+            premises = premises,
+            maxAttempts = 3,
+            maxCandidates = 2,
+            candidateGenerationMode = CandidateGenerationMode.BATCH,
+            promptFormat = typechecker.cli.proofstep.TacticPromptFormat.QWEN3_DIRECT_V1,
+            batchTemperature = 0.7,
+            llmClient = llm
+        )
+        val goal = PlainTextGoal(
+            "0",
+            "x = 0 || x = 1",
+            listOf(ContextBinding("x", "Nat")),
+            "M:D"
+        )
+        val proof = PlainTextProof(cli, "M:D", "{?}", listOf(goal))
+
+        gen.generate(goal, proof)
+
+        assertEquals(listOf(3), llm.requestedCounts)
+        assertEquals(0.7, llm.temperatures.single())
+        assertEquals(
+            typechecker.cli.proofstep.CliLLMStepGenerator.QWEN3_DIRECT_V1_SYSTEM_MESSAGE,
+            llm.systemPrompts.single()
+        )
+        assertEquals(
+            typechecker.cli.proofstep.CliLLMStepGenerator.qwen3DirectV1Prompt(
+                listOf("x : Nat"),
+                "x = 0 || x = 1",
+                premises
+            ),
+            llm.prompts.single()
+        )
+        assertTrue("BATCH MODE" !in llm.prompts.single())
+        assertTrue("Current proof" !in llm.prompts.single())
+        assertTrue("Definitions in current module" !in llm.prompts.single())
+    }
+
+    @Test
+    fun `batch logging collapses raw responses duplicates and retry feedback`() {
+        val checkerError = "CHECKER_ERROR_SENTINEL"
+        val cli = FakeCli().apply {
+            applyStepHandler = { _, fullBody ->
+                if ("good" in fullBody) {
+                    ApplyStepResponse(success = true, goals = emptyList())
+                } else {
+                    ApplyStepResponse(success = false, errors = listOf("unexpected term"))
+                }
+            }
+            typeExprResponses["missing"] = TypeExprResponse(error = checkerError)
+        }
+        val llm = ScriptedBatchLLMClient(
+            listOf(
+                """RAW_MODEL_ONLY_PROSE
+                [REFINE]good[/REFINE]
+                [REFINE]good[/REFINE]
+                [CASE]missing[/CASE]
+                [REFINE]{?}[/REFINE]""".trimIndent()
+            )
+        )
+        val gen = typechecker.cli.proofstep.CliLLMStepGenerator(
+            cli,
+            "M:D",
+            maxAttempts = 4,
+            maxCandidates = 2,
+            candidateGenerationMode = CandidateGenerationMode.BATCH,
+            llmClient = llm
+        )
+        val goal = PlainTextGoal("0", "Nat", emptyList(), "M:D")
+        val proof = PlainTextProof(cli, "M:D", "{?}", listOf(goal))
+
+        val output = captureStdout { gen.generate(goal, proof) }
+
+        assertTrue(output.contains("ACCEPT [REFINE]good[/REFINE] (x2) -> good"))
+        assertTrue(output.contains("REJECT [CASE]missing[/CASE]"))
+        assertTrue(output.contains("REJECT [REFINE]{?}[/REFINE]"))
+        assertTrue(
+            output.contains("Batch summary: accepted=1, rejected=2, duplicates=1, malformed=0, skipped=0")
+        )
+        assertEquals(1, occurrenceCount(output, checkerError))
+        assertFalse(output.contains("Batch response #"))
+        assertFalse(output.contains("RAW_MODEL_ONLY_PROSE"))
+        assertFalse(output.contains("Provide your next attempt"))
+        assertFalse(output.contains("Constructed from"))
+        assertFalse(output.contains("Final term:"))
+        assertFalse(output.contains("applyStep succeeded!"))
+    }
+
+    @Test
+    fun `batch logging deduplicates repeated checker errors`() {
+        val checkerError = "TYPE_ERROR_SENTINEL"
+        val cli = FakeCli().apply {
+            applyStepResult = ApplyStepResponse(
+                success = false,
+                errors = listOf(checkerError, checkerError)
+            )
+        }
+        val gen = typechecker.cli.proofstep.CliLLMStepGenerator(
+            cli,
+            "M:D",
+            maxAttempts = 1,
+            maxCandidates = 1,
+            candidateGenerationMode = CandidateGenerationMode.BATCH,
+            llmClient = ScriptedBatchLLMClient(listOf("[REFINE]bad[/REFINE]"))
+        )
+        val goal = PlainTextGoal("0", "Nat", emptyList(), "M:D")
+        val proof = PlainTextProof(cli, "M:D", "{?}", listOf(goal))
+
+        val output = captureStdout { gen.generate(goal, proof) }
+
+        assertEquals(1, occurrenceCount(output, checkerError))
+        assertTrue(
+            output.contains("Batch summary: accepted=0, rejected=1, duplicates=0, malformed=0, skipped=0")
+        )
+    }
+
+    @Test
+    fun `fine tuned mode preserves training prompt while feeding checker errors back`() {
+        val cli = FakeCli().apply {
+            applyStepResult = ApplyStepResponse(success = false, errors = listOf("Type mismatch"))
+        }
+        val llm = ScriptedLLMClient(listOf(
+            "[REFINE]natUnit {?}[/REFINE]",
+            "[REFINE]inv {?}[/REFINE]"
+        ))
+        val gen = typechecker.cli.proofstep.CliLLMStepGenerator(
+            cli,
+            "M:D",
+            maxAttempts = 2,
+            maxCandidates = 1,
+            candidateGenerationMode = CandidateGenerationMode.ITERATIVE_FEEDBACK,
+            promptFormat = typechecker.cli.proofstep.TacticPromptFormat.FINE_TUNED_AREND,
+            llmClient = llm
+        )
+        val goal = PlainTextGoal("0", "x = 1", listOf(ContextBinding("x", "Nat")), "M:D")
+        val proof = PlainTextProof(cli, "M:D", "{?}", listOf(goal))
+
+        gen.generate(goal, proof)
+
+        assertEquals("", llm.systemPrompts[0], "the first request must match fine-tuning")
+        assertTrue(llm.systemPrompts[1].contains("Type mismatch"), "the retry should receive checker feedback")
+        assertEquals(llm.prompts[0], llm.prompts[1], "feedback must not alter the training-format user prompt")
+        assertEquals("['x : Nat'] [] x = 1", llm.prompts[0])
     }
 
     @Test
@@ -901,7 +1235,13 @@ class CaseRecoveryTest {
         // generator gives up on the goal rather than burning LLM attempts.
         val cli = FakeCli() // typeExprResponses empty -> typeExpr returns null
         val llm = ScriptedLLMClient(listOf("[CASE]n[/CASE]"))
-        val gen = typechecker.cli.proofstep.CliLLMStepGenerator(cli, "M:D", maxAttempts = 5, llmClient = llm)
+        val gen = typechecker.cli.proofstep.CliLLMStepGenerator(
+            cli,
+            "M:D",
+            maxAttempts = 5,
+            candidateGenerationMode = CandidateGenerationMode.ITERATIVE_FEEDBACK,
+            llmClient = llm
+        )
         val goal = PlainTextGoal("0", "Nat", listOf(ContextBinding("n", "Nat")), "M:D")
         val proof = PlainTextProof(cli, "M:D", "{?}", listOf(goal))
 
@@ -911,4 +1251,3 @@ class CaseRecoveryTest {
         assertEquals(1, llm.prompts.size, "should not retry after a null typeExpr response")
     }
 }
-

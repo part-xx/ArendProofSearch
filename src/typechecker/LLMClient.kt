@@ -6,6 +6,21 @@ package typechecker
  */
 interface LLMClient {
     suspend fun generateResponse(systemPrompt: String, userPrompt: String, temperature: Double? = null): String
+
+    /**
+     * Generates several independent completions for one prompt. Backends with a
+     * native batch/`n` parameter should override this; the default preserves
+     * compatibility by issuing individual requests.
+     */
+    suspend fun generateResponses(
+        systemPrompt: String,
+        userPrompt: String,
+        temperature: Double? = null,
+        count: Int
+    ): List<String> {
+        require(count > 0) { "Response count must be positive" }
+        return List(count) { generateResponse(systemPrompt, userPrompt, temperature) }
+    }
 }
 
 /**

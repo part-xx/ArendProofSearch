@@ -1,0 +1,55 @@
+-- Lemmas of arend-lib whose proofs only apply definitions, rewrite and split cases.
+-- Each is restated verbatim (class-body lemmas take their class as a parameter); the
+-- comment gives the location and the original proof, with a top-level \elim written as \case \elim.
+
+\import Algebra.Meta
+\import Data.Bool
+\import Data.Or
+\import Logic
+\import Logic.Meta
+\import Meta
+\import Paths
+\import Paths.Meta
+\import Set
+
+-- Logic.ard:64: prop-pi
+\lemma set-pi' {A : \Set} {a b : A} {p q : a = b} : p = q => {?}
+
+-- Set.ard:39: prop-pi
+\lemma dec_yes_reduce' {E : \Prop} {d : Dec E} (e : E) : d = yes e => {?}
+
+-- Set.ard:152: prop-pi
+\lemma decideEq=_reduce' {A : DecSet} {x y : A} (p : x = y) : decideEq x y = yes p => {?}
+
+-- Set.ard:164: ==_= so
+\lemma =-dec' {A : DecSet} {a a' : A} {so : So (a == a')} : a = a' => {?}
+
+-- Logic.ard:169: propExt.dir (inv p) b
+\lemma propExt-conv' {A B : \Prop} (p : A = B) (b : B) : A => {?}
+
+-- Data/Bool.ard:22: cases b idp
+\lemma not-isInv' {b : Bool} : not (not b) = b => {?}
+
+-- Data/Bool.ard:11: \case \elim b, \elim s \with { | true, _ => idp }
+\lemma So-fromSo' {b : Bool} (s : So b) : b = true => {?}
+
+-- Data/Bool.ard:46: \case \elim x, \elim y, \elim p \with { | true, _, _ => byLeft idp | _, true, _ => byRight idp }
+\lemma or-toOr' {x y : Bool} (p : x or y = true) : (x = true) || (y = true) => {?}
+
+-- Data/Bool.ard:50: \case \elim x, \elim y, \elim p \with { | true, _, _ => idp | false, true, _ => idp | false, false, byLeft () | false, false, byRight () }
+\lemma or-fromOr' {x y : Bool} (p : (x = true) || (y = true)) : x or y = true => {?}
+
+-- Logic.ard:30: \case \elim t \with { | inP a => a }
+\lemma TruncP-remove'' {A : \Prop} (t : TruncP A) : A => {?}
+
+-- Logic.ard:99: \case \elim p \with { | inl a => byLeft a | inr b => byRight b }
+\lemma OR-fromOr' {A B : \Cat} (p : Or A B) : A || B => {?}
+
+-- Logic.ard:103: \case \elim p \with { | byLeft a => inP (inl a) | byRight b => inP (inr b) }
+\lemma OR-toOr' {A B : \Cat} (p : A || B) : TruncP (Or A B) => {?}
+
+-- Logic.ard:107: \case \elim e \with { | byLeft a => byRight a | byRight b => byLeft b }
+\lemma OR-flip' {A B : \Cat} (e : A || B) : B || A => {?}
+
+-- Paths.ard:20: \case \elim a', \elim p \with { | _, idp => idp }
+\lemma sym' {A : \Set} {a a' : A} (p : a = a') : a' = a => {?}

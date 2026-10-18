@@ -1,0 +1,35 @@
+-- Lemmas of Order.Lattice (class JoinSemilattice) restated with {?} bodies (proof-search benchmark; generated).
+
+\import Algebra.Monoid
+\import Algebra.Semiring
+\import Category.Limit
+\import Data.Array
+\import Data.Array.EPerm
+\import Data.Bool
+\import Equiv
+\import Function.Meta
+\import Logic.Unique
+\import Homotopy.Fibration
+\import Logic
+\import Meta
+\import Order.Directed
+\import Paths
+\import Order.PartialOrder
+\import Paths.Meta
+\import Set.Fin
+\import Order.Lattice
+\import Algebra.Meta
+\import Logic.Meta
+\open JoinSemilattice
+
+\lemma Big_join-cond {A : JoinSemilattice} {n : Nat} {l : Array A (suc n)} {j : Fin (suc n)} : l j <= Big_∨ l => {?}
+\lemma join-monotone {A : JoinSemilattice} {x y x' y' : A} (p : x <= x') (q : y <= y') : x ∨ y <= x' ∨ y' => {?}
+\lemma join-idemp {A : JoinSemilattice} {x : A} : x ∨ x = x => {?}
+\lemma join-comm {A : JoinSemilattice} {x y : A} : x ∨ y = y ∨ x => {?}
+\lemma join-assoc {A : JoinSemilattice} {x y z : A} : (x ∨ y) ∨ z = x ∨ (y ∨ z) => {?}
+\lemma join_<= {A : JoinSemilattice} {x y : A} (x<=y : x <= y) : x ∨ y = y => {?}
+\lemma join_<=' {A : JoinSemilattice} {x y : A} (p : x ∨ y = y) : x <= y => {?}
+\lemma Big_<=_join0 {A : JoinSemilattice} {l : Array A} {x : A} : x <= Big (∨) x l => {?}
+\lemma Big_<=_join1 {A : JoinSemilattice} {l : Array A} {x : A} (i : Fin l.len) : l i <= Big (∨) x l => {?}
+\lemma Big_<=_join {A : JoinSemilattice} {n : Nat} {l : Array A (suc n)} (i : Fin (suc n)) : l i <= Big (∨) (l 0) (tail l) => {?}
+\lemma Big_join-univ {A : JoinSemilattice} {l : Array A} {x y : A} (p : x <= y) (f : \Pi (i : Fin l.len) -> l i <= y) : Big (∨) x l <= y => {?}

@@ -1,0 +1,32 @@
+-- Lemmas of Algebra.Field (class DiscreteField) restated with {?} bodies (proof-search benchmark; generated).
+
+\import Algebra.Domain.Euclidean
+\import Algebra.Domain.GCD
+\import Algebra.Group
+\import Algebra.Meta
+\import Algebra.Monoid
+\import Algebra.Monoid.GCD
+\import Algebra.Pointed
+\import Algebra.Ring
+\import Algebra.Ring.RingHom
+\import Algebra.Ring.Local
+\import Data.Or
+\import Equiv
+\import Function.Meta ($)
+\import Logic
+\import Meta
+\import Paths
+\import Paths.Meta
+\import Set
+\import Algebra.Field
+\import Logic.Meta
+\open Monoid(Inv)
+\open DiscreteField
+
+\lemma finv-left {A : DiscreteField} {x : A} (x/=0 : x /= 0) : finv x * x = 1 => {?}
+\lemma finv-Inv {A : DiscreteField} {x : A} (x/=0 : x /= 0) : Inv (finv x) x => {?}
+\lemma nonZero-Inv {A : DiscreteField} {x : A} (x/=0 : x /= 0) : Inv x (finv x) => {?}
+\lemma finv/=0 {A : DiscreteField} {x : A} (x/=0 : x /= 0) : finv x /= 0 => {?}
+\lemma finv_* {A : DiscreteField} {x y : A} : finv (x * y) = finv y * finv x => {?}
+\lemma finv_finv {A : DiscreteField} {x : A} : finv (finv x) = x => {?}
+\lemma finv-diff {A : DiscreteField} {x : A} (xi : x /= 0) (x+1i : x + 1 /= 0) : finv x - finv (x + 1) = finv (x * (x + 1)) => {?}

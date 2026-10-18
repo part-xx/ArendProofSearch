@@ -1,0 +1,19 @@
+-- Lemmas of Data.Fin restated with {?} bodies (proof-search benchmark; generated).
+
+\import Arith.Nat(pred)
+\import Logic
+\import Paths
+\import Data.Fin
+\import Algebra.Meta
+\import Logic.Meta
+\import Meta
+\import Paths.Meta
+
+\lemma unfsuc {n : Nat} {x y : Fin n} (p : suc x = suc y) : x = y => {?}
+\lemma fsuc/= {n : Nat} {x y : Fin n} (p : x /= y) : fsuc x /= fsuc y => {?}
+\lemma fsuc/=0 {n : Nat} {x : Fin n} : fsuc x /= 0 => {?}
+\lemma fsuc/=-conv {n : Nat} {x y : Fin n} (p : fsuc x /= fsuc y) : x /= y => {?}
+\lemma nat_fin_= {n : Nat} {x y : Fin n} (p : x = {Nat} y) : x = y => {?}
+\lemma fin_nat_/= {n : Nat} {x y : Fin n} (p : x /= y) : (x : Nat) /= y => {?}
+\lemma fsuc_fpred {n : Nat} {x : Fin (suc n)} {d : Fin n} (p : x /= 0) : fsuc (fpred d x) = x => {?}
+\lemma fsuc_fpredP {n : Nat} {x : Fin (suc n)} (p : x /= 0) : fsuc (fpredP x p) = x => {?}

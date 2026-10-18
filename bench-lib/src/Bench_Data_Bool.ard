@@ -1,0 +1,12 @@
+-- Lemmas of Data.Bool restated with {?} bodies (proof-search benchmark; generated).
+
+\import Logic
+\import Meta
+\import Paths
+\import Data.Bool
+\import Algebra.Meta
+\import Logic.Meta
+\import Paths.Meta
+
+\lemma not-isInv {b : Bool} : not (not b) = b => {?}
+\lemma true/=false (p : true = false) : Empty => {?}

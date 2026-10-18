@@ -1,0 +1,1802 @@
+[
+ {
+  "name": "suc_pred",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "-'0",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "-'+",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "-'id",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "-'-'l",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "-'_<",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "<_-'",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "id<suc",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "id/=suc",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "nonZero>0",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "fin_<",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "toFin=id",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "toFin=fin",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "mod_Fin=mod",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "fin_nat-inj",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "fin_nat-ineq",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "zero<=_",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "suc<=suc",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "-'-'r",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "-'-'r_id",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "<=_exists",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "-'<=id",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "-'_<=+",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "-'+-comm",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "-'-monotone-left",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "-'-monotone-right",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "-'_<-monotone-left",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "-'_<=",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "-'_+_<=",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "-'=0",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "<=_*",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "monotone-diagonal",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "sequence-monotone",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "sequence-anti-monotone",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "suc_<_<=",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "<_suc_<=",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "suc_<=_<",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "<=_<_suc",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "id<=suc",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "n*_+_<n",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "mod-unique",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "div-unique",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "mod<=left",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "mod<right",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "div_<",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "mod_<",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "toFin'=id",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "mod_Fin_<",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "mod_Fin=id",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "fin_mod_id",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "natUnit",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "natAssociates-areEqual",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "ldiv_<=",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "ldiv*div=id",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "div_mod",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "id_mod",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "div_*<=id",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "id<pow2",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "n*_+_mod_n",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "n*_+_mod_n=mod",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "mod_+-left",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "mod_+-right",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "mod_*-left",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "mod_*-right",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "mod_+-cong-left",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "mod_+-cong-right",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "mod_suc",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "div_suc-lem",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "n*_+_div_n=div",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "*_div=id",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "div-monotone",
+  "module": "Bench_Arith_Nat",
+  "source": "Arith.Nat",
+  "inClass": null
+ },
+ {
+  "name": "iabs=abs",
+  "module": "Bench_Arith_Int",
+  "source": "Arith.Int",
+  "inClass": null
+ },
+ {
+  "name": "iabs_*",
+  "module": "Bench_Arith_Int",
+  "source": "Arith.Int",
+  "inClass": null
+ },
+ {
+  "name": "<_+1_<=",
+  "module": "Bench_Arith_Int",
+  "source": "Arith.Int",
+  "inClass": null
+ },
+ {
+  "name": "ldiv_iabs",
+  "module": "Bench_Arith_Int",
+  "source": "Arith.Int",
+  "inClass": null
+ },
+ {
+  "name": "id<isuc",
+  "module": "Bench_Arith_Int",
+  "source": "Arith.Int",
+  "inClass": null
+ },
+ {
+  "name": "isuc_<_<=",
+  "module": "Bench_Arith_Int",
+  "source": "Arith.Int",
+  "inClass": null
+ },
+ {
+  "name": "pos_iabs",
+  "module": "Bench_Arith_Int",
+  "source": "Arith.Int",
+  "inClass": null
+ },
+ {
+  "name": "neg_iabs",
+  "module": "Bench_Arith_Int",
+  "source": "Arith.Int",
+  "inClass": null
+ },
+ {
+  "name": "iabs_-_suc",
+  "module": "Bench_Arith_Int",
+  "source": "Arith.Int",
+  "inClass": null
+ },
+ {
+  "name": "zro-id=neg",
+  "module": "Bench_Arith_Int",
+  "source": "Arith.Int",
+  "inClass": null
+ },
+ {
+  "name": "-'=-",
+  "module": "Bench_Arith_Int",
+  "source": "Arith.Int",
+  "inClass": null
+ },
+ {
+  "name": "unpos",
+  "module": "Bench_Arith_Int",
+  "source": "Arith.Int",
+  "inClass": null
+ },
+ {
+  "name": "pos<pos",
+  "module": "Bench_Arith_Int",
+  "source": "Arith.Int",
+  "inClass": null
+ },
+ {
+  "name": "neg<neg",
+  "module": "Bench_Arith_Int",
+  "source": "Arith.Int",
+  "inClass": null
+ },
+ {
+  "name": "pos<=pos",
+  "module": "Bench_Arith_Int",
+  "source": "Arith.Int",
+  "inClass": null
+ },
+ {
+  "name": "neg<=pos",
+  "module": "Bench_Arith_Int",
+  "source": "Arith.Int",
+  "inClass": null
+ },
+ {
+  "name": "pos/<=neg",
+  "module": "Bench_Arith_Int",
+  "source": "Arith.Int",
+  "inClass": null
+ },
+ {
+  "name": "neg<=neg",
+  "module": "Bench_Arith_Int",
+  "source": "Arith.Int",
+  "inClass": null
+ },
+ {
+  "name": "signum_iabs_eq",
+  "module": "Bench_Arith_Int",
+  "source": "Arith.Int",
+  "inClass": null
+ },
+ {
+  "name": "not-isInv",
+  "module": "Bench_Data_Bool",
+  "source": "Data.Bool",
+  "inClass": null
+ },
+ {
+  "name": "true/=false",
+  "module": "Bench_Data_Bool",
+  "source": "Data.Bool",
+  "inClass": null
+ },
+ {
+  "name": "length_++",
+  "module": "Bench_Data_List",
+  "source": "Data.List",
+  "inClass": null
+ },
+ {
+  "name": "length_replicate",
+  "module": "Bench_Data_List",
+  "source": "Data.List",
+  "inClass": null
+ },
+ {
+  "name": "all-map",
+  "module": "Bench_Data_List",
+  "source": "Data.List",
+  "inClass": null
+ },
+ {
+  "name": "all-implies",
+  "module": "Bench_Data_List",
+  "source": "Data.List",
+  "inClass": null
+ },
+ {
+  "name": "all-forall",
+  "module": "Bench_Data_List",
+  "source": "Data.List",
+  "inClass": null
+ },
+ {
+  "name": "allC-tail",
+  "module": "Bench_Data_List",
+  "source": "Data.List",
+  "inClass": null
+ },
+ {
+  "name": "count_perm",
+  "module": "Bench_Data_List",
+  "source": "Data.List",
+  "inClass": null
+ },
+ {
+  "name": "count_++",
+  "module": "Bench_Data_List",
+  "source": "Data.List",
+  "inClass": null
+ },
+ {
+  "name": "group-sorted",
+  "module": "Bench_Data_List",
+  "source": "Data.List",
+  "inClass": null
+ },
+ {
+  "name": "group-diff",
+  "module": "Bench_Data_List",
+  "source": "Data.List",
+  "inClass": null
+ },
+ {
+  "name": "group_count-lem",
+  "module": "Bench_Data_List",
+  "source": "Data.List",
+  "inClass": null
+ },
+ {
+  "name": "InList_++",
+  "module": "Bench_Data_List",
+  "source": "Data.List",
+  "inClass": null
+ },
+ {
+  "name": "InList_++-left",
+  "module": "Bench_Data_List",
+  "source": "Data.List",
+  "inClass": null
+ },
+ {
+  "name": "InList_++-right",
+  "module": "Bench_Data_List",
+  "source": "Data.List",
+  "inClass": null
+ },
+ {
+  "name": "contains_InList",
+  "module": "Bench_Data_List",
+  "source": "Data.List",
+  "inClass": null
+ },
+ {
+  "name": "union~++",
+  "module": "Bench_Data_List",
+  "source": "Data.List",
+  "inClass": null
+ },
+ {
+  "name": "unfsuc",
+  "module": "Bench_Data_Fin",
+  "source": "Data.Fin",
+  "inClass": null
+ },
+ {
+  "name": "fsuc/=",
+  "module": "Bench_Data_Fin",
+  "source": "Data.Fin",
+  "inClass": null
+ },
+ {
+  "name": "fsuc/=0",
+  "module": "Bench_Data_Fin",
+  "source": "Data.Fin",
+  "inClass": null
+ },
+ {
+  "name": "fsuc/=-conv",
+  "module": "Bench_Data_Fin",
+  "source": "Data.Fin",
+  "inClass": null
+ },
+ {
+  "name": "nat_fin_=",
+  "module": "Bench_Data_Fin",
+  "source": "Data.Fin",
+  "inClass": null
+ },
+ {
+  "name": "fin_nat_/=",
+  "module": "Bench_Data_Fin",
+  "source": "Data.Fin",
+  "inClass": null
+ },
+ {
+  "name": "fsuc_fpred",
+  "module": "Bench_Data_Fin",
+  "source": "Data.Fin",
+  "inClass": null
+ },
+ {
+  "name": "fsuc_fpredP",
+  "module": "Bench_Data_Fin",
+  "source": "Data.Fin",
+  "inClass": null
+ },
+ {
+  "name": "/=-sym",
+  "module": "Bench_Logic",
+  "source": "Logic",
+  "inClass": null
+ },
+ {
+  "name": "prop-pi",
+  "module": "Bench_Logic",
+  "source": "Logic",
+  "inClass": null
+ },
+ {
+  "name": "prop-isProp",
+  "module": "Bench_Logic",
+  "source": "Logic",
+  "inClass": null
+ },
+ {
+  "name": "set-pi",
+  "module": "Bench_Logic",
+  "source": "Logic",
+  "inClass": null
+ },
+ {
+  "name": "prop-dpi",
+  "module": "Bench_Logic",
+  "source": "Logic",
+  "inClass": null
+ },
+ {
+  "name": "setPair-unext2",
+  "module": "Bench_Logic",
+  "source": "Logic",
+  "inClass": null
+ },
+ {
+  "name": "<->_=",
+  "module": "Bench_Logic",
+  "source": "Logic",
+  "inClass": null
+ },
+ {
+  "name": "<->refl",
+  "module": "Bench_Logic",
+  "source": "Logic",
+  "inClass": null
+ },
+ {
+  "name": "<->trans",
+  "module": "Bench_Logic",
+  "source": "Logic",
+  "inClass": null
+ },
+ {
+  "name": "<->sym",
+  "module": "Bench_Logic",
+  "source": "Logic",
+  "inClass": null
+ },
+ {
+  "name": "TSetIm-con",
+  "module": "Bench_Logic",
+  "source": "Logic",
+  "inClass": null
+ },
+ {
+  "name": "TSetIm-elim",
+  "module": "Bench_Logic",
+  "source": "Logic",
+  "inClass": null
+ },
+ {
+  "name": "SetIm-con",
+  "module": "Bench_Logic",
+  "source": "Logic",
+  "inClass": null
+ },
+ {
+  "name": "SetIm-cone",
+  "module": "Bench_Logic",
+  "source": "Logic",
+  "inClass": null
+ },
+ {
+  "name": "SetIm-elim",
+  "module": "Bench_Logic",
+  "source": "Logic",
+  "inClass": null
+ },
+ {
+  "name": "SetIm_id",
+  "module": "Bench_Logic",
+  "source": "Logic",
+  "inClass": null
+ },
+ {
+  "name": "SetIm_o",
+  "module": "Bench_Logic",
+  "source": "Logic",
+  "inClass": null
+ },
+ {
+  "name": "SetIm_TSetIm",
+  "module": "Bench_Logic",
+  "source": "Logic",
+  "inClass": null
+ },
+ {
+  "name": "propExt",
+  "module": "Bench_Logic",
+  "source": "Logic",
+  "inClass": null
+ },
+ {
+  "name": "=_<=",
+  "module": "Bench_Order_PartialOrder",
+  "source": "Order.PartialOrder",
+  "inClass": null
+ },
+ {
+  "name": "=<=",
+  "module": "Bench_Order_PartialOrder",
+  "source": "Order.PartialOrder",
+  "inClass": null
+ },
+ {
+  "name": "Big_meet-cond",
+  "module": "Bench_Order_Lattice_MeetSemilattice",
+  "source": "Order.Lattice",
+  "inClass": "MeetSemilattice"
+ },
+ {
+  "name": "meet-idemp",
+  "module": "Bench_Order_Lattice_MeetSemilattice",
+  "source": "Order.Lattice",
+  "inClass": "MeetSemilattice"
+ },
+ {
+  "name": "meet-comm",
+  "module": "Bench_Order_Lattice_MeetSemilattice",
+  "source": "Order.Lattice",
+  "inClass": "MeetSemilattice"
+ },
+ {
+  "name": "meet-monotone",
+  "module": "Bench_Order_Lattice_MeetSemilattice",
+  "source": "Order.Lattice",
+  "inClass": "MeetSemilattice"
+ },
+ {
+  "name": "meet-assoc",
+  "module": "Bench_Order_Lattice_MeetSemilattice",
+  "source": "Order.Lattice",
+  "inClass": "MeetSemilattice"
+ },
+ {
+  "name": "meet_<=",
+  "module": "Bench_Order_Lattice_MeetSemilattice",
+  "source": "Order.Lattice",
+  "inClass": "MeetSemilattice"
+ },
+ {
+  "name": "meet_<='",
+  "module": "Bench_Order_Lattice_MeetSemilattice",
+  "source": "Order.Lattice",
+  "inClass": "MeetSemilattice"
+ },
+ {
+  "name": "Big_<=_meet0",
+  "module": "Bench_Order_Lattice_MeetSemilattice",
+  "source": "Order.Lattice",
+  "inClass": "MeetSemilattice"
+ },
+ {
+  "name": "Big_<=_meet1",
+  "module": "Bench_Order_Lattice_MeetSemilattice",
+  "source": "Order.Lattice",
+  "inClass": "MeetSemilattice"
+ },
+ {
+  "name": "Big_meet-univ",
+  "module": "Bench_Order_Lattice_MeetSemilattice",
+  "source": "Order.Lattice",
+  "inClass": "MeetSemilattice"
+ },
+ {
+  "name": "Big_join-cond",
+  "module": "Bench_Order_Lattice_JoinSemilattice",
+  "source": "Order.Lattice",
+  "inClass": "JoinSemilattice"
+ },
+ {
+  "name": "join-monotone",
+  "module": "Bench_Order_Lattice_JoinSemilattice",
+  "source": "Order.Lattice",
+  "inClass": "JoinSemilattice"
+ },
+ {
+  "name": "join-idemp",
+  "module": "Bench_Order_Lattice_JoinSemilattice",
+  "source": "Order.Lattice",
+  "inClass": "JoinSemilattice"
+ },
+ {
+  "name": "join-comm",
+  "module": "Bench_Order_Lattice_JoinSemilattice",
+  "source": "Order.Lattice",
+  "inClass": "JoinSemilattice"
+ },
+ {
+  "name": "join-assoc",
+  "module": "Bench_Order_Lattice_JoinSemilattice",
+  "source": "Order.Lattice",
+  "inClass": "JoinSemilattice"
+ },
+ {
+  "name": "join_<=",
+  "module": "Bench_Order_Lattice_JoinSemilattice",
+  "source": "Order.Lattice",
+  "inClass": "JoinSemilattice"
+ },
+ {
+  "name": "join_<='",
+  "module": "Bench_Order_Lattice_JoinSemilattice",
+  "source": "Order.Lattice",
+  "inClass": "JoinSemilattice"
+ },
+ {
+  "name": "Big_<=_join0",
+  "module": "Bench_Order_Lattice_JoinSemilattice",
+  "source": "Order.Lattice",
+  "inClass": "JoinSemilattice"
+ },
+ {
+  "name": "Big_<=_join1",
+  "module": "Bench_Order_Lattice_JoinSemilattice",
+  "source": "Order.Lattice",
+  "inClass": "JoinSemilattice"
+ },
+ {
+  "name": "Big_<=_join",
+  "module": "Bench_Order_Lattice_JoinSemilattice",
+  "source": "Order.Lattice",
+  "inClass": "JoinSemilattice"
+ },
+ {
+  "name": "Big_join-univ",
+  "module": "Bench_Order_Lattice_JoinSemilattice",
+  "source": "Order.Lattice",
+  "inClass": "JoinSemilattice"
+ },
+ {
+  "name": "ldistr<=",
+  "module": "Bench_Order_Lattice_Lattice",
+  "source": "Order.Lattice",
+  "inClass": "Lattice"
+ },
+ {
+  "name": "meet-ldistr",
+  "module": "Bench_Order_Lattice_DistributiveLattice",
+  "source": "Order.Lattice",
+  "inClass": "DistributiveLattice"
+ },
+ {
+  "name": "meet-rdistr",
+  "module": "Bench_Order_Lattice_DistributiveLattice",
+  "source": "Order.Lattice",
+  "inClass": "DistributiveLattice"
+ },
+ {
+  "name": "rdistr>=",
+  "module": "Bench_Order_Lattice_DistributiveLattice",
+  "source": "Order.Lattice",
+  "inClass": "DistributiveLattice"
+ },
+ {
+  "name": "lcodistr",
+  "module": "Bench_Order_Lattice_DistributiveLattice",
+  "source": "Order.Lattice",
+  "inClass": "DistributiveLattice"
+ },
+ {
+  "name": "top-right",
+  "module": "Bench_Order_Lattice_TopMeetSemilattice",
+  "source": "Order.Lattice",
+  "inClass": "TopMeetSemilattice"
+ },
+ {
+  "name": "BigMeet-cond",
+  "module": "Bench_Order_Lattice_TopMeetSemilattice",
+  "source": "Order.Lattice",
+  "inClass": "TopMeetSemilattice"
+ },
+ {
+  "name": "BigMeet-univ",
+  "module": "Bench_Order_Lattice_TopMeetSemilattice",
+  "source": "Order.Lattice",
+  "inClass": "TopMeetSemilattice"
+ },
+ {
+  "name": "bottom-right",
+  "module": "Bench_Order_Lattice_BottomJoinSemilattice",
+  "source": "Order.Lattice",
+  "inClass": "BottomJoinSemilattice"
+ },
+ {
+  "name": "BigJoin-cond",
+  "module": "Bench_Order_Lattice_BottomJoinSemilattice",
+  "source": "Order.Lattice",
+  "inClass": "BottomJoinSemilattice"
+ },
+ {
+  "name": "BigJoin-univ",
+  "module": "Bench_Order_Lattice_BottomJoinSemilattice",
+  "source": "Order.Lattice",
+  "inClass": "BottomJoinSemilattice"
+ },
+ {
+  "name": "FinJoin-cond",
+  "module": "Bench_Order_Lattice_BottomJoinSemilattice",
+  "source": "Order.Lattice",
+  "inClass": "BottomJoinSemilattice"
+ },
+ {
+  "name": "FinJoin-univ",
+  "module": "Bench_Order_Lattice_BottomJoinSemilattice",
+  "source": "Order.Lattice",
+  "inClass": "BottomJoinSemilattice"
+ },
+ {
+  "name": "FinJoin=BigJoin",
+  "module": "Bench_Order_Lattice_BottomJoinSemilattice",
+  "source": "Order.Lattice",
+  "inClass": "BottomJoinSemilattice"
+ },
+ {
+  "name": "BigJoin_EPerm",
+  "module": "Bench_Order_Lattice_BottomJoinSemilattice",
+  "source": "Order.Lattice",
+  "inClass": "BottomJoinSemilattice"
+ },
+ {
+  "name": "BigJoin_++",
+  "module": "Bench_Order_Lattice_BottomJoinSemilattice",
+  "source": "Order.Lattice",
+  "inClass": "BottomJoinSemilattice"
+ },
+ {
+  "name": "BigJoin_join",
+  "module": "Bench_Order_Lattice_BottomJoinSemilattice",
+  "source": "Order.Lattice",
+  "inClass": "BottomJoinSemilattice"
+ },
+ {
+  "name": "bottom-ldistr",
+  "module": "Bench_Order_Lattice_BottomDistributiveLattice",
+  "source": "Order.Lattice",
+  "inClass": "BottomDistributiveLattice"
+ },
+ {
+  "name": "bottom-rdistr",
+  "module": "Bench_Order_Lattice_BottomDistributiveLattice",
+  "source": "Order.Lattice",
+  "inClass": "BottomDistributiveLattice"
+ },
+ {
+  "name": "meet-isMin",
+  "module": "Bench_Order_LinearOrder_TotalOrder",
+  "source": "Order.LinearOrder",
+  "inClass": "TotalOrder"
+ },
+ {
+  "name": "meet-prop",
+  "module": "Bench_Order_LinearOrder_TotalOrder",
+  "source": "Order.LinearOrder",
+  "inClass": "TotalOrder"
+ },
+ {
+  "name": "Big01_meet-isMin",
+  "module": "Bench_Order_LinearOrder_TotalOrder",
+  "source": "Order.LinearOrder",
+  "inClass": "TotalOrder"
+ },
+ {
+  "name": "Big_meet-isMin",
+  "module": "Bench_Order_LinearOrder_TotalOrder",
+  "source": "Order.LinearOrder",
+  "inClass": "TotalOrder"
+ },
+ {
+  "name": "join-isMax",
+  "module": "Bench_Order_LinearOrder_TotalOrder",
+  "source": "Order.LinearOrder",
+  "inClass": "TotalOrder"
+ },
+ {
+  "name": "join-prop",
+  "module": "Bench_Order_LinearOrder_TotalOrder",
+  "source": "Order.LinearOrder",
+  "inClass": "TotalOrder"
+ },
+ {
+  "name": "Big01_join-isMax",
+  "module": "Bench_Order_LinearOrder_TotalOrder",
+  "source": "Order.LinearOrder",
+  "inClass": "TotalOrder"
+ },
+ {
+  "name": "Big_join-isMax",
+  "module": "Bench_Order_LinearOrder_TotalOrder",
+  "source": "Order.LinearOrder",
+  "inClass": "TotalOrder"
+ },
+ {
+  "name": "monotone-injective",
+  "module": "Bench_Order_LinearOrder",
+  "source": "Order.LinearOrder",
+  "inClass": null
+ },
+ {
+  "name": "Big_meet_<",
+  "module": "Bench_Order_LinearOrder_LinearLattice",
+  "source": "Order.LinearOrder",
+  "inClass": "LinearLattice"
+ },
+ {
+  "name": "<_/=",
+  "module": "Bench_Order_StrictOrder_StrictPoset",
+  "source": "Order.StrictOrder",
+  "inClass": "StrictPoset"
+ },
+ {
+  "name": ">_/=",
+  "module": "Bench_Order_StrictOrder_StrictPoset",
+  "source": "Order.StrictOrder",
+  "inClass": "StrictPoset"
+ },
+ {
+  "name": "pow_+",
+  "module": "Bench_Algebra_Monoid_Monoid",
+  "source": "Algebra.Monoid",
+  "inClass": "Monoid"
+ },
+ {
+  "name": "pow_*",
+  "module": "Bench_Algebra_Monoid_Monoid",
+  "source": "Algebra.Monoid",
+  "inClass": "Monoid"
+ },
+ {
+  "name": "pow-comm1",
+  "module": "Bench_Algebra_Monoid_Monoid",
+  "source": "Algebra.Monoid",
+  "inClass": "Monoid"
+ },
+ {
+  "name": "pow-comm2",
+  "module": "Bench_Algebra_Monoid_Monoid",
+  "source": "Algebra.Monoid",
+  "inClass": "Monoid"
+ },
+ {
+  "name": "pow-comm",
+  "module": "Bench_Algebra_Monoid_Monoid",
+  "source": "Algebra.Monoid",
+  "inClass": "Monoid"
+ },
+ {
+  "name": "pow-left",
+  "module": "Bench_Algebra_Monoid_Monoid",
+  "source": "Algebra.Monoid",
+  "inClass": "Monoid"
+ },
+ {
+  "name": "BigProd-ext",
+  "module": "Bench_Algebra_Monoid_Monoid",
+  "source": "Algebra.Monoid",
+  "inClass": "Monoid"
+ },
+ {
+  "name": "BigProd_ide",
+  "module": "Bench_Algebra_Monoid_Monoid",
+  "source": "Algebra.Monoid",
+  "inClass": "Monoid"
+ },
+ {
+  "name": "BigProd-unique",
+  "module": "Bench_Algebra_Monoid_Monoid",
+  "source": "Algebra.Monoid",
+  "inClass": "Monoid"
+ },
+ {
+  "name": "BigProd_++",
+  "module": "Bench_Algebra_Monoid_Monoid",
+  "source": "Algebra.Monoid",
+  "inClass": "Monoid"
+ },
+ {
+  "name": "BigProd_suc",
+  "module": "Bench_Algebra_Monoid_Monoid",
+  "source": "Algebra.Monoid",
+  "inClass": "Monoid"
+ },
+ {
+  "name": "BigProd_replicate",
+  "module": "Bench_Algebra_Monoid_Monoid",
+  "source": "Algebra.Monoid",
+  "inClass": "Monoid"
+ },
+ {
+  "name": "IsCentral_*",
+  "module": "Bench_Algebra_Monoid_Monoid",
+  "source": "Algebra.Monoid",
+  "inClass": "Monoid"
+ },
+ {
+  "name": "IsCentral_pow",
+  "module": "Bench_Algebra_Monoid_Monoid",
+  "source": "Algebra.Monoid",
+  "inClass": "Monoid"
+ },
+ {
+  "name": "negative-unique",
+  "module": "Bench_Algebra_Monoid_AddMonoid",
+  "source": "Algebra.Monoid",
+  "inClass": "AddMonoid"
+ },
+ {
+  "name": "*n-rdistr",
+  "module": "Bench_Algebra_Monoid_AddMonoid",
+  "source": "Algebra.Monoid",
+  "inClass": "AddMonoid"
+ },
+ {
+  "name": "*n-assoc",
+  "module": "Bench_Algebra_Monoid_AddMonoid",
+  "source": "Algebra.Monoid",
+  "inClass": "AddMonoid"
+ },
+ {
+  "name": "BigSum-ext",
+  "module": "Bench_Algebra_Monoid_AddMonoid",
+  "source": "Algebra.Monoid",
+  "inClass": "AddMonoid"
+ },
+ {
+  "name": "BigSum_++",
+  "module": "Bench_Algebra_Monoid_AddMonoid",
+  "source": "Algebra.Monoid",
+  "inClass": "AddMonoid"
+ },
+ {
+  "name": "BigSum_Big++",
+  "module": "Bench_Algebra_Monoid_AddMonoid",
+  "source": "Algebra.Monoid",
+  "inClass": "AddMonoid"
+ },
+ {
+  "name": "BigSum_++'",
+  "module": "Bench_Algebra_Monoid_AddMonoid",
+  "source": "Algebra.Monoid",
+  "inClass": "AddMonoid"
+ },
+ {
+  "name": "BigSum-split",
+  "module": "Bench_Algebra_Monoid_AddMonoid",
+  "source": "Algebra.Monoid",
+  "inClass": "AddMonoid"
+ },
+ {
+  "name": "BigSum_suc",
+  "module": "Bench_Algebra_Monoid_AddMonoid",
+  "source": "Algebra.Monoid",
+  "inClass": "AddMonoid"
+ },
+ {
+  "name": "BigSum_suc-nat",
+  "module": "Bench_Algebra_Monoid_AddMonoid",
+  "source": "Algebra.Monoid",
+  "inClass": "AddMonoid"
+ },
+ {
+  "name": "BigSum_zro",
+  "module": "Bench_Algebra_Monoid_AddMonoid",
+  "source": "Algebra.Monoid",
+  "inClass": "AddMonoid"
+ },
+ {
+  "name": "BigSum-unique",
+  "module": "Bench_Algebra_Monoid_AddMonoid",
+  "source": "Algebra.Monoid",
+  "inClass": "AddMonoid"
+ },
+ {
+  "name": "BigSum-unique2",
+  "module": "Bench_Algebra_Monoid_AddMonoid",
+  "source": "Algebra.Monoid",
+  "inClass": "AddMonoid"
+ },
+ {
+  "name": "BigSum-pred",
+  "module": "Bench_Algebra_Monoid_AddMonoid",
+  "source": "Algebra.Monoid",
+  "inClass": "AddMonoid"
+ },
+ {
+  "name": "BigSum-subset",
+  "module": "Bench_Algebra_Monoid_AddMonoid",
+  "source": "Algebra.Monoid",
+  "inClass": "AddMonoid"
+ },
+ {
+  "name": "fit_BigSum",
+  "module": "Bench_Algebra_Monoid_AddMonoid",
+  "source": "Algebra.Monoid",
+  "inClass": "AddMonoid"
+ },
+ {
+  "name": "fit-transpose",
+  "module": "Bench_Algebra_Monoid_AddMonoid",
+  "source": "Algebra.Monoid",
+  "inClass": "AddMonoid"
+ },
+ {
+  "name": "FinSum_zro",
+  "module": "Bench_Algebra_Monoid_AbMonoid",
+  "source": "Algebra.Monoid",
+  "inClass": "AbMonoid"
+ },
+ {
+  "name": "FinSum_+",
+  "module": "Bench_Algebra_Monoid_AbMonoid",
+  "source": "Algebra.Monoid",
+  "inClass": "AbMonoid"
+ },
+ {
+  "name": "FinSum-unique",
+  "module": "Bench_Algebra_Monoid_AbMonoid",
+  "source": "Algebra.Monoid",
+  "inClass": "AbMonoid"
+ },
+ {
+  "name": "FinSum-unique2",
+  "module": "Bench_Algebra_Monoid_AbMonoid",
+  "source": "Algebra.Monoid",
+  "inClass": "AbMonoid"
+ },
+ {
+  "name": "FinSum-pred",
+  "module": "Bench_Algebra_Monoid_AbMonoid",
+  "source": "Algebra.Monoid",
+  "inClass": "AbMonoid"
+ },
+ {
+  "name": "inverse-isInv",
+  "module": "Bench_Algebra_Group_Group",
+  "source": "Algebra.Group",
+  "inClass": "Group"
+ },
+ {
+  "name": "inverse_*",
+  "module": "Bench_Algebra_Group_Group",
+  "source": "Algebra.Group",
+  "inClass": "Group"
+ },
+ {
+  "name": "conjugate-via-id",
+  "module": "Bench_Algebra_Group",
+  "source": "Algebra.Group",
+  "inClass": null
+ },
+ {
+  "name": "commutator=ide<->comm",
+  "module": "Bench_Algebra_Group",
+  "source": "Algebra.Group",
+  "inClass": null
+ },
+ {
+  "name": "comm_sym",
+  "module": "Bench_Algebra_Group",
+  "source": "Algebra.Group",
+  "inClass": null
+ },
+ {
+  "name": "comm_conjugate",
+  "module": "Bench_Algebra_Group",
+  "source": "Algebra.Group",
+  "inClass": null
+ },
+ {
+  "name": "comm_inverse-right",
+  "module": "Bench_Algebra_Group",
+  "source": "Algebra.Group",
+  "inClass": null
+ },
+ {
+  "name": "comm_inverse-left",
+  "module": "Bench_Algebra_Group",
+  "source": "Algebra.Group",
+  "inClass": null
+ },
+ {
+  "name": "cancel-left",
+  "module": "Bench_Algebra_Group_AddGroup",
+  "source": "Algebra.Group",
+  "inClass": "AddGroup"
+ },
+ {
+  "name": "cancel-right",
+  "module": "Bench_Algebra_Group_AddGroup",
+  "source": "Algebra.Group",
+  "inClass": "AddGroup"
+ },
+ {
+  "name": "negative-isInv",
+  "module": "Bench_Algebra_Group_AddGroup",
+  "source": "Algebra.Group",
+  "inClass": "AddGroup"
+ },
+ {
+  "name": "negative_+",
+  "module": "Bench_Algebra_Group_AddGroup",
+  "source": "Algebra.Group",
+  "inClass": "AddGroup"
+ },
+ {
+  "name": "negative_-",
+  "module": "Bench_Algebra_Group_AddGroup",
+  "source": "Algebra.Group",
+  "inClass": "AddGroup"
+ },
+ {
+  "name": "minus_zro",
+  "module": "Bench_Algebra_Group_AddGroup",
+  "source": "Algebra.Group",
+  "inClass": "AddGroup"
+ },
+ {
+  "name": "fromZero",
+  "module": "Bench_Algebra_Group_AddGroup",
+  "source": "Algebra.Group",
+  "inClass": "AddGroup"
+ },
+ {
+  "name": "toZero",
+  "module": "Bench_Algebra_Group_AddGroup",
+  "source": "Algebra.Group",
+  "inClass": "AddGroup"
+ },
+ {
+  "name": "*i-rdistr",
+  "module": "Bench_Algebra_Group_AddGroup",
+  "source": "Algebra.Group",
+  "inClass": "AddGroup"
+ },
+ {
+  "name": "diff_+",
+  "module": "Bench_Algebra_Group_AddGroup",
+  "source": "Algebra.Group",
+  "inClass": "AddGroup"
+ },
+ {
+  "name": "minus_+",
+  "module": "Bench_Algebra_Group_AddGroup",
+  "source": "Algebra.Group",
+  "inClass": "AddGroup"
+ },
+ {
+  "name": "sum-cancel-left",
+  "module": "Bench_Algebra_Group_AbGroup",
+  "source": "Algebra.Group",
+  "inClass": "AbGroup"
+ },
+ {
+  "name": "sum-cancel-right",
+  "module": "Bench_Algebra_Group_AbGroup",
+  "source": "Algebra.Group",
+  "inClass": "AbGroup"
+ },
+ {
+  "name": "diff-cancel-left",
+  "module": "Bench_Algebra_Group_AbGroup",
+  "source": "Algebra.Group",
+  "inClass": "AbGroup"
+ },
+ {
+  "name": "negative_+-comm",
+  "module": "Bench_Algebra_Group_AbGroup",
+  "source": "Algebra.Group",
+  "inClass": "AbGroup"
+ },
+ {
+  "name": "diff_sum",
+  "module": "Bench_Algebra_Group_AbGroup",
+  "source": "Algebra.Group",
+  "inClass": "AbGroup"
+ },
+ {
+  "name": "diff_diff",
+  "module": "Bench_Algebra_Group_AbGroup",
+  "source": "Algebra.Group",
+  "inClass": "AbGroup"
+ },
+ {
+  "name": "natCoef-comm",
+  "module": "Bench_Algebra_Semiring_Semiring",
+  "source": "Algebra.Semiring",
+  "inClass": "Semiring"
+ },
+ {
+  "name": "negative_*-left",
+  "module": "Bench_Algebra_Ring_PseudoRing",
+  "source": "Algebra.Ring",
+  "inClass": "PseudoRing"
+ },
+ {
+  "name": "negative_*-right",
+  "module": "Bench_Algebra_Ring_PseudoRing",
+  "source": "Algebra.Ring",
+  "inClass": "PseudoRing"
+ },
+ {
+  "name": "negative_*",
+  "module": "Bench_Algebra_Ring_PseudoRing",
+  "source": "Algebra.Ring",
+  "inClass": "PseudoRing"
+ },
+ {
+  "name": "ldistr_-",
+  "module": "Bench_Algebra_Ring_PseudoRing",
+  "source": "Algebra.Ring",
+  "inClass": "PseudoRing"
+ },
+ {
+  "name": "rdistr_-",
+  "module": "Bench_Algebra_Ring_PseudoRing",
+  "source": "Algebra.Ring",
+  "inClass": "PseudoRing"
+ },
+ {
+  "name": "*_sum_diff",
+  "module": "Bench_Algebra_Ring_PseudoRing",
+  "source": "Algebra.Ring",
+  "inClass": "PseudoRing"
+ },
+ {
+  "name": "*_diff_sum",
+  "module": "Bench_Algebra_Ring_PseudoRing",
+  "source": "Algebra.Ring",
+  "inClass": "PseudoRing"
+ },
+ {
+  "name": "Inv_negative",
+  "module": "Bench_Algebra_Ring_Ring",
+  "source": "Algebra.Ring",
+  "inClass": "Ring"
+ },
+ {
+  "name": "idempotent_LDiv",
+  "module": "Bench_Algebra_Ring_Ring",
+  "source": "Algebra.Ring",
+  "inClass": "Ring"
+ },
+ {
+  "name": "negative_<=",
+  "module": "Bench_Algebra_Ordered_PosetAddGroup",
+  "source": "Algebra.Ordered",
+  "inClass": "PosetAddGroup"
+ },
+ {
+  "name": "negative_<=-conv",
+  "module": "Bench_Algebra_Ordered_PosetAddGroup",
+  "source": "Algebra.Ordered",
+  "inClass": "PosetAddGroup"
+ },
+ {
+  "name": "<=_+-cancel-left",
+  "module": "Bench_Algebra_Ordered_PosetAddGroup",
+  "source": "Algebra.Ordered",
+  "inClass": "PosetAddGroup"
+ },
+ {
+  "name": "<=_+-cancel-right",
+  "module": "Bench_Algebra_Ordered_PosetAddGroup",
+  "source": "Algebra.Ordered",
+  "inClass": "PosetAddGroup"
+ },
+ {
+  "name": "meet_negative",
+  "module": "Bench_Algebra_Ordered_LatticeAbGroup",
+  "source": "Algebra.Ordered",
+  "inClass": "LatticeAbGroup"
+ },
+ {
+  "name": "join_negative",
+  "module": "Bench_Algebra_Ordered_LatticeAbGroup",
+  "source": "Algebra.Ordered",
+  "inClass": "LatticeAbGroup"
+ },
+ {
+  "name": "modularity",
+  "module": "Bench_Algebra_Ordered_LatticeAbGroup",
+  "source": "Algebra.Ordered",
+  "inClass": "LatticeAbGroup"
+ },
+ {
+  "name": "abs>=id",
+  "module": "Bench_Algebra_Ordered_LatticeAbGroup",
+  "source": "Algebra.Ordered",
+  "inClass": "LatticeAbGroup"
+ },
+ {
+  "name": "abs>=neg",
+  "module": "Bench_Algebra_Ordered_LatticeAbGroup",
+  "source": "Algebra.Ordered",
+  "inClass": "LatticeAbGroup"
+ },
+ {
+  "name": "abs_negative",
+  "module": "Bench_Algebra_Ordered_LatticeAbGroup",
+  "source": "Algebra.Ordered",
+  "inClass": "LatticeAbGroup"
+ },
+ {
+  "name": "abs_abs",
+  "module": "Bench_Algebra_Ordered_LatticeAbGroup",
+  "source": "Algebra.Ordered",
+  "inClass": "LatticeAbGroup"
+ },
+ {
+  "name": "abs_+",
+  "module": "Bench_Algebra_Ordered_LatticeAbGroup",
+  "source": "Algebra.Ordered",
+  "inClass": "LatticeAbGroup"
+ },
+ {
+  "name": "abs_-",
+  "module": "Bench_Algebra_Ordered_LatticeAbGroup",
+  "source": "Algebra.Ordered",
+  "inClass": "LatticeAbGroup"
+ },
+ {
+  "name": "abs_-left",
+  "module": "Bench_Algebra_Ordered_LatticeAbGroup",
+  "source": "Algebra.Ordered",
+  "inClass": "LatticeAbGroup"
+ },
+ {
+  "name": "abs_-right",
+  "module": "Bench_Algebra_Ordered_LatticeAbGroup",
+  "source": "Algebra.Ordered",
+  "inClass": "LatticeAbGroup"
+ },
+ {
+  "name": "abs>=_-",
+  "module": "Bench_Algebra_Ordered_LatticeAbGroup",
+  "source": "Algebra.Ordered",
+  "inClass": "LatticeAbGroup"
+ },
+ {
+  "name": "abs-univ",
+  "module": "Bench_Algebra_Ordered_LatticeAbGroup",
+  "source": "Algebra.Ordered",
+  "inClass": "LatticeAbGroup"
+ },
+ {
+  "name": "parts_-",
+  "module": "Bench_Algebra_Ordered_AbsAbGroup",
+  "source": "Algebra.Ordered",
+  "inClass": "AbsAbGroup"
+ },
+ {
+  "name": "join_+-double",
+  "module": "Bench_Algebra_Ordered_AbsAbGroup",
+  "source": "Algebra.Ordered",
+  "inClass": "AbsAbGroup"
+ },
+ {
+  "name": "join_+-comm",
+  "module": "Bench_Algebra_Ordered_AbsAbGroup",
+  "source": "Algebra.Ordered",
+  "inClass": "AbsAbGroup"
+ },
+ {
+  "name": "finv-left",
+  "module": "Bench_Algebra_Field_DiscreteField",
+  "source": "Algebra.Field",
+  "inClass": "DiscreteField"
+ },
+ {
+  "name": "finv-Inv",
+  "module": "Bench_Algebra_Field_DiscreteField",
+  "source": "Algebra.Field",
+  "inClass": "DiscreteField"
+ },
+ {
+  "name": "nonZero-Inv",
+  "module": "Bench_Algebra_Field_DiscreteField",
+  "source": "Algebra.Field",
+  "inClass": "DiscreteField"
+ },
+ {
+  "name": "finv/=0",
+  "module": "Bench_Algebra_Field_DiscreteField",
+  "source": "Algebra.Field",
+  "inClass": "DiscreteField"
+ },
+ {
+  "name": "finv_*",
+  "module": "Bench_Algebra_Field_DiscreteField",
+  "source": "Algebra.Field",
+  "inClass": "DiscreteField"
+ },
+ {
+  "name": "finv_finv",
+  "module": "Bench_Algebra_Field_DiscreteField",
+  "source": "Algebra.Field",
+  "inClass": "DiscreteField"
+ },
+ {
+  "name": "finv-diff",
+  "module": "Bench_Algebra_Field_DiscreteField",
+  "source": "Algebra.Field",
+  "inClass": "DiscreteField"
+ },
+ {
+  "name": "dec-separated",
+  "module": "Bench_Set",
+  "source": "Set",
+  "inClass": null
+ },
+ {
+  "name": "negated-dec",
+  "module": "Bench_Set",
+  "source": "Set",
+  "inClass": null
+ },
+ {
+  "name": "dec_decide",
+  "module": "Bench_Set",
+  "source": "Set",
+  "inClass": null
+ },
+ {
+  "name": "dec_yes_reduce",
+  "module": "Bench_Set",
+  "source": "Set",
+  "inClass": null
+ },
+ {
+  "name": "dec_no_reduce",
+  "module": "Bench_Set",
+  "source": "Set",
+  "inClass": null
+ },
+ {
+  "name": "Dec_||",
+  "module": "Bench_Set",
+  "source": "Set",
+  "inClass": null
+ },
+ {
+  "name": "NotDec",
+  "module": "Bench_Set",
+  "source": "Set",
+  "inClass": null
+ },
+ {
+  "name": "decideEq=_reduce",
+  "module": "Bench_Set",
+  "source": "Set",
+  "inClass": null
+ },
+ {
+  "name": "decideEq/=_reduce",
+  "module": "Bench_Set",
+  "source": "Set",
+  "inClass": null
+ },
+ {
+  "name": "==_=",
+  "module": "Bench_Set",
+  "source": "Set",
+  "inClass": null
+ },
+ {
+  "name": "=-dec",
+  "module": "Bench_Set",
+  "source": "Set",
+  "inClass": null
+ },
+ {
+  "name": "/=-dec",
+  "module": "Bench_Set",
+  "source": "Set",
+  "inClass": null
+ },
+ {
+  "name": "apartNotEqual",
+  "module": "Bench_Set_Set",
+  "source": "Set",
+  "inClass": "Set#"
+ }
+]

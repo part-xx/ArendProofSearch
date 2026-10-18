@@ -1,0 +1,19 @@
+-- Lemmas of Algebra.Semiring (class Semiring) restated with {?} bodies (proof-search benchmark; generated).
+
+\import Algebra.Monoid
+\import Algebra.Monoid.GCD
+\import Data.Array
+\import Function.Meta
+\import Logic
+\import Logic.Meta
+\import Logic.Unique
+\import Meta
+\import Paths
+\import Paths.Meta
+\import Relation.Equivalence
+\import Set.Fin
+\import Algebra.Semiring
+\import Algebra.Meta
+\open Semiring
+
+\lemma natCoef-comm {A : Semiring} {n : Nat} {a : A} : natCoef n * a = a * natCoef n => {?}

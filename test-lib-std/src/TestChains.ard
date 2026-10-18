@@ -1,0 +1,84 @@
+-- Goals for path chains, pairs, the solvers of Algebra.Meta, and unfolding.
+
+\import Algebra.Group
+\import Algebra.Meta
+\import Algebra.Monoid
+\import Algebra.Pointed
+\import Algebra.Ordered
+\import Order.Lattice
+\import Set.Fin
+\import Arith.Nat
+\import Data.Or
+\import Logic
+\import Logic.Meta
+\import Meta
+\import Order.LinearOrder
+\import Order.PartialOrder
+\import Order.StrictOrder
+\import Paths
+\import Paths.Meta
+\open NatOrder
+\open Nat(mod)
+\open JoinSemilattice (join)
+
+-- transitivity applied to hypotheses: p *> (q *> r)
+\lemma trans3 {A : \Set} {a b c d : A} (p : a = b) (q : b = c) (r : c = d) : a = d => {?}
+
+-- a pair of hypotheses: (a, b)
+\lemma both {A B : \Prop} (a : A) (b : B) : \Sigma A B => {?}
+
+-- Algebra.Meta's equation solver
+\lemma assoc3 {M : Monoid} (x y z : M) : (x * y) * z = x * (y * z) => {?}
+
+-- Algebra.Meta's linear arithmetic
+\lemma lin1 {x y : Nat} (p : x < y) : x < suc y => {?}
+
+-- Order/LinearOrder.ard:263 dec<_reduce: unfold dec<_<= (mcases contradiction \with { | less a<a' => pmap inl prop-pi })
+\lemma dec<_reduce' {A : LinearOrder.Dec} {a a' : A} (p : a < a') : LinearOrder.dec<_<= a a' = inl p => {?}
+
+-- Activation of step generators: what is not proposed when its precondition fails
+
+-- Algebra/Ordered.ard:150 abs_negative: unfold abs exposes ∨, which the goal lacks: unfold abs {?}
+\lemma unfold-needed {G : LatticeAbGroup} (x : G) : LatticeAbGroup.abs (AddGroup.negative x) = LatticeAbGroup.abs x => {?}
+
+-- the goal already shows ∨ and negative; unfolding adds nothing (idp closes it)
+\lemma unfold-not-needed {G : LatticeAbGroup} (x : G) : LatticeAbGroup.abs x = x ∨ AddGroup.negative x => {?}
+
+-- f concludes B like the goal; g concludes A and is not applied
+\lemma hyp-heads {A B : \Prop} (f : A -> B) (g : A -> A) (a : A) : B => {?}
+
+-- p's ends meet the goal's left end only: p *> {?} and nothing else; q's ends meet neither
+\lemma path-ends {x y z : Nat} (p : x = y) (q : y = y) : x = z => {?}
+
+-- Equational chain through a library lemma: ide-right matches the goal's left end, then closes the rest
+--   ide-right *> ide-right
+\lemma chain-lemma {M : Monoid} (x : M) : x * Monoid.ide * Monoid.ide = x => {?}
+
+-- Algebra/Monoid.ard:595 FinSum_zro: a goal about FinSum is proved by splitting on FinSum_char x, the lemma
+-- that characterizes FinSum by a truncated existence
+\lemma finsum-zro {M : AbMonoid} {J : FinSet} (x : J -> M) (p : \Pi (j : J) -> x j = 0) : AbMonoid.FinSum x = 0 => {?}
+
+-- Algebra/Ordered.ard negative_<=-conv: the hypothesis's form reaches the goal by transport along negative-isInv
+\lemma negative_<=-conv' {A : PosetAddGroup} {x y : A} (p : negative y <= negative x) : x <= y => {?}
+
+-- Algebra/Group.ard comm_sym, comm_conjugate: the group solver with a hint derived from the hypothesis
+\lemma comm_sym' {E : Group} {g h : E} (p : commutator g h = ide) : commutator h g = ide => {?}
+\lemma comm_conjugate' {E : Group} {g h : E} (p : commutator g h = ide) : conjugate g h = h => {?}
+
+-- Algebra/Group.ard inverse-isInv: the additive group's lemma, with the group converted, `AddGroup.negative-isInv {AddGroup.fromGroup A}`
+\lemma inverse-isInv' {A : Group} {x : A} : inverse (inverse x) = x => {?}
+
+-- Algebra/Group.ard AddGroup.cancel-left: the cancellation monoid's lemma, with the additive group converted, `Group.cancel_*-left {toGroup \this} x p`
+\lemma cancel-left' {A : AddGroup} (x : A) {y z : A} (p : x + y = x + z) : y = z => {?}
+
+-- Algebra/Ordered.ard <=_+-positive: a relation lemma applied to the hypotheses, brought to the goal by equations, `transport (<= _) zro-left $ <=_+ a>=0 b>=0`
+\lemma <=_+-positive' {E : PosetAddMonoid} {a b : E} (a>=0 : 0 <= a) (b>=0 : 0 <= b) : 0 <= a + b => {?}
+
+-- No relation lemma mentions a function of the goal or of the hypothesis: no transport2 step
+\lemma fix-none' {E : PosetAddGroup} {y z : E} (p : y <= z) : y <= z => {?}
+
+-- Algebra/Monoid.ard IsCentral_*: the hypotheses are functions into equations, applied to the element at hand as the solver's hints
+\lemma IsCentral_*' {A : Monoid} {x y : A} (xc : Monoid.IsCentral x) (yc : Monoid.IsCentral y) : Monoid.IsCentral (x * y) => {?}
+
+-- Arith/Nat.ard mod_suc: a chain ending with a library lemma whose hypothesis is left as a goal, `pmap suc (mod_< p) *> inv (mod_< (suc<suc p))`
+\lemma mod_suc' {n : Nat} (i : Nat) (p : i < suc n) : suc (i mod suc n) = suc i mod suc (suc n) => {?}

@@ -5,6 +5,9 @@
 # corresponding environment variables win over them:
 #   OPENAI_LIKE_API_KEY  OPENAI_LIKE_BASE_URL  OPENAI_LIKE_MODEL
 #   OPENAI_LIKE_MAX_TOKENS  OPENAI_LIKE_ENABLE_THINKING
+# The managed local model needs no API key. Optional local CLI overrides are:
+#   LOCAL_AREND_MODEL_PATH  LOCAL_AREND_CONTEXT_SIZE  LOCAL_AREND_MAX_TOKENS
+#   AREND_LLM_PREMISES_FILE  LLAMA_SERVER
 # Prefer the environment for secrets; gradle.properties is untracked so a key left here
 # stays local, but the environment keeps it out of the working tree entirely.
 
@@ -18,6 +21,24 @@ llmModel=deepseek-chat
 openaiLikeApiKey=
 openaiLikeBaseUrl=
 openaiLikeModel=
+
+# Configuration for `llm - full - prime-char-dir`.
+llmBackend=local
+llmRegime=qwen3-direct-v1
+llmCandidateMode=batch
+arendLibPath=
+localModelPath=../VM_setup/models/qwen3-coder-30b-a3b-arend-direct-v1-production-20260823-001-q5_k_m.gguf
+llamaServerExecutable=llama-server
+localContextSize=8192
+localMaxTokens=512
+localStartupTimeoutSeconds=180
+# Positive integer: iterative attempts, or raw proposal budget in batch mode.
+llmMaxAttempts=10
+llmMaxCandidates=2
+# Batch sampling temperature; the exported Qwen3 GGUF recommends 0.7.
+llmBatchTemperature=0.7
+# Optional JSON string array or dataset-style object containing a `Premises` array.
+llmPremisesFile=
 
 ktorVersion=3.0.3
 openaiVersion=2.20.1

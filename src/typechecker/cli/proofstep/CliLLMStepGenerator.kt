@@ -38,21 +38,50 @@ private fun loadProperty(name: String): String? {
     return null
 }
 
+/** Prompt layouts supported by the tactic generator. */
+enum class TacticPromptFormat {
+    /** Detailed instructions for a general-purpose chat/instruction model. */
+    INSTRUCTION,
+
+    /** The compact `context premises expected-type` format used to train the local 14B model. */
+    FINE_TUNED_AREND,
+
+    /** Exact `arend-qwen3-coder-v1` chat contract used by the Qwen3 direct fine-tune. */
+    QWEN3_DIRECT_V1
+}
+
+/** How several tactic candidates are obtained for one goal. */
+enum class CandidateGenerationMode {
+    /** Repeated requests; checker failures and accepted candidates are fed back to the LLM. */
+    ITERATIVE_FEEDBACK,
+
+    /** One API request for several independent completions; candidates are deduplicated and typechecked locally. */
+    BATCH;
+
+    companion object {
+        fun parse(value: String): CandidateGenerationMode? = when (value.lowercase()) {
+            "iterative", "feedback", "iterative-feedback" -> ITERATIVE_FEEDBACK
+            "batch" -> BATCH
+            else -> null
+        }
+    }
+}
+
 class CliLLMStepGenerator(
     private val cli: CliApi,
     private val moduleDef: String,
     private val premises: List<String> = emptyList(),
-    private val maxAttempts: Int = 10,
+    private val maxAttempts: Int = DEFAULT_MAX_ATTEMPTS,
     /** How many distinct validated step candidates to collect per goal. */
-    private val maxCandidates: Int = 2,
+    private val maxCandidates: Int = DEFAULT_MAX_CANDIDATES,
     /**
-     * true  — history-based: the model sees previous failures/successes and is told
-     *         to provide a NEW, different attempt after each accepted candidate.
-     * false — independent attempts: every attempt runs with the same fresh prompt
-     *         (no error history, no knowledge of previous successes). Duplicates
-     *         are filtered mechanically; diversity comes from temperature sampling.
+     * Iterative feedback spends [maxAttempts] LLM calls. Batch mode makes one LLM
+     * call requesting at most [maxAttempts] raw proposals and returns at most
+     * [maxCandidates] distinct proposals that pass local validation.
      */
-    private val seekAlternatives: Boolean = false,
+    private val candidateGenerationMode: CandidateGenerationMode = CandidateGenerationMode.BATCH,
+    private val promptFormat: TacticPromptFormat = TacticPromptFormat.INSTRUCTION,
+    private val batchTemperature: Double = DEFAULT_BATCH_TEMPERATURE,
     private val llmClient: LLMClient = OpenAILikeLLMClient(
         apiKey = openaiLikeApiKey,
         model = openaiLikeModel,
@@ -82,6 +111,15 @@ class CliLLMStepGenerator(
      * premise class transitively extending it).
      */
     private val fieldOwners: Map<String, List<String>> = computeFieldOwners()
+
+    /**
+     * The premise names that are declared as operators — `*>` from
+     * `\func \infixr 9 *> {A : \Type} ...`, `∧` from `| meet \alias \infixl 7 ∧ E E : E`.
+     * A reference to one of these is read as a binary operator wherever it stands, so a term
+     * that applies it in front of its arguments has to parenthesize it; see
+     * [parenthesizeIfOperator].
+     */
+    private val operatorPremises: Set<String> = collectOperatorPremises()
     /**
      * Validated step terms per semantic goal ([PlainTextGoal] equality ignores the
      * positional id). Unlike ProofSteps, terms are goal-relative, so they can be
@@ -90,16 +128,35 @@ class CliLLMStepGenerator(
      */
     private val stepTermCache = mutableMapOf<PlainTextGoal, List<String>>()
     private val systemPrompt = buildSystemPrompt()
+    private val requestSystemPrompt = when (promptFormat) {
+        TacticPromptFormat.INSTRUCTION -> systemPrompt
+        TacticPromptFormat.FINE_TUNED_AREND -> ""
+        TacticPromptFormat.QWEN3_DIRECT_V1 -> QWEN3_DIRECT_V1_SYSTEM_MESSAGE
+    }
     private val preprompt: String
-    private val lemmaSignature: String = cli.signature(moduleDef)
+    private val lemmaSignature: String =
+        if (promptFormat == TacticPromptFormat.INSTRUCTION) cli.signature(moduleDef) else ""
 
     init {
-        val modulePrefix = moduleDef.substringBefore(":")
-        val moduleDefinitions = buildModuleDefinitions(modulePrefix)
+        require(
+            promptFormat != TacticPromptFormat.QWEN3_DIRECT_V1 ||
+                    candidateGenerationMode == CandidateGenerationMode.BATCH
+        ) {
+            "The direct-v1 model was trained on direct examples only; use batch candidate generation"
+        }
 
+        val modulePrefix = moduleDef.substringBefore(":")
+        val moduleDefinitions = if (promptFormat == TacticPromptFormat.INSTRUCTION) {
+            buildModuleDefinitions(modulePrefix)
+        } else {
+            ""
+        }
+
+        // Signature metadata is also required to turn compact [APPLY] outputs
+        // into terms, even when the raw premise text is sent unchanged.
         fetchPremiseSignatures()
 
-        val premisesBlock = if (premises.isNotEmpty())
+        val premisesBlock = if (promptFormat == TacticPromptFormat.INSTRUCTION && premises.isNotEmpty())
             "Available functions (use [APPLY name] to apply):\n${formatPremises()}\n" +
                     "Entries marked [field of A, B] are record/class fields: apply them on an instance " +
                     "of one of those classes with dot notation, e.g. [APPLY inst.field].\n"
@@ -108,9 +165,13 @@ class CliLLMStepGenerator(
         println("Premises: ")
         println(premisesBlock)
 
-        preprompt = "Definitions in current module:\n$moduleDefinitions\n" +
-                premisesBlock +
-                "--- ACTUAL GOAL TO SOLVE ---\n"
+        preprompt = if (promptFormat == TacticPromptFormat.INSTRUCTION) {
+            "Definitions in current module:\n$moduleDefinitions\n" +
+                    premisesBlock +
+                    "--- ACTUAL GOAL TO SOLVE ---\n"
+        } else {
+            ""
+        }
     }
 
     private fun fetchPremiseSignatures() {
@@ -132,8 +193,33 @@ class CliLLMStepGenerator(
     }
 
     private fun extractPremiseName(premise: String): String? {
-        val match = Regex("""(?:\\truncated\s+)?\\(?:func|lemma|meta|data|class|record)\s+(?:\\[a-z]+\s+\d+\s+)?(\S+)""").find(premise)
-        return match?.groupValues?.get(1)
+        Regex("""(?:\\truncated\s+)?\\(?:func|lemma|meta|data|class|record)\s+(?:\\[a-z]+\s+\d+\s+)?(\S+)""")
+            .find(premise)
+            ?.let { return it.groupValues[1] }
+
+        // Direct-v1 rows contain already-flattened constructor and field
+        // signatures, for example `byRight B : A || B` and
+        // `| isIrr ... [field of Irr]`.
+        Regex("""^\s*\|\s+(?:\\[a-z]+\s+\d+\s+)?(\S+)""")
+            .find(premise)
+            ?.let { return it.groupValues[1] }
+        return Regex("""^\s*([^\s|]+)(?:\s|:)""")
+            .find(premise)
+            ?.groupValues
+            ?.get(1)
+    }
+
+    /**
+     * The operator names among the premises, read off the precedence each one is declared
+     * with. Every premise carries its declaration verbatim, so the `\infixr 9` in
+     * `\func \infixr 9 *> …` is right there; a `\alias` puts the precedence on the alias,
+     * which is the name that is the operator.
+     */
+    private fun collectOperatorPremises(): Set<String> {
+        val declarations = Regex("""\\(?:infixl|infixr|infix|fixl|fixr|fix)\s+\d+\s+(\S+)""")
+        return premises.flatMapTo(HashSet()) { premise ->
+            declarations.findAll(premise).map { it.groupValues[1] }
+        }
     }
 
     private fun isClassOrRecord(premise: String): Boolean {
@@ -328,7 +414,7 @@ class CliLLMStepGenerator(
             .take(implicitParamCount)
         val explicitProvided = providedArgs.filter { !(it.startsWith("{") && it.endsWith("}")) }
 
-        val parts = mutableListOf(name)
+        val parts = mutableListOf(parenthesizeIfOperator(name))
         parts.addAll(implicitArgs)
 
         var argIdx = 0
@@ -349,7 +435,48 @@ class CliLLMStepGenerator(
         return parts.joinToString(" ")
     }
 
-    fun buildCaseExpression(splitExpr: String, datatype: String, dataModule: String, isVariable: Boolean = false, topLevel: Boolean = false): String? {
+    /**
+     * An operator standing in front of its arguments, as `(*>)`.
+     *
+     * A term applies its head before the arguments, but a reference to a definition declared
+     * `\infixr`/`\infixl`/`\infix`/`\fix` is read as a BINARY OPERATOR: `*> {Nat} {a} {b} {?}
+     * {?}` parses as the section `\lam _x => _x *> {?} {?}` and fails with a type mismatch,
+     * while `(*>) {Nat} {a} {b} {?} {?}` elaborates and leaves the two subgoals. It is the
+     * only way to write `[APPLY *>]` — the tactic the prompt asks for when a chain's midpoint
+     * has to be pinned.
+     *
+     * Dot notation is parenthesized as a whole (`(M.*)`), since it is the FIELD that carries
+     * the precedence. Parentheses around a name that is not an operator would be harmless,
+     * but they are left off to keep terms readable: a name is taken to be an operator when a
+     * premise declares it as one, or when it is written entirely in symbols, which no
+     * ordinary function name is.
+     */
+    private fun parenthesizeIfOperator(name: String): String {
+        val referenced = name.substringAfterLast('.')
+        val isOperator = referenced in operatorPremises ||
+                (referenced.isNotEmpty() && referenced.none { it.isLetterOrDigit() || it == '_' })
+        return if (isOperator) "($name)" else name
+    }
+
+    /**
+     * The `\case` (or top-level `\elim`) that splits [splitExpr] over the constructors of
+     * [datatype].
+     *
+     * Eliminating a VARIABLE is not the same as casing on an expression: `\case n \with …`
+     * leaves the `n` in the goal untouched, so a branch cannot use what the pattern tells it,
+     * whereas `\case \elim n` generalizes the goal over `n` first, and at the top of a proof
+     * `\elim n` does the same while still passing the termination checker (which is what a
+     * recursive lemma needs). [isVariable] says which of the two this is; a caller that knows
+     * the goal's context decides it from there, and a bare identifier is taken to be a
+     * variable when no one says otherwise.
+     */
+    fun buildCaseExpression(
+        splitExpr: String,
+        datatype: String,
+        dataModule: String,
+        isVariable: Boolean = looksLikeVariable(splitExpr),
+        topLevel: Boolean = false
+    ): String? {
         val info = cli.signatureInfo(dataModule, datatype)
         val constructors = info?.constructors
         if (constructors.isNullOrEmpty()) return null
@@ -359,6 +486,13 @@ class CliLLMStepGenerator(
             val explicitParams = con.params.filter { it.explicit }
             val pattern = if (explicitParams.isEmpty()) {
                 con.name
+            } else if (isVariable && explicitParams.size == 1) {
+                // Eliminating a variable consumes it, so its name is free for what the
+                // constructor holds — `\elim m | suc m => …`, the form arend-lib itself is
+                // written in. The declared name would be a second name for the same thing,
+                // and one that can shadow a binding already in the context: splitting `m`
+                // with `suc`'s parameter named `n` hides the caller's own `n`.
+                "${con.name} $splitExpr"
             } else {
                 val paramNames = explicitParams.map { p ->
                     if (p.name == "_") {
@@ -380,6 +514,13 @@ class CliLLMStepGenerator(
         val caseHead = if (isVariable) "\\case \\elim $splitExpr" else "\\case $splitExpr"
         return "$caseHead \\with { | $clauses }"
     }
+
+    /**
+     * Whether [splitExpr] could name a variable: a single identifier, and not an application,
+     * a projection or a field access, which are expressions and can only be `\case`d.
+     */
+    private fun looksLikeVariable(splitExpr: String): Boolean =
+        splitExpr.isNotEmpty() && splitExpr.none { it.isWhitespace() || it == '.' || it == '(' }
 
     fun buildIntroExpression(providedNames: List<String>, goal: PlainTextGoal): String {
         if (providedNames.isNotEmpty()) {
@@ -450,7 +591,8 @@ class CliLLMStepGenerator(
 
     data class ParsedStep(val type: String, val name: String?, val args: List<String>, val rawTerm: String?)
 
-    fun parseStepFromResponse(response: String): ParsedStep? {
+    /** Extracts every tagged step in response order. Prose and numbering are ignored. */
+    fun parseStepsFromResponse(response: String): List<ParsedStep> {
         data class Candidate(val position: Int, val step: ParsedStep)
 
         val candidates = mutableListOf<Candidate>()
@@ -494,7 +636,19 @@ class CliLLMStepGenerator(
             candidates.add(Candidate(m.range.first, ParsedStep("intro", null, names, null)))
         }
 
-        return candidates.maxByOrNull { it.position }?.step
+        return candidates.sortedBy { it.position }.map { it.step }
+    }
+
+    /** Single-candidate compatibility parser: use the last tagged step in a response. */
+    fun parseStepFromResponse(response: String): ParsedStep? = parseStepsFromResponse(response).lastOrNull()
+
+    /**
+     * Parses the strict single-tactic output contract used to build direct-v1.
+     * Unlike [parseStepsFromResponse], this rejects prose and multi-tactic output.
+     */
+    fun parseQwen3DirectStepFromResponse(response: String): ParsedStep? {
+        if (!QWEN3_DIRECT_V1_RESPONSE.matches(response)) return null
+        return parseStepsFromResponse(response).singleOrNull()
     }
 
     /** Invalidates the memoized negative result for a goal the search wants to retry. */
@@ -530,20 +684,37 @@ class CliLLMStepGenerator(
 
         val context = goal.contextBindings.joinToString("\n") { "${it.name} : ${it.type}" }
 
-        val initialPrompt = preprompt +
-                "Signature: $lemmaSignature\n" +
-                "Context: $context\n" +
-                "Expected type: ${goal.expectedType}\n" +
-                "Current proof: $currentProofText\n" +
-                "\nProvide CORRECT COMPLETION EXPRESSION."
-        var currentPromptPadding = "\n"
+        val initialPrompt = when (promptFormat) {
+            TacticPromptFormat.INSTRUCTION -> preprompt +
+                    "Signature: $lemmaSignature\n" +
+                    "Context: $context\n" +
+                    "Expected type: ${goal.expectedType}\n" +
+                    "Current proof: $currentProofText\n" +
+                    "\nProvide CORRECT COMPLETION EXPRESSION."
+            TacticPromptFormat.FINE_TUNED_AREND -> fineTunedArendPrompt(
+                goal.contextBindings.map { "${it.name} : ${it.type}" },
+                premises,
+                goal.expectedType
+            )
+            TacticPromptFormat.QWEN3_DIRECT_V1 -> qwen3DirectV1Prompt(
+                goal.contextBindings.map { "${it.name} : ${it.type}" },
+                goal.expectedType,
+                premises
+            )
+        }
+        var currentPromptPadding = if (promptFormat == TacticPromptFormat.INSTRUCTION) "\n" else ""
 
-        println("Expected type: ${goal.expectedType}")
-        println("Context: $context")
+        println("Goal: ${goal.expectedType}")
+        if (goal.contextBindings.isEmpty()) {
+            println("Context: (empty)")
+        } else {
+            println("Context:")
+            goal.contextBindings.forEach { println("  ${it.name} : ${it.type}") }
+        }
 
-        // if (!seekAlternatives) {
-        //    return generateIndependent(goal, currentProofText, currentPrompt)
-       // }
+        if (candidateGenerationMode == CandidateGenerationMode.BATCH) {
+            return generateBatch(goal, currentProofText, initialPrompt)
+        }
 
         val failedAttempts = mutableSetOf<String>()
         val attemptErrors = mutableMapOf<String, String>()
@@ -551,7 +722,14 @@ class CliLLMStepGenerator(
         val candidates = mutableListOf<ProofStep<PlainTextGoal>>()
         val acceptedTerms = mutableSetOf<String>()
         val acceptedTermList = mutableListOf<String>()
-        var temperature = 0.7
+        // The term each step already built. Duplicates are recognized by their TERM, so a
+        // repeated step has to be built before it can be spotted — and building a [CASE]
+        // costs a typechecker round trip to learn the type of the split expression. The goal
+        // and the proof text are fixed for this call, so the term is too.
+        val termsBuilt = mutableMapOf<ParsedStep, String>()
+        // The local model's held-out evaluation uses greedy decoding. If another
+        // candidate is needed, duplicate/error recovery gradually introduces sampling.
+        var temperature = if (promptFormat == TacticPromptFormat.FINE_TUNED_AREND) 0.0 else 0.7
         var consecutiveDuplicates = 0
 
         for (attempt in 0 until maxAttempts) {
@@ -567,14 +745,26 @@ class CliLLMStepGenerator(
             //)
             //val response = runBlocking { agent.run(currentPrompt) }
             val response = try {
-                runBlocking { llmClient.generateResponse(systemPrompt, initialPrompt + currentPromptPadding, temperature) }
+                // The fine-tuned model's user message must stay byte-for-byte in the
+                // training format. On retries, put checker feedback in the system
+                // message instead of corrupting that compact prompt. The first call
+                // still has no system message at all, exactly as during fine-tuning.
+                val (attemptSystemPrompt, attemptUserPrompt) =
+                    if (promptFormat == TacticPromptFormat.FINE_TUNED_AREND && currentPromptPadding.isNotBlank()) {
+                        systemPrompt + currentPromptPadding to initialPrompt
+                    } else {
+                        requestSystemPrompt to initialPrompt + currentPromptPadding
+                    }
+                runBlocking {
+                    llmClient.generateResponse(attemptSystemPrompt, attemptUserPrompt, temperature)
+                }
             } catch (e: Exception) {
                 // Infra failure (unreachable endpoint, auth, ...). Retrying proof
                 // attempts is pointless and slow (~1 min of client backoff each) —
                 // abort the search with a clear diagnosis instead of a raw stack trace.
                 throw LLMUnavailableException(
-                    "LLM API call failed after client retries — check network/VPN/endpoint " +
-                    "(${e.message})"
+                    "LLM request failed — check context size, model/backend settings, and endpoint " +
+                            "(${e.message})"
                 )
             }
             println("The response:\n${response.chunked(120).joinToString("\n")}")
@@ -600,7 +790,7 @@ class CliLLMStepGenerator(
                 continue
             }
 
-            val term = when (val construction = buildTermFromStep(step, goal, currentProofText)) {
+            val term = termsBuilt[step] ?: when (val construction = buildTermFromStep(step, goal, currentProofText)) {
                 is StepConstruction.Fatal -> {
                     println(construction.message)
                     return emptyList()
@@ -610,7 +800,7 @@ class CliLLMStepGenerator(
                     currentPromptPadding += construction.feedback
                     continue
                 }
-                is StepConstruction.Term -> construction.value
+                is StepConstruction.Term -> construction.value.also { termsBuilt[step] = it }
             }
             println("Final term: $term")
 
@@ -640,17 +830,12 @@ class CliLLMStepGenerator(
                 continue
             }
             if (normalizedTerm in acceptedTerms) {
-                if (seekAlternatives) {
-                    consecutiveDuplicates++
-                    temperature = minOf(temperature + 0.1, 1.0)
-                    println("DUPLICATE — term '$normalizedTerm' already ACCEPTED (x$consecutiveDuplicates), raising temperature to $temperature")
-                    currentPromptPadding += "\n\nYou already proposed '$term' — it was ACCEPTED as a candidate. " +
-                            duplicateEscalation(consecutiveDuplicates) +
-                            "Provide a DIFFERENT step, not an accepted one."
-                } else {
-                    temperature = minOf(temperature + 0.1, 1.0)
-                    println("DUPLICATE — term '$normalizedTerm' already ACCEPTED, raising temperature to $temperature")
-                }
+                consecutiveDuplicates++
+                temperature = minOf(temperature + 0.1, 1.0)
+                println("DUPLICATE — term '$normalizedTerm' already ACCEPTED (x$consecutiveDuplicates), raising temperature to $temperature")
+                currentPromptPadding += "\n\nYou already proposed '$term' — it was ACCEPTED as a candidate. " +
+                        duplicateEscalation(consecutiveDuplicates) +
+                        "Provide a DIFFERENT step, not an accepted one."
                 continue
             }
 
@@ -686,13 +871,9 @@ class CliLLMStepGenerator(
                     acceptedTermList.add(normalizedTerm)
                     consecutiveDuplicates = 0
                     println("Candidate #${candidates.size} accepted: $term")
-                    if (seekAlternatives) {
-                        currentPromptPadding += "\n\nACCEPTED as candidate #${candidates.size}: $term\n" +
-                                "This step is correct and recorded. Now provide a DIFFERENT step for the SAME goal " +
-                                "(a different lemma, tactic, or strategy). Do NOT repeat accepted or rejected approaches."
-                    } else {
-                        currentPromptPadding = "\n"
-                    }
+                    currentPromptPadding += "\n\nACCEPTED as candidate #${candidates.size}: $term\n" +
+                            "This step is correct and recorded. Now provide a DIFFERENT step for the SAME goal " +
+                            "(a different lemma, tactic, or strategy). Do NOT repeat accepted or rejected approaches."
                     continue
                 }
                 is Validation.Error -> {
@@ -743,77 +924,171 @@ class CliLLMStepGenerator(
     }
 
     /**
-     * Independent-attempts mode ([seekAlternatives] = false): every attempt uses the
-     * SAME fresh prompt — the model never sees error history or previous successes.
-     * Distinct valid candidates are collected; duplicates are filtered mechanically
-     * and diversity comes from the temperature ramp, not from instructions.
+     * Requests a batch of tactic alternatives in one LLM API call, then performs
+     * all construction, deduplication, and typechecking locally without feedback.
+     * Instruction models are asked for several distinct tagged steps per completion;
+     * this lets each completion avoid repeating its own highest-probability step.
      */
-    private fun generateIndependent(
+    private fun generateBatch(
         goal: PlainTextGoal,
         currentProofText: String,
         basePrompt: String
     ): List<ProofStep<PlainTextGoal>> {
         val candidates = mutableListOf<ProofStep<PlainTextGoal>>()
-        val acceptedTerms = mutableSetOf<String>()
-        var temperature = 0.7
+        val acceptedTerms = mutableListOf<String>()
+        val seenTerms = mutableSetOf<String>()
+        val instructionBatch = promptFormat == TacticPromptFormat.INSTRUCTION
+        val directV1Batch = promptFormat == TacticPromptFormat.QWEN3_DIRECT_V1
+        val responseCount = batchCompletionCount(promptFormat, maxAttempts, maxCandidates)
+        val proposalsPerResponse = (maxAttempts + responseCount - 1) / responseCount
+        val temperature = if (instructionBatch || directV1Batch) batchTemperature else 0.7
+        val batchPrompt = if (instructionBatch) {
+            basePrompt + "\n\n" + """
+BATCH MODE: Return up to $proposalsPerResponse DISTINCT alternative next proof steps for this same goal.
+Each alternative must be one complete [APPLY], [REWRITE], [CASE], [INTRO], or [REFINE] block.
+Do not repeat the same tag, name, and arguments. Prefer genuinely different proof strategies or arguments.
+The alternatives are independent; do not combine them into one proof. Output ONLY the tagged blocks, with no plan or prose.
+""".trimIndent()
+        } else {
+            // Preserve the selected fine-tuning user message byte-for-byte.
+            basePrompt
+        }
 
-        for (attempt in 0 until maxAttempts) {
-            if (candidates.size >= maxCandidates) break
-            println("Attempt ${attempt + 1} (independent, temperature=$temperature)")
-            val response = try {
-                runBlocking { llmClient.generateResponse(systemPrompt, basePrompt, temperature) }
-            } catch (e: Exception) {
-                throw LLMUnavailableException(
-                    "LLM API call failed after client retries — check network/VPN/endpoint " +
-                    "(${e.message})"
-                )
+        if (instructionBatch) {
+            println(
+                "Batch request: completions=$responseCount, proposals-per-completion<=$proposalsPerResponse, " +
+                        "budget=$maxAttempts, temperature=$temperature"
+            )
+        } else {
+            println("Batch request: completions=$responseCount, mode=independent, temperature=$temperature")
+        }
+        val responses = try {
+            runBlocking {
+                llmClient.generateResponses(requestSystemPrompt, batchPrompt, temperature, responseCount)
             }
-            temperature = minOf(temperature + 0.1, 1.0)
-            println("The response:\n${response.chunked(120).joinToString("\n")}")
+        } catch (e: Exception) {
+            throw LLMUnavailableException(
+                "LLM request failed — check context size, model/backend settings, and endpoint " +
+                        "(${e.message})"
+            )
+        }
+        val parsedByResponse = if (directV1Batch) {
+            responses.map { response -> listOfNotNull(parseQwen3DirectStepFromResponse(response)) }
+        } else {
+            responses.map(::parseStepsFromResponse)
+        }
+        val malformedResponses = parsedByResponse.count { it.isEmpty() }
+        val steps = parsedByResponse.flatten().take(maxAttempts)
+        val occurrences = linkedMapOf<ParsedStep, Int>()
+        for (step in steps) occurrences[step] = (occurrences[step] ?: 0) + 1
+        var duplicateCount = steps.size - occurrences.size
+        var rejectedCount = 0
+        var skippedCount = 0
 
-            val step = parseStepFromResponse(response)
-            if (step == null) {
-                println("Could not extract step from response")
+        println(
+            "Batch proposals: parsed=${steps.size}, unique=${occurrences.size}, " +
+                    "duplicates=$duplicateCount, malformed=$malformedResponses"
+        )
+        for ((step, count) in occurrences) {
+            val proposal = renderStepForLog(step)
+            val repetition = if (count > 1) " (x$count)" else ""
+            if (candidates.size >= maxCandidates) {
+                skippedCount++
                 continue
             }
-
-            val term = when (val construction = buildTermFromStep(step, goal, currentProofText)) {
+            val term = when (val construction = buildTermFromStep(step, goal, currentProofText, logDetails = false)) {
                 is StepConstruction.Fatal -> {
-                    println(construction.message)
-                    return candidates
+                    rejectedCount++
+                    println("  REJECT $proposal$repetition — ${compactLogText(construction.message)}")
+                    continue
                 }
                 is StepConstruction.Failure -> {
-                    println(construction.feedback)
+                    rejectedCount++
+                    println("  REJECT $proposal$repetition — ${compactLogText(construction.diagnostic)}")
                     continue
                 }
                 is StepConstruction.Term -> construction.value
             }
-            println("Final term: $term")
 
-            val normalizedTerm = term.replace("\\s+".toRegex(), " ").trim()
-            if (normalizedTerm in acceptedTerms) {
-                println("Already have this candidate, skipping")
+            if (IDENTITY_PMAP.containsMatchIn(term)) {
+                rejectedCount++
+                println("  REJECT $proposal$repetition — pmap with an identity function is a no-op")
                 continue
             }
 
-            when (val validation = validateTerm(term, goal, currentProofText)) {
+            val normalizedTerm = term.replace("\\s+".toRegex(), " ").trim()
+            if (!seenTerms.add(normalizedTerm)) {
+                duplicateCount++
+                println("  SKIP $proposal$repetition — duplicates term: $normalizedTerm")
+                continue
+            }
+
+            when (val validation = validateTerm(term, goal, currentProofText, logSuccess = false)) {
                 is Validation.Success -> {
+                    val newGoals = validation.step.proof.goals()
+                    if (newGoals.size == 1 && newGoals[0] == goal) {
+                        rejectedCount++
+                        println("  REJECT $proposal$repetition -> $normalizedTerm — leaves the goal unchanged")
+                        continue
+                    }
+                    if (newGoals.any { stepTermCache[it]?.isEmpty() == true }) {
+                        rejectedCount++
+                        println("  REJECT $proposal$repetition -> $normalizedTerm — leads to an exhausted goal")
+                        continue
+                    }
                     candidates.add(validation.step)
                     acceptedTerms.add(normalizedTerm)
-                    println("Candidate #${candidates.size} accepted (independent): $term")
+                    val subgoals = newGoals.size
+                    println(
+                        "  ACCEPT $proposal$repetition -> $normalizedTerm " +
+                                "($subgoals ${if (subgoals == 1) "subgoal" else "subgoals"})"
+                    )
                 }
-                is Validation.Error -> println("Errors: ${validation.errorMsg}")
-                is Validation.Crashed -> println("Exception during validation: ${validation.errorMsg}")
+                is Validation.Error -> {
+                    rejectedCount++
+                    println(
+                        "  REJECT $proposal$repetition -> $normalizedTerm — " +
+                                compactLogText(validation.errorMsg)
+                    )
+                }
+                is Validation.Crashed -> {
+                    rejectedCount++
+                    println(
+                        "  REJECT $proposal$repetition -> $normalizedTerm — validation failed: " +
+                                compactLogText(validation.errorMsg)
+                    )
+                }
             }
         }
+        println(
+            "Batch summary: accepted=${candidates.size}, rejected=$rejectedCount, " +
+                    "duplicates=$duplicateCount, malformed=$malformedResponses, skipped=$skippedCount"
+        )
+        stepTermCache[goal] = acceptedTerms
         return candidates
     }
+
+    private fun renderStepForLog(step: ParsedStep): String = when (step.type) {
+        "apply" -> buildString {
+            append("[APPLY ").append(step.name).append(']')
+            if (step.args.isNotEmpty()) append(' ').append(step.args.joinToString("; ") { compactLogText(it) })
+            append("[/APPLY]")
+        }
+        "rewrite" -> "[REWRITE]${compactLogText(step.rawTerm.orEmpty())}[/REWRITE]"
+        "refine" -> "[REFINE]${compactLogText(step.rawTerm.orEmpty())}[/REFINE]"
+        "case" -> "[CASE]${compactLogText(step.rawTerm.orEmpty())}[/CASE]"
+        "intro" -> "[INTRO]${step.args.joinToString(" ")}[/INTRO]"
+        else -> step.toString()
+    }
+
+    private fun compactLogText(text: String): String =
+        text.lineSequence().map { it.trim() }.filter { it.isNotEmpty() }.joinToString(" | ")
 
     /** Outcome of turning a parsed step into a candidate term (includes CLI calls for CASE). */
     private sealed interface StepConstruction {
         data class Term(val value: String) : StepConstruction
-        /** Recoverable failure; [feedback] is the prompt text the history-based loop feeds back. */
-        data class Failure(val feedback: String) : StepConstruction
+        /** Recoverable failure with separate console and iterative-retry representations. */
+        data class Failure(val diagnostic: String, val feedback: String) : StepConstruction
         /** Unrecoverable CLI failure — give up on the goal. */
         data class Fatal(val message: String) : StepConstruction
     }
@@ -827,21 +1102,26 @@ class CliLLMStepGenerator(
         data class Crashed(val errorMsg: String) : Validation
     }
 
-    private fun buildTermFromStep(step: ParsedStep, goal: PlainTextGoal, currentProofText: String): StepConstruction {
+    private fun buildTermFromStep(
+        step: ParsedStep,
+        goal: PlainTextGoal,
+        currentProofText: String,
+        logDetails: Boolean = true
+    ): StepConstruction {
         return when (step.type) {
             "apply" -> {
                 val name = step.name!!
                 val constructed = buildTermFromApply(name, step.args)
                 if (constructed != null) {
-                    println("Constructed from APPLY: $constructed")
+                    if (logDetails) println("Constructed from APPLY: $constructed")
                     StepConstruction.Term(constructed)
                 } else {
                     val rawArgs = step.args.joinToString(" ") { v ->
                         if (v.startsWith("{") && v.endsWith("}")) v
                         else if (v.contains(' ') || v.startsWith("\\")) "($v)" else v
                     }
-                    val result = "$name $rawArgs".trim()
-                    println("Constructed from APPLY (raw): $result")
+                    val result = "${parenthesizeIfOperator(name)} $rawArgs".trim()
+                    if (logDetails) println("Constructed from APPLY (raw): $result")
                     StepConstruction.Term(result)
                 }
             }
@@ -849,28 +1129,32 @@ class CliLLMStepGenerator(
                 val term = step.rawTerm!!
                 // A lone hole is not a step: it re-creates the goal unchanged.
                 if (term == "{?}") {
-                    println("REFINE term is a bare goal — not a step")
+                    val diagnostic = "REFINE term is a bare goal and leaves the goal unchanged"
+                    if (logDetails) println(diagnostic)
                     return StepConstruction.Failure(
+                        diagnostic,
                         "\n\nYour [REFINE] term was just {?}, which is not a step — it leaves the goal unchanged. " +
                                 "Give the expression that fills the goal, with {?} only for the subproofs it leaves open.\n\n" +
                                 "Provide your next attempt."
                     )
                 }
-                println("Constructed from REFINE: $term")
+                if (logDetails) println("Constructed from REFINE: $term")
                 StepConstruction.Term(term)
             }
             "rewrite" -> {
                 val eq = step.rawTerm!!
                 val result = if (eq.contains(' ') || eq.startsWith("\\")) "rewrite ($eq) {?}" else "rewrite $eq {?}"
-                println("Constructed from REWRITE: $result")
+                if (logDetails) println("Constructed from REWRITE: $result")
                 StepConstruction.Term(result)
             }
             "case" -> {
                 val splitExpr = step.rawTerm!!
 
                 if (splitExpr.contains("{?}")) {
-                    println("Split expression $splitExpr should not contain goals {?}")
+                    val diagnostic = "CASE split expression '$splitExpr' contains a goal placeholder {?}"
+                    if (logDetails) println(diagnostic)
                     return StepConstruction.Failure(
+                        diagnostic,
                         "\n\nSplit expression $splitExpr should not contain goals {?}\n\n" +
                                 "Provide your next attempt."
                     )
@@ -888,8 +1172,10 @@ class CliLLMStepGenerator(
                 if (normalizedProof.contains("\\case $normalizedSplit \\with") ||
                     normalizedProof.contains("\\case \\elim $normalizedSplit \\with") ||
                     normalizedProof.contains("\\elim $normalizedSplit |")) {
-                    println("Nested duplicate CASE on '$splitExpr' — already split in an ancestor of this goal")
+                    val diagnostic = "CASE already splits '$splitExpr' in an ancestor of this goal"
+                    if (logDetails) println(diagnostic)
                     return StepConstruction.Failure(
+                        diagnostic,
                         "\n\n'$splitExpr' is ALREADY case-split in an ancestor of the current goal. " +
                         "The expected type does not change between a case and its own branches (the context only gains the pattern variable), " +
                         "so splitting it again only nests forever without progress. " +
@@ -904,8 +1190,10 @@ class CliLLMStepGenerator(
                     ?: return StepConstruction.Fatal("CLI invocation error for '$splitExpr'")
 
                 if (cliResponse.error != null) {
-                    println("Using case with split expression '$splitExpr' resulted in error: ${cliResponse.error}")
+                    val diagnostic = "CASE split '$splitExpr' does not typecheck: ${cliResponse.error}"
+                    if (logDetails) println(diagnostic)
                     return StepConstruction.Failure(
+                        diagnostic,
                         "\n\nTypechecking split expression $splitExpr resulted in error: ${cliResponse.error}\n\n" +
                                 "Provide your next attempt."
                     )
@@ -913,8 +1201,10 @@ class CliLLMStepGenerator(
 
                 val typeName = cliResponse.data?.datatype?.typename
                 if (typeName == null) {
-                    println("Cannot recognize the type of '$splitExpr' as a datatype")
+                    val diagnostic = "Cannot recognize the type of CASE split '$splitExpr' as a datatype"
+                    if (logDetails) println(diagnostic)
                     return StepConstruction.Failure(
+                        diagnostic,
                         "\n\nCannot recognize the type of '$splitExpr' as a datatype\n\n" +
                                 "Provide your next attempt."
                     )
@@ -923,10 +1213,12 @@ class CliLLMStepGenerator(
                 val isVariable = binding != null
                 val isTopLevel = currentProofText.trim() == "{?}"
                 val result = buildCaseExpression(splitExpr, typeName, dataModule, topLevel = isTopLevel, isVariable = isVariable)
-                println("Constructed from CASE: $result")
+                if (logDetails) println("Constructed from CASE: $result")
                 if (result == null) {
-                    println("Could not build case expression for '${splitExpr}'")
+                    val diagnostic = "Could not build CASE expression for '$splitExpr'"
+                    if (logDetails) println(diagnostic)
                     return StepConstruction.Failure(
+                        diagnostic,
                         "\n\nCould not build case expression for '${splitExpr}'\n\n" +
                                 "Provide your next attempt."
                     )
@@ -935,12 +1227,14 @@ class CliLLMStepGenerator(
             }
             "intro" -> {
                 val result = buildIntroExpression(step.args, goal)
-                println("Constructed from INTRO: $result")
+                if (logDetails) println("Constructed from INTRO: $result")
                 StepConstruction.Term(result)
             }
             else -> {
-                println("Unknown step type: ${step.type}")
+                val diagnostic = "Unknown step type: ${step.type}"
+                if (logDetails) println(diagnostic)
                 StepConstruction.Failure(
+                    diagnostic,
                     "\n\nUnknown step type '${step.type}'. Use [APPLY name]...[/APPLY], [REWRITE]...[/REWRITE], " +
                             "[CASE]...[/CASE], [INTRO]...[/INTRO], or [REFINE]...[/REFINE].\n\nProvide your next attempt."
                 )
@@ -948,7 +1242,12 @@ class CliLLMStepGenerator(
         }
     }
 
-    private fun validateTerm(term: String, goal: PlainTextGoal, currentProofText: String): Validation {
+    private fun validateTerm(
+        term: String,
+        goal: PlainTextGoal,
+        currentProofText: String,
+        logSuccess: Boolean = true
+    ): Validation {
         val goalIndex = goal.id.toIntOrNull() ?: 0
         val wrappedTerm = if (term.contains(' ')) "($term)" else term
         val fullBody = PlainTextProof.replaceNthGoal(currentProofText, goalIndex, wrappedTerm)
@@ -957,7 +1256,7 @@ class CliLLMStepGenerator(
         return try {
             val applyResult = cli.applyStep(moduleDef, fullBody)
             if (applyResult.success) {
-                println("applyStep succeeded! Proof: $fullBody")
+                if (logSuccess) println("applyStep succeeded! Proof: $fullBody")
                 val newGoals = applyResult.goals.map { g ->
                     PlainTextGoal(g.id, g.expectedType, g.context, moduleDef)
                 }
@@ -965,7 +1264,7 @@ class CliLLMStepGenerator(
                 // finishing branches (0 new goals) before growing *>/pmap chains.
                 Validation.Success(ProofStep(PlainTextProof(cli, moduleDef, fullBody, newGoals), newGoals.size.toDouble()))
             } else {
-                Validation.Error(applyResult.errors.joinToString("\n"))
+                Validation.Error(applyResult.errors.distinct().joinToString("\n"))
             }
         } catch (e: Exception) {
             Validation.Crashed(e.message ?: "unknown error")
@@ -1039,6 +1338,74 @@ class CliLLMStepGenerator(
 
     companion object {
         const val INCLUDE_PLANNING_INSTRUCTIONS = true
+        const val DEFAULT_MAX_ATTEMPTS = 10
+        const val DEFAULT_MAX_CANDIDATES = 1
+        const val DEFAULT_BATCH_TEMPERATURE = 0.7
+        const val DEFAULT_INSTRUCTION_BATCH_COMPLETIONS = 2
+        const val QWEN3_DIRECT_V1_SYSTEM_MESSAGE =
+            "Generate one Arend proof step. Return one tagged tactic only."
+
+        private val QWEN3_DIRECT_V1_RESPONSE = Regex(
+            """\A\s*(?:\[APPLY\s+\S+\].*?\[/APPLY\]|\[REWRITE\].*?\[/REWRITE\]|\[REFINE\].*?\[/REFINE\]|\[CASE\].*?\[/CASE\]|\[INTRO\].*?\[/INTRO\])\s*\z""",
+            RegexOption.DOT_MATCHES_ALL
+        )
+
+        /** Number of native completions requested, and therefore local server slots required. */
+        fun batchCompletionCount(
+            promptFormat: TacticPromptFormat,
+            maxAttempts: Int,
+            maxCandidates: Int
+        ): Int {
+            require(maxAttempts > 0) { "Maximum attempts must be positive" }
+            require(maxCandidates > 0) { "Maximum candidates must be positive" }
+            return when (promptFormat) {
+                TacticPromptFormat.INSTRUCTION -> minOf(DEFAULT_INSTRUCTION_BATCH_COMPLETIONS, maxAttempts)
+                TacticPromptFormat.FINE_TUNED_AREND -> maxAttempts
+                // Direct-v1 emits one candidate per completion, and malformed or
+                // non-typechecking samples still consume the raw proposal budget.
+                TacticPromptFormat.QWEN3_DIRECT_V1 -> maxAttempts
+            }
+        }
+
+        /** Reproduces the versioned `arend-qwen3-coder-v1` user message byte-for-byte. */
+        fun qwen3DirectV1Prompt(
+            context: List<String>,
+            expectedType: String,
+            premises: List<String>
+        ): String =
+            "<CONTEXT>\n${context.joinToString("\n")}\n</CONTEXT>\n" +
+                    "<GOAL>\n$expectedType\n</GOAL>\n" +
+                    "<PREMISES>\n${premises.joinToString("\n\n")}\n</PREMISES>"
+
+        /** Reproduces the Python-list prompt representation used in the fine-tuning JSONL. */
+        fun fineTunedArendPrompt(context: List<String>, premises: List<String>, expectedType: String): String =
+            "${pythonListRepr(context)} ${pythonListRepr(premises)} $expectedType"
+
+        private fun pythonListRepr(values: List<String>): String =
+            values.joinToString(prefix = "[", postfix = "]", separator = ", ") { pythonStringRepr(it) }
+
+        private fun pythonStringRepr(value: String): String {
+            val quote = if ('\'' in value && '"' !in value) '"' else '\''
+            return buildString {
+                append(quote)
+                for (char in value) {
+                    when (char) {
+                        '\\' -> append("\\\\")
+                        quote -> append('\\').append(char)
+                        '\n' -> append("\\n")
+                        '\r' -> append("\\r")
+                        '\t' -> append("\\t")
+                        '\b' -> append("\\b")
+                        else -> if (char.code < 0x20 || char.code == 0x7f) {
+                            append("\\x").append(char.code.toString(16).padStart(2, '0'))
+                        } else {
+                            append(char)
+                        }
+                    }
+                }
+                append(quote)
+            }
+        }
 
         /** Matches Arend's FunctionArgInferenceError in both variants:
          *  "Cannot infer parameter 'x' of definition 'f'" (named) and

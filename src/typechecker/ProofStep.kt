@@ -5,6 +5,9 @@ data class ProofStep<G : Goal<G>>(val proof: Proof<G>, val score: Double)
 interface ProofStepGenerator<G : Goal<G>> {
     fun generate(goal: G, currentProof: Proof<G>? = null): List<ProofStep<G>>
 
+    /** Tells the generator when the search gives up (absolute time in milliseconds); it may stop generating steps then. */
+    fun setDeadline(deadlineMillis: Long) {}
+
     /**
      * Called when the search resurrects a goal that previously yielded no steps
      * and retries it with a fresh generation round. Implementations that memoize

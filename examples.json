@@ -1,0 +1,114 @@
+{
+    "Context": [],
+    "Expected type": "0 < 0 || (0 = 0)",
+    "Expression": "byRight idp",
+    "Premises": [
+        "byRight B : A || B",
+        "\\func \\infix 1 = {A : \\Type} (a a' : A) : \\Type => a = a'",
+        "\\func idp {A : \\Type} {a : A} : a = a => path (\\lam (_ : I) => a)",
+        "\\data \\infixr 2 || (_ _ : \\Type) : \\Prop \n  | byLeft A\n  | byRight B",
+        "\\func finLast (n1 : Nat) : Fin (suc n1) => {?}",
+        "\\data \\infix 4 < \\plevels  \\hlevels  (_ _ : Nat) \\with\n  | 0, suc n => zero<suc\n  | suc n, suc m => suc<suc (n < m)"
+    ]
+}
+{
+    "Context": ["k : Nat"],
+    "Expected type": "0 < suc k || (0 = suc (finLast k))",
+    "Expression": "byLeft zero<suc",
+    "Premises": [
+        "byLeft A : A || B",
+        "\\func \\infix 1 = {A : \\Type} (a a' : A) : \\Type => a = a'",
+        "suc Nat : Nat",
+        "\\data \\infixr 2 || (_ _ : \\Type) : \\Prop \n  | byLeft A\n  | byRight B",
+        "\\func finLast (n1 : Nat) : Fin (suc n1) => {?}",
+        "\\data \\infix 4 < \\plevels  \\hlevels  (_ _ : Nat) \\with\n  | 0, suc n => zero<suc\n  | suc n, suc m => suc<suc (n < m)",
+        "zero<suc : 0 < suc n"
+    ]
+}
+{
+    "Context": [
+        "i : Fin (suc k)",
+        "k : Nat"
+    ],
+    "Expected type": "i < k || (i = finLast k)",
+    "Expression": "exampleForPS i",
+    "Premises": [
+        "\\func \\infix 1 = {A : \\Type} (a a' : A) : \\Type => a = a'",
+        "\\data \\infixr 2 || (_ _ : \\Type) : \\Prop \n  | byLeft A\n  | byRight B",
+        "\\func finLast (n1 : Nat) : Fin (suc n1) => {?}",
+        "\\lemma exampleForPS {k : Nat} (i : Fin (suc k)) : i < k || (i = finLast k) => {?}",
+        "\\data \\infix 4 < \\plevels  \\hlevels  (_ _ : Nat) \\with\n  | 0, suc n => zero<suc\n  | suc n, suc m => suc<suc (n < m)"
+    ]
+}
+{
+    "Context": [
+        "i : Fin (suc k)",
+        "i<k : i < k",
+        "k : Nat"
+    ],
+    "Expected type": "suc i < suc k",
+    "Expression": "suc<suc i<k",
+    "Premises": [
+        "suc Nat : Nat",
+        "suc<suc (n < m) : suc n < suc m",
+        "\\data \\infix 4 < \\plevels  \\hlevels  (_ _ : Nat) \\with\n  | 0, suc n => zero<suc\n  | suc n, suc m => suc<suc (n < m)"
+    ]
+}
+{
+    "Context": [
+        "i : Fin (suc k)",
+        "i<k : i < k",
+        "k : Nat"
+    ],
+    "Expected type": "suc i < suc k || (suc i = suc (finLast k))",
+    "Expression": "byLeft {?}",
+    "Premises": [
+        "byLeft A : A || B",
+        "\\func \\infix 1 = {A : \\Type} (a a' : A) : \\Type => a = a'",
+        "suc Nat : Nat",
+        "\\data \\infixr 2 || (_ _ : \\Type) : \\Prop \n  | byLeft A\n  | byRight B",
+        "\\func finLast (n1 : Nat) : Fin (suc n1) => {?}",
+        "suc<suc (n < m) : suc n < suc m",
+        "\\data \\infix 4 < \\plevels  \\hlevels  (_ _ : Nat) \\with\n  | 0, suc n => zero<suc\n  | suc n, suc m => suc<suc (n < m)"
+    ]
+}
+{
+    "Context": [
+        "i : Fin (suc k)",
+        "i=last : i = finLast k",
+        "k : Nat"
+    ],
+    "Expected type": "suc i < suc k || (suc i = suc (finLast k))",
+    "Expression": "byRight {?}",
+    "Premises": [
+        "byRight B : A || B",
+        "\\func \\infix 1 = {A : \\Type} (a a' : A) : \\Type => a = a'",
+        "suc Nat : Nat",
+        "\\func fsuc \\plevels  \\hlevels  {n : Nat} (x : Fin n) : Fin (suc n) => suc x",
+        "\\data \\infixr 2 || (_ _ : \\Type) : \\Prop \n  | byLeft A\n  | byRight B",
+        "\\func finLast (n1 : Nat) : Fin (suc n1) => {?}",
+        "\\data \\infix 4 < \\plevels  \\hlevels  (_ _ : Nat) \\with\n  | 0, suc n => zero<suc\n  | suc n, suc m => suc<suc (n < m)",
+        "\\func pmap {A B : \\Type} (f : A -> B) {a a' : A} (p : a = a') : f a = f a' => path (\\lam (i : I) => f (p @ i))"
+    ]
+}
+{
+    "Context": [
+        "i : Fin (suc k)",
+        "k : Nat"
+    ],
+    "Expected type": "suc i < suc k || (suc i = suc (finLast k))",
+    "Expression": "\\case exampleForPS i \\with {\n  | byLeft i<k => {?}\n  | byRight i=last => {?}\n}",
+    "Premises": [
+        "byLeft A : A || B",
+        "byRight B : A || B",
+        "\\func \\infix 1 = {A : \\Type} (a a' : A) : \\Type => a = a'",
+        "suc Nat : Nat",
+        "\\func fsuc \\plevels  \\hlevels  {n : Nat} (x : Fin n) : Fin (suc n) => suc x",
+        "\\data \\infixr 2 || (_ _ : \\Type) : \\Prop \n  | byLeft A\n  | byRight B",
+        "\\func finLast (n1 : Nat) : Fin (suc n1) => {?}",
+        "\\lemma exampleForPS {k : Nat} (i : Fin (suc k)) : i < k || (i = finLast k) => {?}",
+        "suc<suc (n < m) : suc n < suc m",
+        "\\data \\infix 4 < \\plevels  \\hlevels  (_ _ : Nat) \\with\n  | 0, suc n => zero<suc\n  | suc n, suc m => suc<suc (n < m)",
+        "\\func pmap {A B : \\Type} (f : A -> B) {a a' : A} (p : a = a') : f a = f a' => path (\\lam (i : I) => f (p @ i))"
+    ]
+}

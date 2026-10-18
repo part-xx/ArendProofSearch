@@ -1,0 +1,45 @@
+-- Lemmas of arend-lib whose proofs only apply definitions, rewrite and split cases.
+-- Each is restated verbatim (class-body lemmas take their class as a parameter); the
+-- comment gives the location and the original proof, with a top-level \elim written as \case \elim.
+
+\import Algebra.Meta
+\import Data.Or
+\import Logic
+\import Logic.Meta
+\import Meta
+\import Order.Lattice
+\import Order.LinearOrder
+\import Order.PartialOrder
+\import Order.StrictOrder
+\import Paths
+\import Paths.Meta
+\import Set
+\open MeetSemilattice
+\open JoinSemilattice
+
+-- Order/Lattice.ard:51: <=-antisymmetric meet-left (meet-univ <=-refl <=-refl)
+\lemma meet-idemp' {A : MeetSemilattice} {x : A} : x ∧ x = x => {?}
+
+-- Order/Lattice.ard:54: <=-antisymmetric (meet-univ meet-right meet-left) (meet-univ meet-right meet-left)
+\lemma meet-comm' {A : MeetSemilattice} {x y : A} : x ∧ y = y ∧ x => {?}
+
+-- Order/Lattice.ard:65: <=-antisymmetric meet-left (meet-univ <=-refl x<=y)
+\lemma meet_<=' {A : MeetSemilattice} {x y : A} (x<=y : x <= y) : x ∧ y = x => {?}
+
+-- Order/Lattice.ard:118: <=-antisymmetric (join-univ join-right join-left) (join-univ join-right join-left)
+\lemma join-comm' {A : JoinSemilattice} {x y : A} : x ∨ y = y ∨ x => {?}
+
+-- Order/Lattice.ard:128: <=-antisymmetric (join-univ x<=y <=-refl) join-right
+\lemma join_<=' {A : JoinSemilattice} {x y : A} (x<=y : x <= y) : x ∨ y = y => {?}
+
+-- Order/Lattice.ard:206: <=-antisymmetric meet-left (meet-univ <=-refl top-univ)
+\lemma top-right' {A : TopMeetSemilattice} {x : A} : x ∧ top = x => {?}
+
+-- Order/PartialOrder.ard:65: rewrite p <=-refl
+\lemma =_<=' {P : Preorder} {x y : P} (p : x = y) : x <= y => {?}
+
+-- Order/LinearOrder.ard:273: \case LinearOrder.dec<_<= a a' \with { | inl q => yes q | inr q => no q }
+\lemma LinearOrder-dec<' {A : LinearOrder.Dec} (a a' : A) : Set.Dec (a < a') => {?}
+
+-- Order/LinearOrder.ard:38: \case TotalOrder.totality x y \with { | byLeft x<=y => byLeft (<=-antisymmetric meet-left (meet-univ <=-refl x<=y)) | byRight y<=x => byRight (<=-antisymmetric meet-right (meet-univ y<=x <=-refl)) }
+\lemma TotalOrder-meet-isMin' {A : TotalOrder} (x y : A) : (x ∧ y = x) || (x ∧ y = y) => {?}

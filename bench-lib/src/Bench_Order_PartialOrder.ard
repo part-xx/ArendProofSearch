@@ -1,0 +1,16 @@
+-- Lemmas of Order.PartialOrder restated with {?} bodies (proof-search benchmark; generated).
+
+\import Category
+\import Category.Functor
+\import Logic
+\import Paths.Meta
+\import Relation.Equivalence
+\import Set
+\import Set.SetHom
+\import Order.PartialOrder
+\import Algebra.Meta
+\import Logic.Meta
+\import Meta
+
+\lemma =_<= {P : Preorder} {x y : P} (p : x = y) : x <= y | idp => {?}
+\lemma \infixr 9 =<= {E : Preorder} {x y z : E} (p : x = y) (q : y <= z) : x <= z => {?}

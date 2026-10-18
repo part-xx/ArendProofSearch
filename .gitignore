@@ -37,3 +37,7 @@ bin/
 
 ### Local config with API keys — copy from gradle.properties.template ###
 gradle.properties
+
+### Arend daemon state and symbol indexes of the test libraries ###
+.arend/
+.arend-symbol-index/

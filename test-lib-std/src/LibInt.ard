@@ -1,0 +1,34 @@
+-- Lemmas of arend-lib whose proofs only apply definitions, rewrite and split cases.
+-- Each is restated verbatim (class-body lemmas take their class as a parameter); the
+-- comment gives the location and the original proof, with a top-level \elim written as \case \elim.
+
+\import Algebra.Meta
+\import Algebra.Group
+\import Algebra.Monoid
+\import Algebra.StrictlyOrdered
+\import Algebra.Pointed
+\import Algebra.Ring
+\import Algebra.Semiring
+\import Arith.Int
+\import Arith.Nat
+\import Data.Bool
+\import Data.Or
+\import Function.Meta
+\import Logic
+\import Meta
+\import Order.Biordered
+\import Order.LinearOrder
+\import Order.PartialOrder
+\import Order.StrictOrder
+\import Paths
+\import Paths.Meta
+\open LinearOrder (trichotomy)
+
+-- Arith/Int.ard:30: \case \elim x \with { | pos n => idp | neg (suc n) => idp }
+\lemma ipred_isuc' (x : Int) : ipred (isuc x) = x => {?}
+
+-- Arith/Int.ard:410: \case \elim n \with { | 0 => idp | suc n => idp }
+\lemma zro-id=neg' {n : Nat} : 0 Nat.- n = neg n => {?}
+
+-- Arith/Int.ard:382: \case \elim x \with { | pos n => pos<pos id<suc | neg (suc n) => neg<neg id<suc }
+\lemma id<isuc' {x : Int} : x < isuc x => {?}

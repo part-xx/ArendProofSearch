@@ -1,0 +1,38 @@
+-- Lemmas of Data.List restated with {?} bodies (proof-search benchmark; generated).
+
+\import Algebra.Meta
+\import Algebra.Monoid
+\import Data.Bool
+\import Data.Or
+\import Function
+\import Function.Meta
+\import Logic
+\import Logic.Meta
+\import Meta
+\import Order.Biordered
+\import Order.LinearOrder
+\import Order.PartialOrder
+\import Order.StrictOrder
+\import Paths
+\import Paths.Meta
+\import Set
+\import Data.List
+\open Sort
+\open InList
+
+\lemma length_++ {A : \Type} {l l' : List A} : length (l ++ l') = length l Nat.+ length l' => {?}
+\lemma length_replicate {A : \Type} {n : Nat} {a : A} : length (replicate n a) = n => {?}
+\lemma all-map {A B : \Type} (f : A -> B) {P : B -> \Prop} {l : List A} (a : All P (map f l)) : All (\lam a => P (f a)) l => {?}
+\lemma all-implies {A : \Type} {P Q : A -> \Prop} {l : List A} (a : All P l) (p : All (\lam a => P a -> Q a) l) : All Q l => {?}
+\lemma all-forall {A : \Type} {P : A -> \Prop} {l : List A} (p : \Pi (a : A) -> P a) : All P l => {?}
+\lemma allC-tail {A : \Type} {a : A} {l : List A} {P : A -> A -> \Prop} (a : AllC P (a :: l)) : AllC P l => {?}
+\lemma count_perm {A : DecSet} {l l' : List A} (p : Perm l l') (a : A) : count l a = count l' a => {?}
+\lemma count_++ {A : DecSet} {l l' : List A} {a : A} : count (l ++ l') a = count l a Nat.+ count l' a => {?}
+\lemma group-sorted {A : DecSet} {P : Preorder A} {l : List A} (s : Sorted l) : Sorted (map __.1 (group l)) => {?}
+\lemma group-diff {A : DecSet} {P : Poset A} {l : List A} (s : Sorted l) : All2 (__.1 /= __.1) (group l) => {?}
+\lemma group_count-lem {A : DecSet} {P : Poset A} {l : List A} (s : Sorted l) : All (\lam p => p.2 = count l p.1) (group l) => {?}
+\lemma InList_++ {A : \Type} {a : A} {l l' : List A} (p : InList a (l ++ l')) : InList a l || InList a l' => {?}
+\lemma InList_++-left {A : \Type} {a : A} {l l' : List A} (p : InList a l) : InList a (l ++ l') => {?}
+\lemma InList_++-right {A : \Type} {a : A} {l l' : List A} (p : InList a l') : InList a (l ++ l') => {?}
+\lemma contains_InList {A : DecSet} {a : A} {l : List A} : (contains l a = true) <-> InList a l => {?}
+\lemma union~++ {A : DecSet} {l l' : List A} : union l l' ~ l ++ l' => {?}

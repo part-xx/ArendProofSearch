@@ -5,6 +5,11 @@ interface CliApi {
     fun applyStep(moduleDef: String, fullBody: String): ApplyStepResponse
     fun getScope(moduleDef: String, goalId: String): ScopeResponse
     fun proofSearch(pattern: String): ProofSearchResponse
+
+    /** Proof search returning at most [limit] matches, all of them for 0; the CLI's default is 200. */
+    fun proofSearch(pattern: String, limit: Int): ProofSearchResponse = proofSearch(pattern)
+    /** With [printFull], each result carries its full signature rather than the matching slice. */
+    fun proofSearch(pattern: String, limit: Int, printFull: Boolean): ProofSearchResponse = proofSearch(pattern, limit)
     fun signature(moduleDef: String): String
     fun signatureInfo(moduleDef: String, name: String): SignatureInfoResponse?
     /**

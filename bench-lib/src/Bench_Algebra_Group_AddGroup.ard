@@ -1,0 +1,33 @@
+-- Lemmas of Algebra.Group (class AddGroup) restated with {?} bodies (proof-search benchmark; generated).
+
+\import Algebra.Meta
+\import Algebra.Monoid
+\import Algebra.Monoid.MonoidHom
+\import Algebra.Pointed
+\import Arith.Int()
+\import Data.Array
+\import Data.Fin
+\import Data.Or
+\import Equiv
+\import Function.Meta ($)
+\import Logic
+\import Logic.Meta
+\import Meta
+\import Paths
+\import Paths.Meta
+\import Set
+\import Set.Fin
+\import Algebra.Group
+\open AddGroup
+
+\lemma cancel-left {A : AddGroup} (x : A) {y z : A} (p : x + y = x + z) : y = z => {?}
+\lemma cancel-right {A : AddGroup} (z : A) {x y : A} (p : x + z = y + z) : x = y => {?}
+\lemma negative-isInv {A : AddGroup} {x : A} : negative (negative x) = x => {?}
+\lemma negative_+ {A : AddGroup} {x y : A} : negative (x + y) = negative y - x => {?}
+\lemma negative_- {A : AddGroup} {x y : A} : negative (x - y) = y - x => {?}
+\lemma minus_zro {A : AddGroup} {x : A} : x - zro = x => {?}
+\lemma fromZero {A : AddGroup} {x y : A} (x-y=0 : x - y = zro) : x = y => {?}
+\lemma toZero {A : AddGroup} {x y : A} (x=y : x = y) : x - y = zro => {?}
+\lemma *i-rdistr {A : AddGroup} {x y : Int} {a : A} : (x Arith.Int.IntRing.+ y) *i a = x *i a + y *i a => {?}
+\lemma diff_+ {A : AddGroup} {x y z : A} : (z - y) + (y - x) = z - x => {?}
+\lemma minus_+ {A : AddGroup} {x y : A} : (x - y) + y = x => {?}

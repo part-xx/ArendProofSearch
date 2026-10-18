@@ -1,0 +1,28 @@
+-- Lemmas of Algebra.Group (class AbGroup) restated with {?} bodies (proof-search benchmark; generated).
+
+\import Algebra.Meta
+\import Algebra.Monoid
+\import Algebra.Monoid.MonoidHom
+\import Algebra.Pointed
+\import Arith.Int()
+\import Data.Array
+\import Data.Fin
+\import Data.Or
+\import Equiv
+\import Function.Meta ($)
+\import Logic
+\import Logic.Meta
+\import Meta
+\import Paths
+\import Paths.Meta
+\import Set
+\import Set.Fin
+\import Algebra.Group
+\open AbGroup
+
+\lemma sum-cancel-left {A : AbGroup} {x y z : A} : x + z - (x + y) = z - y => {?}
+\lemma sum-cancel-right {A : AbGroup} {x y z : A} : z + x - (y + x) = z - y => {?}
+\lemma diff-cancel-left {A : AbGroup} {x y z : A} : x - z - (x - y) = y - z => {?}
+\lemma negative_+-comm {A : AbGroup} {x y : A} : negative (x + y) = negative x - y => {?}
+\lemma diff_sum {A : AbGroup} {x y z : A} : x - (y + z) = x - y - z => {?}
+\lemma diff_diff {A : AbGroup} {x y z : A} : x - (y - z) = x - y + z => {?}

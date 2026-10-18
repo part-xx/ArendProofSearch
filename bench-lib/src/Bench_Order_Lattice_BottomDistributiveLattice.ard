@@ -1,0 +1,26 @@
+-- Lemmas of Order.Lattice (class BottomDistributiveLattice) restated with {?} bodies (proof-search benchmark; generated).
+
+\import Algebra.Monoid
+\import Algebra.Semiring
+\import Category.Limit
+\import Data.Array
+\import Data.Array.EPerm
+\import Data.Bool
+\import Equiv
+\import Function.Meta
+\import Logic.Unique
+\import Homotopy.Fibration
+\import Logic
+\import Meta
+\import Order.Directed
+\import Paths
+\import Order.PartialOrder
+\import Paths.Meta
+\import Set.Fin
+\import Order.Lattice
+\import Algebra.Meta
+\import Logic.Meta
+\open BottomDistributiveLattice
+
+\lemma bottom-ldistr {A : BottomDistributiveLattice} {x : A} : x ∧ bottom = bottom => {?}
+\lemma bottom-rdistr {A : BottomDistributiveLattice} {x : A} : bottom ∧ x = bottom => {?}

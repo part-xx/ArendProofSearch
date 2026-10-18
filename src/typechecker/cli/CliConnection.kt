@@ -4,7 +4,7 @@ import kotlinx.serialization.json.Json
 import org.arend.frontend.cli.daemon.DaemonPaths
 import org.arend.frontend.cli.daemon.LockFile
 import org.arend.frontend.cli.daemon.client.DaemonClient
-import org.arend.frontend.cli.daemon.server.SocketBinder
+import org.arend.frontend.cli.daemon.wire.SocketAddress
 import java.io.IOException
 import java.nio.file.Path
 
@@ -16,7 +16,7 @@ class CliConnection(libraryPath: Path) : CliApi, AutoCloseable {
         val paths = DaemonPaths.resolve(libraryPath)
             ?: throw IOException("Could not resolve library at $libraryPath")
 
-        val lockFile = LockFile.read(paths.lockFile).orElse(null)
+        val lockFile = LockFile.readIfValid(paths.lockFile).orElse(null)
             ?: throw IOException("No daemon running for library at $libraryPath (no lock file at ${paths.lockFile})")
 
         if (lockFile.socketPath.isNullOrEmpty()) {
@@ -28,7 +28,7 @@ class CliConnection(libraryPath: Path) : CliApi, AutoCloseable {
             throw IOException("Daemon at PID ${lockFile.pid} is dead (stale lock file cleaned up)")
         }
 
-        val addr = SocketBinder.parseAddress(lockFile.socketPath)
+        val addr = SocketAddress.parse(lockFile.socketPath)
         client = DaemonClient.connect(addr)
     }
 
@@ -66,7 +66,7 @@ class CliConnection(libraryPath: Path) : CliApi, AutoCloseable {
     private fun extractJson(raw: String): String {
         val start = raw.lastIndexOf("\n{")
         if (start >= 0) return raw.substring(start + 1).trim()
-        if (raw.startsWith("{\"")) return raw.trim()
+        if (Regex("""^\{\s*"""").containsMatchIn(raw)) return raw.trim()
         throw IOException("No JSON object in daemon output: ${raw.take(200)}")
     }
 
@@ -86,7 +86,17 @@ class CliConnection(libraryPath: Path) : CliApi, AutoCloseable {
     }
 
     override fun proofSearch(pattern: String): ProofSearchResponse {
-        val cliOutput = invokeCliCommand("-psj", pattern)
+        val cliOutput = invokeCliCommand("--json", "-ps", pattern)
+        return json.decodeFromString<ProofSearchResponse>(extractJson(cliOutput.result))
+    }
+
+    override fun proofSearch(pattern: String, limit: Int): ProofSearchResponse {
+        val cliOutput = invokeCliCommand("--json", "-ps", pattern, "limit=$limit")
+        return json.decodeFromString<ProofSearchResponse>(extractJson(cliOutput.result))
+    }
+
+    override fun proofSearch(pattern: String, limit: Int, printFull: Boolean): ProofSearchResponse {
+        val cliOutput = invokeCliCommand(*listOfNotNull("--json", "-ps", pattern, "limit=$limit", if (printFull) "print-full" else null).toTypedArray())
         return json.decodeFromString<ProofSearchResponse>(extractJson(cliOutput.result))
     }
 

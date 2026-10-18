@@ -165,10 +165,10 @@ fun testLLM() {
 
 fun main(args: Array<String>) {
   testLLM()
-  /*if (args.any { it == "--cli-mode" }) {
+  if (args.any { it == "--cli-mode" }) {
     val filteredArgs = args.filter { it != "--cli-mode" }.toTypedArray()
     typechecker.cli.runCliSearch(filteredArgs)
   } else {
     runSearch(args)
-  }*/
+  }
 }

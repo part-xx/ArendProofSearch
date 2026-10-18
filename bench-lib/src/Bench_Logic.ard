@@ -1,0 +1,31 @@
+-- Lemmas of Logic restated with {?} bodies (proof-search benchmark; generated).
+
+\import Algebra.Meta
+\import Data.Or
+\import Function.Meta
+\import Logic.Unique
+\import Logic.Meta
+\import Meta
+\import Paths
+\import Paths.Meta
+\import Logic
+
+\lemma /=-sym {A : \Cat} {a a' : A} (p : a /= a') : a' /= a => {?}
+\lemma prop-pi {A : \Prop} {a a' : A} : a = a' => {?}
+\lemma prop-isProp {A : \Prop} : isProp A => {?}
+\lemma set-pi {A : \Set} {a b : A} {p q : a = b} : p = q => {?}
+\lemma prop-dpi (A : I -> \Prop) (a : A left) (a' : A right) : Path A a a' => {?}
+\lemma setPair-unext2 {A : \Set} {B : A -> \Set} {a : A} {b : B a} {b' : B a} (p : (a,b) = {\Sigma (a : A) (B a)} (a,b')) : b = b' => {?}
+\lemma <->_= {P Q : \Prop} : (P <-> Q) <-> (P = Q) => {?}
+\lemma <->refl {P : \Prop} : P <-> P => {?}
+\lemma <->trans {P Q S : \Prop} (f : P <-> Q) (g : Q <-> S) : P <-> S => {?}
+\lemma <->sym {P Q : \Prop} (f : P <-> Q) : Q <-> P => {?}
+\lemma TSetIm-con {A B : \Cat} {f : A -> B} (a : A) : TSetIm f (f a) => {?}
+\lemma TSetIm-elim {A B : \Cat} {C : B -> \Prop} {f : A -> B} (c : \Pi (a : A) -> C (f a)) {b : B} (s : TSetIm f b) : C b => {?}
+\lemma SetIm-con {A B : \Cat} {f : A -> B} {P : A -> \Cat} {a : A} (Pa : P a) : SetIm f P (f a) => {?}
+\lemma SetIm-cone {A B : \Cat} {f : A -> B} {P : A -> \Cat} (a : A) (Pa : P a) : SetIm f P (f a) => {?}
+\lemma SetIm-elim {A B : \Cat} {C : B -> \Prop} {f : A -> B} {P : A -> \Cat} (c : \Pi {a : A} -> P a -> C (f a)) {b : B} (s : SetIm f P b) : C b => {?}
+\lemma SetIm_id {A : \Cat} {P : A -> \Prop} : SetIm (\lam x => x) P = P => {?}
+\lemma SetIm_o {A B C : \Cat} {f : A -> B} {g : B -> C} {P : A -> \Prop} : SetIm (\lam x => g (f x)) P = SetIm g (SetIm f P) => {?}
+\lemma SetIm_TSetIm {A B C : \Cat} {f : A -> B} {g : B -> C} : SetIm g (TSetIm f) = TSetIm (\lam a => g (f a)) => {?}
+\lemma propExt {A B : \Prop} (f : A -> B) (g : B -> A) : A = B => {?}

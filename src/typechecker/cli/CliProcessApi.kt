@@ -10,7 +10,9 @@ class CliProcessApi(
     private val jarPath: Path = Paths.get(
         System.getProperty("arend.jar",
             "/Users/fedor/codingspace/arend-lang/Arend/cli/build/libs/cli-1.11.0-full.jar")
-    )
+    ),
+    /** Further directories in which the CLI looks for the library's dependencies. */
+    private val libDirs: List<Path> = emptyList()
 ) : CliApi, AutoCloseable {
 
     private val json = Json { ignoreUnknownKeys = true }
@@ -21,6 +23,7 @@ class CliProcessApi(
         if (java.nio.file.Files.isDirectory(libsDir)) {
             cmd.addAll(listOf("-L", libsDir.toString()))
         }
+        for (libDir in libDirs) cmd.addAll(listOf("-L", libDir.toString()))
         cmd.addAll(extraArgs)
         if (appendLibPath) cmd.add(libraryPath.toString())
 
@@ -46,7 +49,7 @@ class CliProcessApi(
         val start = raw.lastIndexOf("\n{")
         if (start >= 0) return raw.substring(start + 1).trim()
         // Fallback: output starts with JSON
-        if (raw.startsWith("{\"")) return raw.trim()
+        if (Regex("""^\{\s*"""").containsMatchIn(raw)) return raw.trim()
         throw IOException("No JSON object in CLI output: $raw")
     }
 
@@ -70,7 +73,18 @@ class CliProcessApi(
     }
 
     override fun proofSearch(pattern: String): ProofSearchResponse {
-        val raw = runCli("--json", "-ps", pattern)
+        // -ps consumes the arguments after it, so the library has to come first
+        val raw = runCli(libraryPath.toString(), "--json", "-ps", pattern, appendLibPath = false)
+        return json.decodeFromString<ProofSearchResponse>(extractJson(raw))
+    }
+
+    override fun proofSearch(pattern: String, limit: Int): ProofSearchResponse {
+        val raw = runCli(libraryPath.toString(), "--json", "-ps", pattern, "limit=$limit", appendLibPath = false)
+        return json.decodeFromString<ProofSearchResponse>(extractJson(raw))
+    }
+
+    override fun proofSearch(pattern: String, limit: Int, printFull: Boolean): ProofSearchResponse {
+        val raw = runCli(*listOfNotNull(libraryPath.toString(), "--json", "-ps", pattern, "limit=$limit", if (printFull) "print-full" else null).toTypedArray(), appendLibPath = false)
         return json.decodeFromString<ProofSearchResponse>(extractJson(raw))
     }
 

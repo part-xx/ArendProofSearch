@@ -1,0 +1,24 @@
+-- Lemmas of Algebra.Group (class Group) restated with {?} bodies (proof-search benchmark; generated).
+
+\import Algebra.Meta
+\import Algebra.Monoid
+\import Algebra.Monoid.MonoidHom
+\import Algebra.Pointed
+\import Arith.Int()
+\import Data.Array
+\import Data.Fin
+\import Data.Or
+\import Equiv
+\import Function.Meta ($)
+\import Logic
+\import Logic.Meta
+\import Meta
+\import Paths
+\import Paths.Meta
+\import Set
+\import Set.Fin
+\import Algebra.Group
+\open Group
+
+\lemma inverse-isInv {A : Group} {x : A} : inverse (inverse x) = x => {?}
+\lemma inverse_* {A : Group} {x y : A} : inverse (x * y) = inverse y * inverse x => {?}

@@ -1,0 +1,46 @@
+-- Goals provable by chaining applications of premises (AppGenerator tests)
+
+-- Q and R can only be built from proofs of P and Q, so their proofs are chains of applications
+\truncated \data P : \Prop | p-con
+\truncated \data Q : \Prop | q-con P
+\truncated \data R : \Prop | r-con P Q
+
+\lemma p-lem : P => p-con
+\lemma q-lem (p : P) : Q => q-con p
+\lemma r-lem (p : P) (q : Q) : R => r-con p q
+
+-- A Prop-valued family; pos-succ has an implicit argument inferred from the goal
+\truncated \data Pos (n : Nat) : \Prop
+  | pos-one-con (n = 1)
+  | pos-suc-con (m : Nat) (Pos m) (n = suc m)
+
+\lemma pos-one : Pos 1 => pos-one-con idp
+\lemma pos-succ {n : Nat} (p : Pos n) : Pos (suc n) => pos-suc-con n p idp
+
+-- Explicit non-Prop arguments sharing one telescope, followed by Prop arguments
+\truncated \data PosPair (x y : Nat) : \Prop | pos-pair-con (Pos x) (Pos y)
+\lemma pos-pair (x y : Nat) (p : Pos x) (q : Pos y) : PosPair x y => pos-pair-con p q
+
+-- one step: p-lem
+\lemma app-one : P => {?}
+
+-- two steps: q-lem {?}, then p-lem
+\lemma app-two : Q => {?}
+
+-- r-lem {?} {?}, then p-lem and q-lem {?}, then p-lem
+\lemma app-branching : R => {?}
+
+-- pos-succ {?}, pos-succ {?}, pos-one
+\lemma app-implicit : Pos 3 => {?}
+
+-- pos-pair _ _ {?} {?}, then pos-one and pos-succ {?}, then pos-one
+\lemma app-telescope : PosPair 1 2 => {?}
+
+-- the goal is a function type, so the premise is used unapplied
+\lemma app-pi : P -> Q => {?}
+
+-- no premise concludes Pos 0
+\lemma app-unprovable : Pos 0 => {?}
+
+-- the hypothesis q makes premises that take a Q (r-lem) more relevant
+\lemma app-hypothesis (q : Q) : R => {?}

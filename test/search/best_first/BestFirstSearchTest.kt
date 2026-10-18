@@ -140,20 +140,24 @@ class BestFirstSearchTest {
     }
 
     @Test
-    fun `search handles replaceGoal returning null`() {
-        val failingProof = object : Proof<MockGoal> {
+    fun `search does not compose steps itself`() {
+        // Steps carry the full proof state; the search never calls replaceGoal on the current proof
+        val proof = object : Proof<MockGoal> {
             override fun goals() = listOf(MockGoal("g1"))
-            override fun replaceGoal(goal: MockGoal, proof: Proof<MockGoal>): Proof<MockGoal>? = null
+            override fun replaceGoal(goal: MockGoal, proof: Proof<MockGoal>): Proof<MockGoal>? =
+                throw AssertionError("The search must not compose steps")
         }
         val generator = object : ProofStepGenerator<MockGoal> {
             override fun generate(goal: MockGoal, currentProof: Proof<MockGoal>?): List<ProofStep<MockGoal>> {
+                assertEquals(proof, currentProof, "The generator composes steps into the current proof")
                 return listOf(ProofStep(MockProof(emptyList(), "step"), 1.0))
             }
         }
         val search = BestFirstSearch<MockGoal>(generator)
 
-        val result = search.search(failingProof)
-        assertNull(result)
+        val result = search.search(proof)
+        assertNotNull(result)
+        assertTrue(result.isFinished())
     }
 
     @Test

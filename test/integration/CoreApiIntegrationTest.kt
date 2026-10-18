@@ -1,25 +1,16 @@
 package integration
 
-import org.arend.error.DummyErrorReporter
 import org.arend.ext.error.ListErrorReporter
 import org.arend.ext.module.FullName
 import org.arend.ext.module.ModuleLocation
-import org.arend.frontend.library.CliServerRequester
-import org.arend.frontend.library.FileSourceLibrary
-import org.arend.frontend.library.LibraryManager
-import org.arend.frontend.source.PreludeResourceSource
-import org.arend.prelude.Prelude
 import org.arend.server.ArendServer
 import org.arend.server.ProgressReporter
-import org.arend.server.impl.ArendServerImpl
 import org.arend.term.concrete.Concrete
 import org.arend.term.group.ConcreteGroup
 import org.arend.typechecking.computation.UnstoppableCancellationIndicator
 import org.arend.core.expr.Expression
 import org.arend.typechecking.result.TypecheckingResult
 import org.arend.typechecking.visitor.CheckTypeVisitor
-import org.arend.util.FileUtils
-import org.arend.util.FileUtils.modulePath
 import typechecker.Proof
 import typechecker.ProofStep
 import typechecker.ProofStepGenerator
@@ -29,72 +20,16 @@ import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlin.test.assertNotNull
 import kotlin.test.assertEquals
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
 
 class CoreApiIntegrationTest {
 
     companion object {
-        private val testLibDir: Path = Paths.get(System.getProperty("user.dir"), "test-lib")
-
-        private var cachedEnv: Triple<ArendServer, ConcreteGroup, ModuleLocation>? = null
-        private var cacheModule: String? = null
-
         private fun loadServer(testModule: String): Triple<ArendServer, ConcreteGroup, ModuleLocation>? {
-            if (cacheModule == testModule && cachedEnv != null) return cachedEnv
-
-            val configFile = testLibDir.resolve(FileUtils.LIBRARY_CONFIG_FILE)
-            if (!Files.exists(configFile)) {
-                println("SKIPPED: test-lib not found at $testLibDir")
+            val module = TestLibrary.load()?.module(testModule) ?: run {
+                println("SKIPPED: could not load module $testModule")
                 return null
             }
-
-            try {
-                val errorReporter = ListErrorReporter()
-                val libraryManager = LibraryManager(errorReporter)
-                val server: ArendServer = ArendServerImpl(CliServerRequester(libraryManager), false, false, true)
-                server.addReadOnlyModule(
-                    Prelude.MODULE_LOCATION,
-                    { PreludeResourceSource().loadGroup(DummyErrorReporter.INSTANCE)!! }
-                )
-                server.addErrorReporter(errorReporter)
-
-                val library = FileSourceLibrary.fromConfigFile(configFile, false, ListErrorReporter())
-                    ?: run {
-                        println("SKIPPED: FileSourceLibrary.fromConfigFile returned null for $configFile")
-                        return null
-                    }
-                libraryManager.updateLibrary(library, server)
-
-                val modulePath = modulePath(testModule)
-                for (mod in library.findModules(false)) {
-                    library.getSource(mod, false)?.load(server, errorReporter)
-                }
-
-                val module = ModuleLocation(library.libraryName, ModuleLocation.LocationKind.SOURCE, modulePath)
-                val checker = server.getCheckerFor(listOf(module))
-                val group = server.getRawGroup(module) ?: run {
-                    println("SKIPPED: getRawGroup returned null for $module")
-                    return null
-                }
-
-                checker.resolveAll(UnstoppableCancellationIndicator.INSTANCE, ProgressReporter.empty())
-                val allModules = server.modules.toList()
-                if (allModules.isNotEmpty()) {
-                    val allChecker = server.getCheckerFor(allModules)
-                    allChecker.typecheck(UnstoppableCancellationIndicator.INSTANCE, ProgressReporter.empty())
-                }
-
-                val result = Triple(server, group, module)
-                cachedEnv = result
-                cacheModule = testModule
-                return result
-            } catch (e: Exception) {
-                println("ERROR loading server: ${e::class.simpleName}: ${e.message}")
-                e.printStackTrace()
-                return null
-            }
+            return Triple(module.server, module.group, module.location)
         }
     }
 

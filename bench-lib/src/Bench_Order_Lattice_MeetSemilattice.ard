@@ -1,0 +1,34 @@
+-- Lemmas of Order.Lattice (class MeetSemilattice) restated with {?} bodies (proof-search benchmark; generated).
+
+\import Algebra.Monoid
+\import Algebra.Semiring
+\import Category.Limit
+\import Data.Array
+\import Data.Array.EPerm
+\import Data.Bool
+\import Equiv
+\import Function.Meta
+\import Logic.Unique
+\import Homotopy.Fibration
+\import Logic
+\import Meta
+\import Order.Directed
+\import Paths
+\import Order.PartialOrder
+\import Paths.Meta
+\import Set.Fin
+\import Order.Lattice
+\import Algebra.Meta
+\import Logic.Meta
+\open MeetSemilattice
+
+\lemma Big_meet-cond {A : MeetSemilattice} {n : Nat} {l : Array A (suc n)} {j : Fin (suc n)} : Big_∧ l <= l j => {?}
+\lemma meet-idemp {A : MeetSemilattice} {x : A} : x ∧ x = x => {?}
+\lemma meet-comm {A : MeetSemilattice} {x y : A} : x ∧ y = y ∧ x => {?}
+\lemma meet-monotone {A : MeetSemilattice} {x y x' y' : A} (p : x <= x') (q : y <= y') : x ∧ y <= x' ∧ y' => {?}
+\lemma meet-assoc {A : MeetSemilattice} {x y z : A} : (x ∧ y) ∧ z = x ∧ (y ∧ z) => {?}
+\lemma meet_<= {A : MeetSemilattice} {x y : A} (x<=y : x <= y) : x ∧ y = x => {?}
+\lemma meet_<=' {A : MeetSemilattice} {x y : A} (p : x ∧ y = x) : x <= y => {?}
+\lemma Big_<=_meet0 {A : MeetSemilattice} {l : Array A} {x : A} : Big (∧) x l <= x => {?}
+\lemma Big_<=_meet1 {A : MeetSemilattice} {l : Array A} {x : A} (i : Fin l.len) : Big (∧) x l <= l i => {?}
+\lemma Big_meet-univ {A : MeetSemilattice} {l : Array A} {x y : A} (p : y <= x) (f : \Pi (i : Fin l.len) -> y <= l i) : y <= Big (∧) x l => {?}

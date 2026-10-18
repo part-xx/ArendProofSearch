@@ -1,8 +1,18 @@
 package integration
 
 import search.best_first.BestFirstSearch
+import typechecker.LLMClient
+import typechecker.LocalLlamaLLMClient
+import typechecker.OpenAILikeLLMClient
 import typechecker.cli.*
+import typechecker.cli.proofstep.CandidateGenerationMode
 import typechecker.cli.proofstep.CliLLMStepGenerator
+import typechecker.cli.proofstep.TacticPromptFormat
+import typechecker.cli.proofstep.openaiLikeApiKey
+import typechecker.cli.proofstep.openaiLikeBaseUrl
+import typechecker.cli.proofstep.openaiLikeEnableThinking
+import typechecker.cli.proofstep.openaiLikeMaxTokens
+import typechecker.cli.proofstep.openaiLikeModel
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -23,12 +33,50 @@ import java.nio.file.Paths
  *   2. arend-lib at arend-lang-new/Arend/arend-lib/
  *   3. VPN on, LITELLM_API_KEY env var set (for LLM tests)
  *
- * Run: ./gradlew test --tests "integration.CliLLMIntegrationTest" -DmaxAttempts=5
+ * Run: ./gradlew test --tests "integration.CliLLMIntegrationTest" -PllmMaxAttempts=5
+ * The prime-char-dir LLM test is configured entirely through the LLM/local-model
+ * Gradle properties documented in gradle.properties.template.
  */
 class CliLLMIntegrationTest {
 
-    private val libPath = Paths.get("/Users/fedor/codingspace/arend-lang/Arend/arend-lib")
-    private val maxAttempts = Integer.getInteger("maxAttempts", 10)
+    private fun positiveIntProperty(name: String, default: Int): Int =
+        System.getProperty(name)?.toIntOrNull()?.takeIf { it > 0 }
+            ?: if (System.getProperty(name) == null) default
+            else error("$name must be a positive integer (got '${System.getProperty(name)}')")
+
+    private fun positiveLongProperty(name: String, default: Long): Long =
+        System.getProperty(name)?.toLongOrNull()?.takeIf { it > 0 }
+            ?: if (System.getProperty(name) == null) default
+            else error("$name must be a positive integer (got '${System.getProperty(name)}')")
+
+    private fun samplingTemperatureProperty(name: String, default: Double): Double =
+        System.getProperty(name)?.toDoubleOrNull()?.takeIf { it > 0.0 && it <= 2.0 }
+            ?: if (System.getProperty(name) == null) default
+            else error("$name must be in (0, 2] (got '${System.getProperty(name)}')")
+
+    private val libPath = (System.getProperty("arend.lib.path")?.takeIf { it.isNotBlank() }?.let(Paths::get)
+        ?: listOf(
+            Paths.get("../arend-lang-new/Arend/arend-lib"),
+            Paths.get("../arend-lang/Arend/arend-lib"),
+            Paths.get("/Users/fedor/codingspace/arend-lang/Arend/arend-lib")
+        ).firstOrNull { Files.exists(it.resolve("arend.yaml")) }
+        ?: Paths.get("../arend-lang-new/Arend/arend-lib")).toAbsolutePath().normalize()
+    private val localModelPath = (System.getProperty("local.model.path")?.takeIf { it.isNotBlank() }?.let(Paths::get)
+        ?: LocalLlamaLLMClient.defaultModelPath()).toAbsolutePath().normalize()
+    private val llamaServerExecutable =
+        System.getProperty("local.llama.server.executable")?.takeIf { it.isNotBlank() } ?: "llama-server"
+    private val localContextSize = positiveIntProperty("local.context.size", LocalLlamaLLMClient.DEFAULT_CONTEXT_SIZE)
+    private val localMaxTokens = positiveIntProperty("local.max.tokens", LocalLlamaLLMClient.DEFAULT_MAX_TOKENS)
+    private val localStartupTimeoutSeconds = positiveLongProperty(
+        "local.startup.timeout.seconds",
+        LocalLlamaLLMClient.DEFAULT_STARTUP_TIMEOUT_SECONDS
+    )
+    private val maxAttempts = positiveIntProperty("llm.max.attempts", CliLLMStepGenerator.DEFAULT_MAX_ATTEMPTS)
+    private val maxCandidates = positiveIntProperty("llm.max.candidates", CliLLMStepGenerator.DEFAULT_MAX_CANDIDATES)
+    private val batchTemperature = samplingTemperatureProperty(
+        "llm.batch.temperature",
+        CliLLMStepGenerator.DEFAULT_BATCH_TEMPERATURE
+    )
     private val testModulePath: Path = libPath.resolve("src/testPS.ard")
     private val testBinPath: Path = libPath.resolve("bin/testPS.arc")
     private val testSigPath: Path = libPath.resolve(".sig/testPS.ard")
@@ -64,6 +112,29 @@ class CliLLMIntegrationTest {
         val OR = """\truncated \data \infixr 2 || (A B : \Type) : \Prop
   | byLeft A
   | byRight B"""
+
+        /** Premises exactly as represented in the fine-tuning row for prime-char-dir. */
+        val PRIME_CHAR_FINE_TUNING_PREMISES = listOf(
+            "byRight B : A || B",
+            "\\func inv {A1 : \\Type} {a1 a' : A1} (_ : a1 = a') : a' = a1 \n" +
+                    "  | {A}, {a}, {a'}, idp => idp {A} {a}",
+            """\lemma natUnit {n m : Nat} (_ : n * m = 1) : m = 1 => {?hidden_proof}""",
+            "\\func \\infixr 9 *> {A : \\Type} {a a' a'' : A} (_ : a = a') (_ : a' = a'') : a = a'' \n" +
+                    "  | {A}, {a}, {a'}, {a''}, p, idp => p",
+            "\\data \\infixr 2 || (_ _ : \\Type) : \\Prop \n" +
+                    "  | byLeft A\n" +
+                    "  | byRight B",
+            "\\data Nat \n" +
+                    "  | zero\n" +
+                    "  | suc Nat",
+            "byLeft A : A || B",
+            """\func pmap {A B : \Type} (f : A -> B) {a a' : A} (p : a = a') : f a = f a' => path (\lam (i : I) => f (p @ i))""",
+            """| \infixl 7 * E E : E  [field of Semigroup]""",
+            "| inv-left : inv * val = elem  [field of RDiv]",
+            "| inv-right : val * inv = elem  [field of LDiv]",
+            "| isIrr {x y : E {M}} (e = x * y) : Inv {M} x || Inv {M} y  [field of Irr]",
+            "| inv : E {M}  [field of LDiv]"
+        )
 
 
         // ── Source definitions (fully implemented, for testPS.ard) ─
@@ -179,9 +250,16 @@ class CliLLMIntegrationTest {
             println("Using daemon connection")
             return conn
         } catch (_: Exception) {}
-        val jarPath = Paths.get("/Users/fedor/codingspace/arend-lang/Arend/cli/build/libs/cli-1.11.0-full.jar")
-        if (!Files.exists(jarPath)) {
-            println("SKIP: CLI jar not found at $jarPath")
+        val cliLibDir = libPath.parent.resolve("cli/build/libs")
+        val jarPath = if (Files.isDirectory(cliLibDir)) {
+            Files.list(cliLibDir).use { paths ->
+                paths.filter { it.fileName.toString().matches(Regex("cli-.*-full\\.jar")) }
+                    .toList()
+                    .maxByOrNull { it.fileName.toString() }
+            }
+        } else null
+        if (jarPath == null) {
+            println("SKIP: CLI full jar not found under $cliLibDir")
             return null
         }
         println("Using CLI process (no daemon running — will be slow)")
@@ -192,6 +270,14 @@ class CliLLMIntegrationTest {
         val key = System.getenv("LITELLM_API_KEY")
         if (key.isNullOrEmpty()) {
             println("SKIP: LITELLM_API_KEY not set")
+            return false
+        }
+        return true
+    }
+
+    private fun requireLocalLLM(): Boolean {
+        if (!Files.isRegularFile(localModelPath)) {
+            println("SKIP: local model not found at $localModelPath")
             return false
         }
         return true
@@ -228,6 +314,7 @@ class CliLLMIntegrationTest {
     }
 
     private fun withTestModule(blocks: List<String>, test: (CliApi) -> Unit) {
+        val originalSource = if (Files.exists(testModulePath)) Files.readString(testModulePath) else null
         writeTestModule(blocks)
         try {
             val cli = requireCli() ?: return
@@ -238,6 +325,7 @@ class CliLLMIntegrationTest {
             }
         } finally {
             cleanTestModule()
+            if (originalSource != null) Files.writeString(testModulePath, originalSource)
         }
     }
 
@@ -661,13 +749,101 @@ class CliLLMIntegrationTest {
 
     @Test
     fun `llm - full - prime-char-dir`() {
-        if (!requireLLM()) return
+        val backend = System.getProperty("llm.backend")?.let { value ->
+            LLMBackend.parse(value) ?: error("llmBackend must be local or remote (got '$value')")
+        } ?: LLMBackend.LOCAL
+        val promptFormat = System.getProperty("llm.regime")?.let { value ->
+            parsePromptRegime(value)
+                ?: error("llmRegime must be qwen3-direct-v1, fine-tuned, or instruction (got '$value')")
+        } ?: defaultPromptRegime(backend)
+        val candidateGenerationMode = System.getProperty("llm.candidate.mode")?.let { value ->
+            parseCandidateMode(value)
+                ?: error("llmCandidateMode must be iterative or batch (got '$value')")
+        } ?: defaultCandidateMode(promptFormat)
+
+        if (backend == LLMBackend.LOCAL && !requireLocalLLM()) return
+        if (backend == LLMBackend.REMOTE && openaiLikeBaseUrl.isBlank()) {
+            println("SKIP: OPENAI_LIKE_BASE_URL is not configured for the remote backend")
+            return
+        }
+
         withTestModule(listOf(TARGET_PRIME_CHAR_DIR)) { d ->
             val moduleDef = "testPS:prime-char-dir"
-            val proof = PlainTextProof.initial(d, moduleDef)
-            val gen = CliLLMStepGenerator(d, moduleDef, listOf(PMAP, CONCAT, OR, IRR, INV_RECORD, NAT_UNIT, LDIV, RDIV, INV, DIV_BASE), maxAttempts = maxAttempts)
-            val result = BestFirstSearch(gen).search(proof)
-            println(if (result != null) "FOUND: $result" else "NOT FOUND")
+            val initialProof = PlainTextProof.initial(d, moduleDef)
+            val proof = if (promptFormat != TacticPromptFormat.INSTRUCTION) {
+                val initialGoal = initialProof.goals().single()
+                // The original core-API dataset collected bindings through a HashSet.
+                // Preserve the order of the actual fine-tuning row used by this fixture.
+                val trainingOrder = listOf("k", "n", "k|n", "p")
+                val orderedContext = trainingOrder.map { name ->
+                    initialGoal.contextBindings.single { it.name == name }
+                }
+                PlainTextProof(
+                    d,
+                    moduleDef,
+                    "{?}",
+                    listOf(PlainTextGoal(initialGoal.id, initialGoal.expectedType, orderedContext, moduleDef))
+                )
+            } else {
+                initialProof
+            }
+
+            val llmClient: LLMClient = when (backend) {
+                LLMBackend.LOCAL -> LocalLlamaLLMClient.start(
+                    modelPath = localModelPath,
+                    contextSize = localContextSize,
+                    maxTokens = localMaxTokens,
+                    parallel = if (candidateGenerationMode == CandidateGenerationMode.BATCH) {
+                        CliLLMStepGenerator.batchCompletionCount(
+                            promptFormat,
+                            maxAttempts,
+                            maxCandidates
+                        )
+                    } else {
+                        LocalLlamaLLMClient.DEFAULT_PARALLEL
+                    },
+                    startupTimeoutSeconds = localStartupTimeoutSeconds,
+                    executable = llamaServerExecutable
+                )
+                LLMBackend.REMOTE -> OpenAILikeLLMClient(
+                    apiKey = openaiLikeApiKey,
+                    model = openaiLikeModel,
+                    baseUrl = openaiLikeBaseUrl,
+                    maxTokens = openaiLikeMaxTokens,
+                    enableThinking = openaiLikeEnableThinking
+                )
+            }
+            (llmClient as AutoCloseable).use {
+                val premises = if (promptFormat != TacticPromptFormat.INSTRUCTION) {
+                    PRIME_CHAR_FINE_TUNING_PREMISES
+                } else {
+                    listOf(PMAP, CONCAT, OR, IRR, INV_RECORD, NAT_UNIT, LDIV, RDIV, INV, DIV_BASE)
+                }
+                println("Integration LLM configuration: backend=${backend.name.lowercase()}, " +
+                        "regime=${promptRegimeName(promptFormat)}, " +
+                        "candidate-mode=${if (candidateGenerationMode == CandidateGenerationMode.BATCH) "batch" else "iterative"}, " +
+                        "max-attempts=$maxAttempts, max-candidates=$maxCandidates, " +
+                        "batch-temperature=$batchTemperature" +
+                        if (backend == LLMBackend.LOCAL) {
+                            ", model=$localModelPath, context-size=$localContextSize, max-tokens=$localMaxTokens"
+                        } else "")
+                val gen = CliLLMStepGenerator(
+                    d,
+                    moduleDef,
+                    premises,
+                    maxAttempts = maxAttempts,
+                    maxCandidates = maxCandidates,
+                    candidateGenerationMode = candidateGenerationMode,
+                    promptFormat = promptFormat,
+                    batchTemperature = batchTemperature,
+                    llmClient = llmClient
+                )
+                // This is a model-quality probe. The current local GGUF does not
+                // reliably reproduce even this exact training example, so report
+                // search success without turning sampling quality into a build gate.
+                val result = BestFirstSearch(gen).search(proof)
+                println(if (result != null) "FOUND: $result" else "NOT FOUND")
+            }
         }
     }
 }

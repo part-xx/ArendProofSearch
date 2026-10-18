@@ -1,0 +1,23 @@
+-- Lemmas of Order.LinearOrder restated with {?} bodies (proof-search benchmark; generated).
+
+\import Data.Array
+\import Data.Or
+\import Function
+\import Function.Meta ($)
+\import Logic
+\import Logic.Meta
+\import Logic.Unique
+\import Meta
+\import Order.Biordered
+\import Order.Lattice
+\import Order.PartialOrder
+\import Order.StrictOrder
+\import Paths
+\import Paths.Meta
+\import Set
+\import Order.LinearOrder
+\import Algebra.Meta
+\open JoinSemilattice
+\open MeetSemilattice
+
+\lemma monotone-injective {X : LinearOrder} {Y : StrictPoset} (f : X -> Y) (fm : IsStrictlyMonotone f) : IsInj f => {?}

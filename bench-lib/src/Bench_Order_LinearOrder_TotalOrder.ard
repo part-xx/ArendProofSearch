@@ -1,0 +1,31 @@
+-- Lemmas of Order.LinearOrder (class TotalOrder) restated with {?} bodies (proof-search benchmark; generated).
+
+\import Data.Array
+\import Data.Or
+\import Function
+\import Function.Meta ($)
+\import Logic
+\import Logic.Meta
+\import Logic.Unique
+\import Meta
+\import Order.Biordered
+\import Order.Lattice
+\import Order.PartialOrder
+\import Order.StrictOrder
+\import Paths
+\import Paths.Meta
+\import Set
+\import Order.LinearOrder
+\import Algebra.Meta
+\open JoinSemilattice
+\open MeetSemilattice
+\open TotalOrder
+
+\lemma meet-isMin {A : TotalOrder} (x y : A) : (x ∧ y = x) || (x ∧ y = y) => {?}
+\lemma meet-prop {A : TotalOrder} (P : A -> \Prop) {x y : A} (Px : P x) (Py : P y) : P (x ∧ y) => {?}
+\lemma Big01_meet-isMin {A : TotalOrder} (l : Array A) (x : A) : (\Sigma (j : Fin l.len) (Big (∧) x l = l j)) || (Big (∧) x l = x) => {?}
+\lemma Big_meet-isMin {A : TotalOrder} {n : Nat} (l : Array A (suc n)) : ∃ (j : Fin (suc n)) (Big_∧ l = l j) => {?}
+\lemma join-isMax {A : TotalOrder} (x y : A) : (x ∨ y = x) || (x ∨ y = y) => {?}
+\lemma join-prop {A : TotalOrder} (P : A -> \Prop) {x y : A} (Px : P x) (Py : P y) : P (x ∨ y) => {?}
+\lemma Big01_join-isMax {A : TotalOrder} (l : Array A) (x : A) : (\Sigma (j : Fin l.len) (Big (∨) x l = l j)) || (Big (∨) x l = x) => {?}
+\lemma Big_join-isMax {A : TotalOrder} {n : Nat} (l : Array A (suc n)) : ∃ (j : Fin (suc n)) (Big_∨ l = l j) => {?}

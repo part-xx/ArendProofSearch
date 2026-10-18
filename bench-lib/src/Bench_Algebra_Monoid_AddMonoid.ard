@@ -1,0 +1,49 @@
+-- Lemmas of Algebra.Monoid (class AddMonoid) restated with {?} bodies (proof-search benchmark; generated).
+
+\import Algebra.Meta
+\import Algebra.Monoid.SubMonoid
+\import Algebra.Pointed
+\import Arith.Nat
+\import Data.Array
+\import Data.Array.EPerm
+\import Data.Array.Perm
+\import Data.Fin (fsuc, fsuc/=, nat_fin_=)
+\import Data.Or
+\import Equiv
+\import Equiv.Sigma
+\import Equiv.Univalence.Set
+\import Function
+\import Function.Meta
+\import Logic.Unique
+\import Logic
+\import Logic.Meta
+\import Meta
+\import Order.Biordered
+\import Order.LinearOrder
+\import Order.PartialOrder
+\import Paths
+\import Paths.Meta
+\import Set
+\import Set.Fin
+\import Set.Fin.BoundedPigeonhole
+\import Set.Fin.Instances
+\import Algebra.Monoid
+\open AddMonoid
+
+\lemma negative-unique {A : AddMonoid} {x z : A} (y : A) (p : x + y = zro) (q : y + z = zro) : x = z => {?}
+\lemma *n-rdistr {A : AddMonoid} {n m : Nat} {a : A} : (n Nat.+ m) *n a = n *n a + m *n a => {?}
+\lemma *n-assoc {A : AddMonoid} {n m : Nat} {a : A} : (n Nat.* m) *n a = n *n (m *n a) => {?}
+\lemma BigSum-ext {A : AddMonoid} {n : Nat} {l l' : Array A n} (p : \Pi (i : Fin n) -> l i = l' i) : BigSum l = BigSum l' => {?}
+\lemma BigSum_++ {A : AddMonoid} {l l' : Array A} : BigSum (l ++ l') = BigSum l + BigSum l' => {?}
+\lemma BigSum_Big++ {A : AddMonoid} {ls : Array (Array A)} : BigSum (Big (++) nil ls) = BigSum (map BigSum ls) => {?}
+\lemma BigSum_++' {A : AddMonoid} {l : Array A} {n : Nat} {l' : Array A n} : BigSum (l ++' l') = BigSum l + BigSum l' => {?}
+\lemma BigSum-split {A : AddMonoid} {n m : Nat} {l : Array A (n Nat.+ m)} : BigSum l = BigSum (\lam (i : Fin n) => l (fin-inc i)) + BigSum (\lam (j : Fin m) => l (fin-raise j)) => {?}
+\lemma BigSum_suc {A : AddMonoid} {n : Nat} {l : Array A (suc n)} : BigSum l = BigSum (\new Array A n (\lam i => l i)) + l (n Nat.mod suc n) => {?}
+\lemma BigSum_suc-nat {A : AddMonoid} {n : Nat} {f : Nat -> A} : BigSum (\new Array A (suc n) (f __)) = BigSum (\new Array A n (f __)) + f n => {?}
+\lemma BigSum_zro {A : AddMonoid} {l : Array A} (p : \Pi (j : Fin l.len) -> l j = zro) : BigSum l = zro => {?}
+\lemma BigSum-unique {A : AddMonoid} {l : Array A} (i : Fin l.len) (p : \Pi (j : Fin l.len) -> i /= j -> l j = 0) : BigSum l = l i => {?}
+\lemma BigSum-unique2 {A : AddMonoid} {l : Array A} {i j : Fin l.len} (i<j : i NatOrder.< j) (p : \Pi (k : Fin l.len) -> k /= i -> k /= j -> l k = 0) : BigSum l = l i + l j => {?}
+\lemma BigSum-pred {A : AddMonoid} {P : A -> \Prop} (P0 : P 0) (P+ : \Pi {x y : A} -> P x -> P y -> P (x + y)) {l : Array A} (p : \Pi (j : Fin l.len) -> P (l j)) : P (BigSum l) => {?}
+\lemma BigSum-subset {A : AddMonoid} {l l' : Array A} (p : l.len <= l'.len) (q1 : \Pi (j : Fin l.len) -> l j = l' (toFin j $ fin_< j <∘l p)) (q2 : \Pi (j : Fin l'.len) -> l.len <= j -> l' j = 0) : BigSum l = BigSum l' => {?}
+\lemma fit_BigSum {A : AddMonoid} {n : Nat} {l : Array A} (p : \Pi (j : Fin l.len) -> n <= j -> l j = 0) : BigSum (fit 0 {n} l) = BigSum l => {?}
+\lemma fit-transpose {A : AddMonoid} {n m : Nat} (l : Array (Array A m) n) : BigSum (\lam j => fit zro (l j) j) = BigSum (\lam k => fit zro (l __ k) k) => {?}

@@ -1,0 +1,60 @@
+-- Lemmas of arend-lib proved by induction: a recursive call inside a branch.
+-- Restated verbatim; the comment gives the original proof.
+
+\import Algebra.Meta
+\import Algebra.Monoid
+\import Algebra.Pointed
+\import Arith.Nat
+\import Data.Array (fit)
+\import Data.List
+\import Logic
+\import Meta
+\import Paths
+\import Paths.Meta
+\import Order.PartialOrder
+\open Nat
+\open NatOrder
+\open Monoid(pow)
+
+-- Arith/Nat.ard:39 -'+: \elim m | 0 => -'0 | suc n => -'+
+\lemma -'+' {n m : Nat} : n + m -' m = n => {?}
+
+-- Arith/Nat.ard:73 id<suc: \elim n | 0 => zero<suc | suc n => suc<suc id<suc
+\lemma id<suc' {n : Nat} : n < suc n => {?}
+
+-- Data/List.ard:42 length_++: \elim l | nil => idp | :: a l => pmap suc length_++
+\lemma length_++' {A : \Type} {l l' : List A} : length (l ++ l') = length l + length l' => {?}
+
+-- Arith/Nat.ard:207 cancel-right: \elim k | 0 => p | suc k => cancel-right k (pmap pred p)
+\lemma cancel-right' {n m : Nat} (k : Nat) (p : n + k = m + k) : n = m => {?}
+
+-- Algebra/Monoid.ard:48 pow_+: \elim m | 0 => inv ide-right | suc m => pmap (* a) pow_+ *> *-assoc
+-- The inductive step rewrites with the induction hypothesis: rewrite pow_+' *-assoc
+\lemma pow_+' {M : Monoid} {a : M} {n m : Nat} : Monoid.pow a (n + m) = Monoid.pow a n * Monoid.pow a m => {?}
+
+-- Arith/Nat.ard -'<=id: the inductive step chains the induction hypothesis, `-'<=id <=∘ ...`
+\lemma -'<=id' (n m : Nat) : n -' m <= n => {?}
+
+-- Arith/Nat.ard id/=suc: the recursive call must end up in an \elim clause, under the lambda that introduces the equation
+\lemma id/=suc' {n : Nat} : n /= suc n => {?}
+
+-- Algebra/Monoid.ard pow-comm1: the monoid solver with the hypothesis and the induction hypothesis as hints
+\lemma pow-comm1' {A : Monoid} {a b : A} (p : a * b = b * a) {n : Nat} : pow a n * b = b * pow a n => {?}
+
+-- Algebra/Monoid.ard pow-comm: the monoid solver with the induction hypothesis and a lemma instance, `equation.monoid {pow-comm p, pow-comm1 (inv p)}`
+\lemma pow-comm' {A : Monoid} {a b : A} (p : a * b = b * a) {n : Nat} : pow (a * b) n = pow a n * pow b n => {?}
+
+-- A lemma instance as the solver's hint: `pow-comm1 p : pow a n * b = b * pow a n`
+\lemma pow-comm-hint' {A : Monoid} {a b : A} (p : a * b = b * a) {n : Nat} : pow a n * b * a = b * pow a n * a => {?}
+
+-- No hypothesis is shaped like pow-comm1's parameter: no lemma instance is offered
+\lemma no-hint' {A : Monoid} {a b : A} (q : a = b) {n : Nat} : pow a n * b * a = b * pow a n * a => {?}
+
+-- Congruence through a class operation, `pmap (a +)`
+\lemma cong-field' {A : AddMonoid} {a x y : A} (p : x = y) : a + x = a + y => {?}
+
+-- Algebra/Monoid.ard fit_BigSum: `pmap (a +) $ fit_BigSum \lam j n<=j => p (suc j) (suc<=suc n<=j)` in the cons case
+\lemma fit_BigSum' {A : AddMonoid} {n : Nat} {l : Array A} (p : \Pi (j : Fin l.len) -> n <= j -> l j = zro) : AddMonoid.BigSum (fit zro {n} l) = AddMonoid.BigSum l => {?}
+
+-- Arith/Nat.ard monotone-diagonal: a chain ending with the hypothesis function applied, `<=-transitive (suc<=suc IH) (mon n)`
+\lemma monotone-diagonal' (f : Nat -> Nat) (mon : \Pi (n : Nat) -> suc (f n) <= f (suc n)) {n : Nat} : n <= f n => {?}
