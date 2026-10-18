@@ -135,8 +135,10 @@ class RewriteGenerator(
       }
     }
 
+    // The goal's subterms are indexed once for all lemmas: computing them (with the goal's normal form) per lemma was a tenth of a generation
+    val subtermIndex = if (lemmas.isEmpty()) null else ConclusionMatcher.SubtermIndex(ConclusionMatcher.goalSubterms(goal.expectedType))
     for (lemma in lemmas) {
-      val (leftScore, rightScore) = ConclusionMatcher.rewriteSideScores(lemma, goal.expectedType) ?: continue
+      val (leftScore, rightScore) = ConclusionMatcher.rewriteSideScores(lemma, subtermIndex!!) ?: continue
       val sides = lemmaSides(lemma)
       val permutative = sides != null && PremiseRetriever.head(sides.first) != null && PremiseRetriever.head(sides.first) == PremiseRetriever.head(sides.second)
       // A lemma with hypotheses gets a goal for each, `rewrite (div_< {?})` (`mod_<`): the meta finds the equation's

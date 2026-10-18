@@ -22,22 +22,22 @@
 \import Logic.Meta
 \open MeetSemilattice
 
--- proved by proof search (final run (current code, 10 s per lemma), 97 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 101 ms)
 \lemma Big_meet-cond {A : MeetSemilattice} {n : Nat} {l : Array A (suc n)} {j : Fin (suc n)} : Big_∧ l <= l j \elim j   | zero => MeetSemilattice.Big_<=_meet0   | suc j => MeetSemilattice.Big_<=_meet1 _
--- proved by proof search (final run (current code, 10 s per lemma), 66 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 57 ms)
 \lemma meet-idemp {A : MeetSemilattice} {x : A} : x ∧ x = x => MeetSemilattice.meet_<= <=-refl
--- proved by proof search (final run (current code, 10 s per lemma), 446 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 448 ms)
 \lemma meet-comm {A : MeetSemilattice} {x y : A} : x ∧ y = y ∧ x => <=-antisymmetric (meet-univ meet-right meet-left) (meet-univ meet-right meet-left)
--- proved by proof search (final run (current code, 10 s per lemma), 1125 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 1129 ms)
 \lemma meet-monotone {A : MeetSemilattice} {x y x' y' : A} (p : x <= x') (q : y <= y') : x ∧ y <= x' ∧ y' => meet-univ (meet-left <=∘ p) (meet-right <=∘ q)
 \lemma meet-assoc {A : MeetSemilattice} {x y z : A} : (x ∧ y) ∧ z = x ∧ (y ∧ z) => {?}
--- proved by proof search (final run (current code, 10 s per lemma), 111 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 105 ms)
 \lemma meet_<= {A : MeetSemilattice} {x y : A} (x<=y : x <= y) : x ∧ y = x => <=-antisymmetric meet-left (meet-univ <=-refl x<=y)
--- proved by proof search (final run (current code, 10 s per lemma), 45 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 43 ms)
 \lemma meet_<=' {A : MeetSemilattice} {x y : A} (p : x ∧ y = x) : x <= y => rewriteI p meet-right
--- proved by proof search (final run (current code, 10 s per lemma), 152 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 147 ms)
 \lemma Big_<=_meet0 {A : MeetSemilattice} {l : Array A} {x : A} : Big (∧) x l <= x \elim l   | nil => <=-refl   | :: a l => meet-right <=∘ Big_<=_meet0 {A} {l} {x}
--- proved by proof search (final run (current code, 10 s per lemma), 222 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 214 ms)
 \lemma Big_<=_meet1 {A : MeetSemilattice} {l : Array A} {x : A} (i : Fin l.len) : Big (∧) x l <= l i \elim l, i   | nil, i => contradiction   | :: a l, zero => meet-left   | :: a l, suc i => meet-right <=∘ Big_<=_meet1 {A} {l} {x} i
--- proved by proof search (final run (current code, 10 s per lemma), 1462 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 1394 ms)
 \lemma Big_meet-univ {A : MeetSemilattice} {l : Array A} {x y : A} (p : y <= x) (f : \Pi (i : Fin l.len) -> y <= l i) : y <= Big (∧) x l \elim l, f   | nil, f => p   | :: a l, f => meet-univ (f zero) (Big_meet-univ p (\lam i => f (suc i)))

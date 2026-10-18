@@ -13,22 +13,22 @@
 
 -- proved by proof search (final run (current code, 10 s per lemma), 5 ms)
 \lemma dec-separated {E : \Prop} (d : Dec E) (q : Not (Not E)) : E => \case d \with {   | yes p => p   | no p' => contradiction }
--- proved by proof search (final run (current code, 10 s per lemma), 174 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 195 ms)
 \lemma negated-dec (E : \Prop) {P : NegatedProp} (f : Dec E -> P) : P => isNegated (\lam p => p (f (no (\lam p' => p (f (yes p'))))))
 \lemma dec_decide {E : \Prop} (d : Dec E) : Decide E => {?}
--- proved by proof search (final run (current code, 10 s per lemma), 39 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 44 ms)
 \lemma dec_yes_reduce {E : \Prop} {d : Dec E} (e : E) : d = yes e => prop-pi
--- proved by proof search (final run (current code, 10 s per lemma), 41 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 43 ms)
 \lemma dec_no_reduce {E : \Prop} {d : Dec E} (q : Not E) : d = no q => prop-pi
--- proved by proof search (final run (current code, 10 s per lemma), 173 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 175 ms)
 \lemma Dec_|| {A B : \Prop} (d : Dec A) (e : Dec B) : Dec (A || B) => \case d \with {   | yes p => yes (byLeft p)   | no p' => \case e \with {     | yes p => yes (byRight p)     | no p'' => no contradiction   } }
 -- proved by proof search (final run (current code, 10 s per lemma), 13 ms)
 \lemma NotDec {P : \Prop} (d : Dec P) : Dec (Not P) => \case d \with {   | yes p => no contradiction   | no p' => yes p' }
--- proved by proof search (final run (current code, 10 s per lemma), 49 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 51 ms)
 \lemma decideEq=_reduce {A : DecSet} {x y : A} (p : x = y) : decideEq x y = yes p => Set.dec_yes_reduce _
 -- proved by proof search (final run (current code, 10 s per lemma), 48 ms)
 \lemma decideEq/=_reduce {A : DecSet} {x y : A} (p : x /= y) : decideEq x y = no p => prop-pi
 \lemma ==_= {A : DecSet} {a a' : A} (so : So (a == a')) : a = a' => {?}
--- proved by proof search (final run (current code, 10 s per lemma), 44 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 40 ms)
 \lemma =-dec {A : DecSet} {a a' : A} {so : So (a == a')} : a = a' => Set.==_= so
 \lemma /=-dec {A : DecSet} {a a' : A} {so : So (not (a == a'))} : a /= a' => {?}

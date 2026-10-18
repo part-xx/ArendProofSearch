@@ -24,7 +24,7 @@
 \open PosetAddGroup
 
 \lemma negative_<= {A : PosetAddGroup} {x y : A} (x<=y : x <= y) : negative y <= negative x => {?}
--- proved by proof search (final run (current code, 10 s per lemma), 576 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 626 ms)
 \lemma negative_<=-conv {A : PosetAddGroup} {x y : A} (p : negative y <= negative x) : x <= y => transport (\lam z => z <= {A} y) AddGroup.negative-isInv    (transport (\lam z => negative {A} (negative {A} x) <= {A} z) AddGroup.negative-isInv (PosetAddGroup.negative_<= p))
 \lemma <=_+-cancel-left {A : PosetAddGroup} (x : A) {y z : A} (p : x + y <= x + z) : y <= z => {?}
 \lemma <=_+-cancel-right {A : PosetAddGroup} (z : A) {x y : A} (p : x + z <= y + z) : x <= y => {?}

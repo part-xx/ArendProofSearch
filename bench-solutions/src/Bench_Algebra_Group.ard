@@ -19,15 +19,15 @@
 \import Set.Fin
 \import Algebra.Group
 
--- proved by proof search (final run (current code, 10 s per lemma), 287 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 307 ms)
 \lemma conjugate-via-id {G : Group} {g : G} : conjugate ide g = g => unfold conjugate (rewrite Group.inverse_ide equation)
--- proved by proof search (final run (current code, 10 s per lemma), 1532 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 1640 ms)
 \lemma commutator=ide<->comm {E : Group} {g h : E} : commutator g h = ide <-> g * h = h * g => (\lam p => equation.group {pmap (\lam z => z * (h * {E} g)) p}, \lam p => unfold commutator (rewrite p (equation.group {p})))
 -- proved by proof search (final run (current code, 10 s per lemma), 7 ms)
 \lemma comm_sym {E : Group} {g h : E} (p : commutator g h = ide) : commutator h g = ide => equation.group {pmap inverse p}
 -- proved by proof search (final run (current code, 10 s per lemma), 3 ms)
 \lemma comm_conjugate {E : Group} {g h : E} (p : commutator g h = ide) : conjugate g h = h => equation.group {pmap (\lam z => z * h) p}
--- proved by proof search (final run (current code, 10 s per lemma), 171 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 183 ms)
 \lemma comm_inverse-right {E : Group} {g h : E} (p : commutator g h = ide) : commutator g (inverse h) = ide => Algebra.Group.comm_sym (Algebra.Group.comm_inverse-left (equation.group {Algebra.Group.comm_sym p}))
--- proved by proof search (final run (current code, 10 s per lemma), 139 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 157 ms)
 \lemma comm_inverse-left {E : Group} {g h : E} (p : commutator g h = ide) : commutator (inverse g) h = ide => Algebra.Group.comm_sym (Algebra.Group.comm_inverse-right (equation.group {Algebra.Group.comm_sym p}))

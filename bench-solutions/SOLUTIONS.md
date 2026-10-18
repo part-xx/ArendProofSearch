@@ -56,7 +56,7 @@ Best proof found for each of the 300 benchmark lemmas across the recorded runs: 
 | Algebra_Group_AbGroup | `diff-cancel-left` | `=> rewrite AbGroup.negative_+-comm AbGroup.sum-cancel-left *> AddGroup.negative_-` | final run (current code, 10 s per lemma) |
 | Algebra_Group_AbGroup | `negative_+-comm` | `=> rewrite AddGroup.negative_+ equation` | final run (current code, 10 s per lemma) |
 | Algebra_Group_AbGroup | `diff_sum` | `=> pmap ((+) {A} x) AbGroup.negative_+-comm *> inv +-assoc` | final run (current code, 10 s per lemma) |
-| Algebra_Group_AbGroup | `diff_diff` | `=> AbGroup.diff_sum *> pmap ((+) {A} (x - {_} y)) AddGroup.negative-isInv` | previous full run (diff_diff, lost to a system sleep in the final run) |
+| Algebra_Group_AbGroup | `diff_diff` | `=> AbGroup.diff_sum *> pmap ((+) {A} (x - {_} y)) AddGroup.negative-isInv` | final run (current code, 10 s per lemma) |
 | Algebra_Group_AddGroup | `cancel-left` | `=> cancel_*-left {toGroup A} _ {_} {_} p` | final run (current code, 10 s per lemma) |
 | Algebra_Group_AddGroup | `cancel-right` | `=> cancel_*-right {toGroup A} _ {_} {_} p` | final run (current code, 10 s per lemma) |
 | Algebra_Group_AddGroup | `negative-isInv` | `=> Group.inverse-isInv {toGroup A} {_}` | final run (current code, 10 s per lemma) |

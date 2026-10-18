@@ -22,10 +22,10 @@
 \import Logic.Meta
 \open DistributiveLattice
 
--- proved by proof search (final run (current code, 10 s per lemma), 398 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 374 ms)
 \lemma meet-ldistr {A : DistributiveLattice} {x y z : A} : x ∧ (y ∨ z) = (x ∧ y) ∨ (x ∧ z) => <=-antisymmetric ldistr>= Lattice.ldistr<=
--- proved by proof search (final run (current code, 10 s per lemma), 8801 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 8537 ms)
 \lemma meet-rdistr {A : DistributiveLattice} {x y z : A} : (y ∨ z) ∧ x = (y ∧ x) ∨ (z ∧ x) => MeetSemilattice.meet-comm *>  rewrite DistributiveLattice.meet-ldistr (rewrite MeetSemilattice.meet-comm (pmap ((∨) {A} (y ∧ {A} x)) MeetSemilattice.meet-comm))
--- proved by proof search (final run (current code, 10 s per lemma), 107 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 112 ms)
 \lemma rdistr>= {A : DistributiveLattice} {x y z : A} : (y ∨ z) ∧ x <= (y ∧ x) ∨ (z ∧ x) => rewriteI DistributiveLattice.meet-rdistr <=-refl
 \lemma lcodistr {A : DistributiveLattice} {x y z : A} : x ∨ (y ∧ z) = (x ∨ y) ∧ (x ∨ z) => {?}

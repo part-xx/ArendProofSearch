@@ -10,7 +10,7 @@
 \import Paths.Meta
 \open StrictPoset
 
--- proved by proof search (final run (current code, 10 s per lemma), 2 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 1 ms)
 \lemma <_/= {A : StrictPoset} {x y : A} (x<y : x < y) : x /= y => contradiction
 -- proved by proof search (final run (current code, 10 s per lemma), 1 ms)
 \lemma >_/= {A : StrictPoset} {x y : A} (y<x : x > y) : x /= y => contradiction

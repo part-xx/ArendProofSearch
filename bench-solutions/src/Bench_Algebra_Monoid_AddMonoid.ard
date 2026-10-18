@@ -31,29 +31,29 @@
 \open AddMonoid
 
 \lemma negative-unique {A : AddMonoid} {x z : A} (y : A) (p : x + y = zro) (q : y + z = zro) : x = z => {?}
--- proved by proof search (final run (current code, 10 s per lemma), 248 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 240 ms)
 \lemma *n-rdistr {A : AddMonoid} {n m : Nat} {a : A} : (n Nat.+ m) *n a = n *n a + m *n a \elim m   | zero => equation   | suc m => equation.addMonoid {*n-rdistr {A} {n} {m} {a}}
 \lemma *n-assoc {A : AddMonoid} {n m : Nat} {a : A} : (n Nat.* m) *n a = n *n (m *n a) => {?}
--- proved by proof search (final run (current code, 10 s per lemma), 1636 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 1394 ms)
 \lemma BigSum-ext {A : AddMonoid} {n : Nat} {l l' : Array A n} (p : \Pi (i : Fin n) -> l i = l' i) : BigSum l = BigSum l' => Monoid.BigProd-ext {toMonoid A} {_} {_} {_} p
--- proved by proof search (final run (current code, 10 s per lemma), 112 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 96 ms)
 \lemma BigSum_++ {A : AddMonoid} {l l' : Array A} : BigSum (l ++ l') = BigSum l + BigSum l' => Monoid.BigProd_++ {toMonoid A} {_} {_}
--- proved by proof search (final run (current code, 10 s per lemma), 732 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 668 ms)
 \lemma BigSum_Big++ {A : AddMonoid} {ls : Array (Array A)} : BigSum (Big (++) nil ls) = BigSum (map BigSum ls) \elim ls   | nil => idp   | :: a ls => rewrite AddMonoid.BigSum_++ (equation.addMonoid {BigSum_Big++ {A} {ls}})
--- proved by proof search (final run (current code, 10 s per lemma), 198 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 184 ms)
 \lemma BigSum_++' {A : AddMonoid} {l : Array A} {n : Nat} {l' : Array A n} : BigSum (l ++' l') = BigSum l + BigSum l' \elim l   | nil => equation   | :: a l => equation.addMonoid {BigSum_++' {A} {l} {n} {l'}}
--- proved by proof search (final run (current code, 10 s per lemma), 913 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 878 ms)
 \lemma BigSum-split {A : AddMonoid} {n m : Nat} {l : Array A (n Nat.+ m)} : BigSum l = BigSum (\lam (i : Fin n) => l (fin-inc i)) + BigSum (\lam (j : Fin m) => l (fin-raise j)) \elim n, l   | zero, l => equation   | suc n, :: a l => equation.addMonoid {BigSum-split {A} {n} {m} {l}}
--- proved by proof search (final run (current code, 10 s per lemma), 103 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 99 ms)
 \lemma BigSum_suc {A : AddMonoid} {n : Nat} {l : Array A (suc n)} : BigSum l = BigSum (\new Array A n (\lam i => l i)) + l (n Nat.mod suc n) => Monoid.BigProd_suc {toMonoid A} {_} {_}
--- proved by proof search (final run (current code, 10 s per lemma), 1905 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 1971 ms)
 \lemma BigSum_suc-nat {A : AddMonoid} {n : Nat} {f : Nat -> A} : BigSum (\new Array A (suc n) (f __)) = BigSum (\new Array A n (f __)) + f n => rewrite AddMonoid.BigSum_suc (rewrite (mod_< linarith) idp)
--- proved by proof search (final run (current code, 10 s per lemma), 282 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 263 ms)
 \lemma BigSum_zro {A : AddMonoid} {l : Array A} (p : \Pi (j : Fin l.len) -> l j = zro) : BigSum l = zro => Monoid.BigProd_ide {toMonoid A} {_} p
 -- proved by proof search (final run (current code, 10 s per lemma), 191 ms)
 \lemma BigSum-unique {A : AddMonoid} {l : Array A} (i : Fin l.len) (p : \Pi (j : Fin l.len) -> i /= j -> l j = 0) : BigSum l = l i \elim l, i, p   | nil, i, p => idp   | :: a l, i, p => Monoid.BigProd-unique {toMonoid A} {_} _ p
 \lemma BigSum-unique2 {A : AddMonoid} {l : Array A} {i j : Fin l.len} (i<j : i NatOrder.< j) (p : \Pi (k : Fin l.len) -> k /= i -> k /= j -> l k = 0) : BigSum l = l i + l j => {?}
--- proved by proof search (final run (current code, 10 s per lemma), 513 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 560 ms)
 \lemma BigSum-pred {A : AddMonoid} {P : A -> \Prop} (P0 : P 0) (P+ : \Pi {x y : A} -> P x -> P y -> P (x + y)) {l : Array A} (p : \Pi (j : Fin l.len) -> P (l j)) : P (BigSum l) \elim l, p   | nil, p => P0   | :: a l, p => P+ (p zero) (BigSum-pred P0 P+ (\lam j => p (suc j)))
 \lemma BigSum-subset {A : AddMonoid} {l l' : Array A} (p : l.len <= l'.len) (q1 : \Pi (j : Fin l.len) -> l j = l' (toFin j $ fin_< j <∘l p)) (q2 : \Pi (j : Fin l'.len) -> l.len <= j -> l' j = 0) : BigSum l = BigSum l' => {?}
 \lemma fit_BigSum {A : AddMonoid} {n : Nat} {l : Array A} (p : \Pi (j : Fin l.len) -> n <= j -> l j = 0) : BigSum (fit 0 {n} l) = BigSum l => {?}

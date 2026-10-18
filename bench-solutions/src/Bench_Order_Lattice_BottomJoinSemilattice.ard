@@ -22,19 +22,19 @@
 \import Logic.Meta
 \open BottomJoinSemilattice
 
--- proved by proof search (final run (current code, 10 s per lemma), 68 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 67 ms)
 \lemma bottom-right {A : BottomJoinSemilattice} {x : A} : x ∨ bottom = x => JoinSemilattice.join-comm *> bottom-left
--- proved by proof search (final run (current code, 10 s per lemma), 38 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 36 ms)
 \lemma BigJoin-cond {A : BottomJoinSemilattice} {l : Array A} (j : Fin l.len) : l j <= BigJoin l => JoinSemilattice.Big_<=_join1 _
--- proved by proof search (final run (current code, 10 s per lemma), 428 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 409 ms)
 \lemma BigJoin-univ {A : BottomJoinSemilattice} {l : Array A} {x : A} (p : \Pi (j : Fin l.len) -> l j <= x) : BigJoin l <= x \elim l, p   | nil, p => bottom-univ   | :: a l, p => rewriteI BottomJoinSemilattice.FinJoin=BigJoin (BottomJoinSemilattice.FinJoin-univ p)
 \lemma FinJoin-cond {A : BottomJoinSemilattice} {J : FinSet} (j : J) {a : J -> A} : a j <= FinJoin a => {?}
 \lemma FinJoin-univ {A : BottomJoinSemilattice} {J : FinSet} {a : J -> A} {x : A} (p : \Pi (j : J) -> a j <= x) : FinJoin a <= x => {?}
--- proved by proof search (final run (current code, 10 s per lemma), 358 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 371 ms)
 \lemma FinJoin=BigJoin {A : BottomJoinSemilattice} {n : Nat} {x : Fin n -> A} : FinJoin x = BigJoin x => <=-antisymmetric (BottomJoinSemilattice.FinJoin-univ BottomJoinSemilattice.BigJoin-cond)    (BottomJoinSemilattice.BigJoin-univ (\lam j => BottomJoinSemilattice.FinJoin-cond _))
--- proved by proof search (final run (current code, 10 s per lemma), 54 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 55 ms)
 \lemma BigJoin_EPerm {A : BottomJoinSemilattice} {l l' : Array A} (e : EPerm l l') : BigJoin l = BigJoin l' => AbMonoid.BigSum_EPerm {toMonoid A} {_} {_} e
--- proved by proof search (final run (current code, 10 s per lemma), 69 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 70 ms)
 \lemma BigJoin_++ {A : BottomJoinSemilattice} {l l' : Array A} : BigJoin (l ++ l') = BigJoin l ∨ BigJoin l' => AddMonoid.BigSum_++ {toMonoid A} {_} {_}
--- proved by proof search (final run (current code, 10 s per lemma), 69 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 78 ms)
 \lemma BigJoin_join {A : BottomJoinSemilattice} {n : Nat} {l l' : Array A n} : BigJoin (\lam i => l i ∨ l' i) = BigJoin l ∨ BigJoin l' => AbMonoid.BigSum_+ {toMonoid A} {_} {_} {_}

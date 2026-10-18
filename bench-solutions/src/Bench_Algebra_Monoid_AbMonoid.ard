@@ -30,10 +30,10 @@
 \import Algebra.Monoid
 \open AbMonoid
 
--- proved by proof search (final run (current code, 10 s per lemma), 322 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 337 ms)
 \lemma FinSum_zro {A : AbMonoid} {J : FinSet} {x : J -> A} (p : \Pi (j : J) -> x j = 0) : FinSum x = 0 => \case FinSum_char x \with {   | inP (e, p') => rewrite p' (AddMonoid.BigSum_zro (\lam j => p _)) }
 \lemma FinSum_+ {A : AbMonoid} {J : FinSet} {x : J -> A} {y : J -> A} : FinSum (\lam j => x j + y j) = FinSum x + FinSum y => {?}
 \lemma FinSum-unique {A : AbMonoid} {J : FinSet} {a : J -> A} (j : J) (p : \Pi (j' : J) -> j' /= j -> a j' = 0) : FinSum a = a j => {?}
 \lemma FinSum-unique2 {A : AbMonoid} {J : FinSet} {i j : J} (i/=j : i /= j) {x : J -> A} (p : \Pi (k : J) -> k /= i -> k /= j -> x k = 0) : FinSum x = x i + x j => {?}
--- proved by proof search (final run (current code, 10 s per lemma), 360 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 540 ms)
 \lemma FinSum-pred {A : AbMonoid} {P : A -> \Prop} (P0 : P 0) (P+ : \Pi {x y : A} -> P x -> P y -> P (x + y)) {J : FinSet} {a : J -> A} (p : \Pi (j : J) -> P (a j)) : P (AbMonoid.FinSum a) => \case FinSum_char a \with {   | inP (e, p') => rewrite p' (AddMonoid.BigSum-pred P0 P+ (\lam j => p _)) }

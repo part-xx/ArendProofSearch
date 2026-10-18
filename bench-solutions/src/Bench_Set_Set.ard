@@ -12,5 +12,5 @@
 \import Algebra.Meta
 \open Set#
 
--- proved by proof search (final run (current code, 10 s per lemma), 1 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 2 ms)
 \lemma apartNotEqual {A : Set#} {x y : A} (x#y : x # y) : x /= y => contradiction
