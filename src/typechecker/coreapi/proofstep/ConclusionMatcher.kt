@@ -1,6 +1,7 @@
 package typechecker.coreapi.proofstep
 
 import org.arend.core.context.binding.Binding
+import org.arend.core.context.param.DependentLink
 import org.arend.core.definition.CallableDefinition
 import org.arend.core.definition.ClassField
 import org.arend.core.definition.Constructor
@@ -336,7 +337,16 @@ object ConclusionMatcher {
         if (target !is DefCallExpression || target.definition != pattern.definition) return null
         val args = pattern.defCallArguments
         val targetArgs = target.defCallArguments
-        if (args.size != targetArgs.size) 1 else sum(args.zip(targetArgs), 1)
+        if (args.size != targetArgs.size) return 1
+        // Implicit arguments (a class instance, a type) have to match but do not count as specificity: `n <= m` for Nat
+        // with its instance scored 2, as much as a genuine match, and never paid the generic premise's penalty
+        val parameters = DependentLink.Helper.toList(pattern.definition.parameters)
+        var total = 1
+        for ((i, pair) in args.zip(targetArgs).withIndex()) {
+          val s = score(pair.first, pair.second, vars, depth + 1) ?: return null
+          if (parameters.getOrNull(i)?.isExplicit != false) total += s
+        }
+        total
       }
       is IntegerExpression -> if (target is IntegerExpression && pattern.isEqual(target)) 1 else null
       is ReferenceExpression -> if (target is ReferenceExpression && target.binding == pattern.binding) 1 else null

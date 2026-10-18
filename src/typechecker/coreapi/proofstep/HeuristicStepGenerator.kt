@@ -365,6 +365,7 @@ class HeuristicStepGenerator(
       val hypothesisBonus = if (penalizeGeneric && hypothesisTypes.any { (type, text) -> caches.hypothesisFits.getOrPut(definition to text) { consumesHypothesis(definition, listOf(type)) } }) HYPOTHESIS_FIT_BONUS else 0.0
       bonusNanos += System.nanoTime() - bonusStart
       val cost = max(MIN_PREMISE_COST, candidate.cost - SPECIFICITY_BONUS * min(score, MAX_SPECIFICITY) - closingBonus + genericPenalty + foreignPenalty - hypothesisBonus - injectivityBonus)
+      if (debug && fit != null) println("Premise ${definition.ref.refName}: cost %.2f = candidate %.2f, score $score, closing $closingBonus, generic $genericPenalty, foreign $foreignPenalty, hypothesis $hypothesisBonus, injective $injectivityBonus".format(cost, candidate.cost))
       if (premises[definition]?.let { it <= cost } != true) premises[definition] = cost
     }
     if (StepBuilder.timing && System.nanoTime() - resolveStart > 10_000_000L) {
