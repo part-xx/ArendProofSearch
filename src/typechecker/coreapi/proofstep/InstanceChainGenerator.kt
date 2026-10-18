@@ -43,8 +43,9 @@ class InstanceChainGenerator(
 ) : ProofStepGenerator<ArendGoal> {
   companion object {
     const val MAX_PARAMETERS = 2
-    const val MAX_LEMMAS = 8
+    const val MAX_LEMMAS = 16
     const val MAX_ARGUMENT_LISTS = 4
+    const val MAX_CHOICES = 2
     /** Added to [cost] for a library lemma, which is less certain than a hypothesis. */
     const val LEMMA_EXTRA_COST = 0.4
   }
@@ -68,10 +69,15 @@ class InstanceChainGenerator(
      * so nothing it stands in would be inferred, but the conclusion does not depend on a proof), an element is each
      * context variable of its type (`mon n`); null when an element has none.
      */
-    fun arguments(parameters: List<DependentLink>): List<Pair<List<ConcreteExpression>, Int>>? {
+    fun arguments(parameters: List<DependentLink>, vars: Set<Binding>, owner: String = ""): List<Pair<List<ConcreteExpression>, Int>>? {
       val choices = parameters.map { parameter ->
-        if (LemmaHints.isProposition(parameter.type)) listOf(factory.goal() to 1)
-        else context.filter { (_, binding) -> CompareVisitor.compare(DummyEquations.getInstance(), CMP.EQ, binding.type, parameter.type, null, null) }
+        if (LemmaHints.isProposition(parameter.type)) {
+          // A hypothesis shaped like the proposition is given too: `<=_*_positive-right {?} k<=l` fixes `l`, which the
+          // chain's other end cannot (`n * k <= n * l` with `l` only in the hypothesis)
+          val hypotheses = context.filter { (_, binding) -> (ConclusionMatcher.match(parameter.type, binding.type, vars) ?: -1) >= 1 }.map { factory.ref(it.first) to 0 }
+          if (debug) println("Instance chain parameter $owner.${parameter.name} : ${parameter.type} (${parameter.type.javaClass.simpleName}): ${context.map { (r, b) -> "${r.refName}=${ConclusionMatcher.match(parameter.type, b.type, vars)}" }} vars ${vars.map { it.name }}")
+          listOf(factory.goal() to 1) + hypotheses.take(MAX_CHOICES)
+        } else context.filter { (_, binding) -> CompareVisitor.compare(DummyEquations.getInstance(), CMP.EQ, binding.type, parameter.type, null, null) }
           .map { factory.ref(it.first) to 0 }.ifEmpty { return null }
       }
       return choices.fold(listOf(emptyList<ConcreteExpression>() to 0)) { acc, options -> acc.flatMap { (prefix, holes) -> options.map { (arg, hole) -> (prefix + arg) to (holes + hole) } } }
@@ -91,16 +97,28 @@ class InstanceChainGenerator(
         conclusion = pi.codomain
       }
       if (parameters.isEmpty() || parameters.size > MAX_PARAMETERS || PremiseRetriever.headKey(conclusion) != key) continue
-      for ((args, holes) in arguments(parameters) ?: continue) ends.add(End(factory.app(factory.ref(ref), true, args), conclusion, binders, cost, holes))
+      for ((args, holes) in arguments(parameters, binders) ?: continue) ends.add(End(factory.app(factory.ref(ref), true, args), conclusion, binders, cost, holes))
     }
-    // Library lemmas with hypotheses, concluding the goal's relation
+    // Library lemmas with hypotheses, concluding the goal's relation; those about a function of the goal first
+    // (`<=_*_positive-right` for `n * k <= m * l`), as hundreds conclude an order
+    val relationName = PremiseRetriever.headName(type)
+    val goalFunctions = EquationRetriever.functionNames(type).filter { it != relationName }.toSet()
     val candidates = lemmas.entries.mapNotNull { (lemma, lemmaCost) ->
       val explicit = RelationFixGenerator.explicitParameters(lemma)
       if (explicit.isEmpty() || explicit.size > MAX_PARAMETERS || !explicit.all { LemmaHints.isProposition(it.type) }) return@mapNotNull null
       val conclusion = ConclusionMatcher.conclusion(lemma) ?: return@mapNotNull null
       if (PremiseRetriever.headKey(conclusion) != key) return@mapNotNull null
-      End(factory.app(factory.ref(lemma.ref), true, List(explicit.size) { factory.goal() }), conclusion, RelationFixGenerator.allParameters(lemma).toSet(), lemmaCost + LEMMA_EXTRA_COST, explicit.size)
-    }.sortedBy { it.cost }.take(MAX_LEMMAS)
+      val about = EquationRetriever.functionNames(conclusion).any { it in goalFunctions }
+      // The pattern's variables: the lemma's parameters and whatever else is free in its conclusion (a class's `this`
+      // is not always among the parameters), minus the goal's own context
+      val contextBindings = context.map { it.second }.toSet()
+      val vars = RelationFixGenerator.allParameters(lemma).toSet<Binding>() + org.arend.core.expr.visitor.FreeVariablesCollector.getFreeVariables(conclusion).filter { it !in contextBindings }
+      val lists = arguments(explicit, vars, lemma.ref.refName) ?: return@mapNotNull null
+      // Ranked: about the goal's operations first, then those a hypothesis instantiates, then by cost
+      val instantiated = lists.any { (_, holes) -> holes < explicit.size }
+      if (debug) println("Instance chain lemma ${lemma.ref.refName} (${lemma.ref.location?.modulePath}): ${lists.size} argument lists, about $about")
+      Triple(lists.map { (args, holes) -> End(factory.app(factory.ref(lemma.ref), true, args), conclusion, vars, lemmaCost + LEMMA_EXTRA_COST, holes) }, about to instantiated, lemmaCost)
+    }.sortedWith(compareBy({ !it.second.first }, { !it.second.second }, { it.third })).take(MAX_LEMMAS).flatMap { it.first }
     ends.addAll(candidates)
     if (debug) println("Instance chains for $type: ${ends.map { "${it.expression} : ${it.conclusion}" }} with ${chains.map { it.refName }}")
     if (ends.isEmpty()) return emptyList()
