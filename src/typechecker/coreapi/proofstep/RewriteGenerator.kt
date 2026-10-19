@@ -141,6 +141,10 @@ class RewriteGenerator(
       val (leftScore, rightScore) = ConclusionMatcher.rewriteSideScores(lemma, subtermIndex!!) ?: continue
       val sides = lemmaSides(lemma)
       val permutative = sides != null && PremiseRetriever.head(sides.first) != null && PremiseRetriever.head(sides.first) == PremiseRetriever.head(sides.second)
+      // Not into a strictly larger term that contains the one replaced: `rewriteI abs_abs` turns `abs x` into `abs (abs x)`,
+      // `rewriteI meet_absorb` turns `x` into `x ∧ (x ∨ y)`; arend-lib rewrites with such lemmas the other way only
+      val growsLeft = sides != null && sides.first !is org.arend.core.expr.ReferenceExpression && sides.first !== sides.second && ConclusionMatcher.occursIn(sides.first, sides.second)
+      val growsRight = sides != null && sides.second !is org.arend.core.expr.ReferenceExpression && sides.first !== sides.second && ConclusionMatcher.occursIn(sides.second, sides.first)
       // A lemma with hypotheses gets a goal for each, `rewrite (div_< {?})` (`mod_<`): the meta finds the equation's
       // sides in the goal, the hypothesis `n < m` is proved afterwards
       // A lemma with hypotheses gets each a goal, `rewrite (div_< {?})`, or a context hypothesis shaped like it,
@@ -151,8 +155,8 @@ class RewriteGenerator(
       val lists = if (explicit.isEmpty()) null else InstanceChainGenerator.argumentLists(goal, explicit, RelationFixGenerator.allParameters(lemma).toSet()) { true }
       val equations = lists?.map { factory.app(factory.ref(lemma.ref), true, it.expressions) to baseCost + it.holes * AppGenerator.SUBGOAL_COST } ?: listOf(factory.ref(lemma.ref) to baseCost)
       for ((equation, cost) in equations) {
-        if (leftScore != null && !undoes(metas.rewrite, lemma.ref.refName)) add(rewriteStep(metas.rewrite, equation), cost)
-        if (rightScore != null && !undoes(metas.rewriteI, lemma.ref.refName)) add(rewriteStep(metas.rewriteI, equation), cost)
+        if (leftScore != null && !growsLeft && !undoes(metas.rewrite, lemma.ref.refName)) add(rewriteStep(metas.rewrite, equation), cost)
+        if (rightScore != null && !growsRight && !undoes(metas.rewriteI, lemma.ref.refName)) add(rewriteStep(metas.rewriteI, equation), cost)
       }
     }
     return steps
