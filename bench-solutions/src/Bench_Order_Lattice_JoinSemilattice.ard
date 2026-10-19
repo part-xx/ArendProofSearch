@@ -22,24 +22,24 @@
 \import Logic.Meta
 \open JoinSemilattice
 
--- proved by proof search (final run (current code, 10 s per lemma), 32 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 31 ms)
 \lemma Big_join-cond {A : JoinSemilattice} {n : Nat} {l : Array A (suc n)} {j : Fin (suc n)} : l j <= Big_∨ l => JoinSemilattice.Big_<=_join _
--- proved by proof search (final run (current code, 10 s per lemma), 736 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 710 ms)
 \lemma join-monotone {A : JoinSemilattice} {x y x' y' : A} (p : x <= x') (q : y <= y') : x ∨ y <= x' ∨ y' => join-univ (p <=∘ join-left) (q <=∘ join-right)
--- proved by proof search (final run (current code, 10 s per lemma), 53 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 54 ms)
 \lemma join-idemp {A : JoinSemilattice} {x : A} : x ∨ x = x => JoinSemilattice.join_<= <=-refl
--- proved by proof search (final run (current code, 10 s per lemma), 313 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 325 ms)
 \lemma join-comm {A : JoinSemilattice} {x y : A} : x ∨ y = y ∨ x => <=-antisymmetric (join-univ join-right join-left) (join-univ join-right join-left)
 \lemma join-assoc {A : JoinSemilattice} {x y z : A} : (x ∨ y) ∨ z = x ∨ (y ∨ z) => {?}
--- proved by proof search (final run (current code, 10 s per lemma), 122 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 109 ms)
 \lemma join_<= {A : JoinSemilattice} {x y : A} (x<=y : x <= y) : x ∨ y = y => <=-antisymmetric (join-univ x<=y <=-refl) join-right
--- proved by proof search (final run (current code, 10 s per lemma), 45 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 40 ms)
 \lemma join_<=' {A : JoinSemilattice} {x y : A} (p : x ∨ y = y) : x <= y => rewriteI p join-left
--- proved by proof search (final run (current code, 10 s per lemma), 139 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 132 ms)
 \lemma Big_<=_join0 {A : JoinSemilattice} {l : Array A} {x : A} : x <= Big (∨) x l \elim l   | nil => <=-refl   | :: a l => Big_<=_join0 {A} {l} {x} <=∘ join-right
--- proved by proof search (final run (current code, 10 s per lemma), 217 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 189 ms)
 \lemma Big_<=_join1 {A : JoinSemilattice} {l : Array A} {x : A} (i : Fin l.len) : l i <= Big (∨) x l \elim l, i   | nil, i => contradiction   | :: a l, zero => join-left   | :: a l, suc i => Big_<=_join1 {A} {l} {x} i <=∘ join-right
--- proved by proof search (final run (current code, 10 s per lemma), 41 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 38 ms)
 \lemma Big_<=_join {A : JoinSemilattice} {n : Nat} {l : Array A (suc n)} (i : Fin (suc n)) : l i <= Big (∨) (l 0) (tail l) => JoinSemilattice.Big_join-cond
--- proved by proof search (final run (current code, 10 s per lemma), 1403 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 1273 ms)
 \lemma Big_join-univ {A : JoinSemilattice} {l : Array A} {x y : A} (p : x <= y) (f : \Pi (i : Fin l.len) -> l i <= y) : Big (∨) x l <= y \elim l, f   | nil, f => p   | :: a l, f => join-univ (f zero) (Big_join-univ p (\lam i => f (suc i)))

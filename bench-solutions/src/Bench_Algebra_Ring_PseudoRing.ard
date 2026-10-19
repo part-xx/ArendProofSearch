@@ -21,17 +21,17 @@
 \import Algebra.Ring
 \open PseudoRing
 
--- proved by proof search (final run (current code, 10 s per lemma), 372 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 386 ms)
 \lemma negative_*-left {A : PseudoRing} {x y : A} : negative x * y = negative (x * y) => inv PseudoRing.negative_* *> rewrite AddGroup.negative-isInv PseudoRing.negative_*-right
--- proved by proof search (final run (current code, 10 s per lemma), 326 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 313 ms)
 \lemma negative_*-right {A : PseudoRing} {x y : A} : x * negative y = negative (x * y) => inv PseudoRing.negative_* *> rewrite AddGroup.negative-isInv PseudoRing.negative_*-left
 -- proved by proof search (final run (current code, 10 s per lemma), 192 ms)
 \lemma negative_* {A : PseudoRing} {x y : A} : negative x * negative y = x * y => rewrite PseudoRing.negative_*-left (rewrite PseudoRing.negative_*-right AddGroup.negative-isInv)
 -- proved by proof search (final run (current code, 10 s per lemma), 938 ms)
 \lemma ldistr_- {A : PseudoRing} {x y z : A} : x * (y - z) = x * y - x * z => unfold (-) (rewriteI PseudoRing.negative_*-right ldistr)
--- proved by proof search (final run (current code, 10 s per lemma), 1089 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 1088 ms)
 \lemma rdistr_- {A : PseudoRing} {x y z : A} : (x - y) * z = x * z - y * z => unfold (-) (rewriteI PseudoRing.negative_*-left rdistr)
--- proved by proof search (final run (current code, 10 s per lemma), 7758 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 7582 ms)
 \lemma *_sum_diff {A : PseudoRing} {x y : A} (p : x * y = y * x) : (x + y) * (x - y) = x * x - y * y => rewrite rdistr (rewrite PseudoRing.ldistr_- (rewrite PseudoRing.ldistr_- (equation.abGroup {AddGroup.toZero (inv p)})))
--- proved by proof search (final run (current code, 10 s per lemma), 7522 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 7481 ms)
 \lemma *_diff_sum {A : PseudoRing} {x y : A} (p : x * y = y * x) : (x - y) * (x + y) = x * x - y * y => rewrite ldistr (rewrite PseudoRing.rdistr_- (rewrite PseudoRing.rdistr_- (equation.abGroup {p})))

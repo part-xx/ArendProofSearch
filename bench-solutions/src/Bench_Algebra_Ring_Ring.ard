@@ -22,4 +22,5 @@
 \open Ring
 
 \lemma Inv_negative {A : Ring} {x : A} (j : Monoid.Inv (negative x)) : Monoid.Inv x => {?}
-\lemma idempotent_LDiv {A : Ring} {a b : A} (q : b * b = b) (d : Monoid.LDiv b a) : a = b * a => {?}
+-- proved by proof search (final run (current code, 10 s per lemma), 1151 ms)
+\lemma idempotent_LDiv {A : Ring} {a b : A} (q : b * b = b) (d : Monoid.LDiv b a) : a = b * a => \case Monoid.LDiv.inv-right {d} \with {   | q' => rewriteI q' (inv PseudoRing.negative_* *> equation.ring {pmap (\lam z => z * negative {A} (Monoid.DivBase.inv {d})) q}) }

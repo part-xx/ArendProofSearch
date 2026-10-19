@@ -121,11 +121,16 @@ class InductionGenerator(
             }
           }
           val tried = HashSet<String>()
+          val started = System.currentTimeMillis()
           for ((hints, extra) in attempts) {
+            if (System.currentTimeMillis() - started > ClosingGenerator.SOLVER_BUDGET_MILLIS) break
             val term = ClosingGenerator.hinted(factory, solver, hints)
             if (!tried.add(term.toString())) continue
-            StepBuilder.build(goal, currentProof, term, cost + SOLVER_EXTRA_COST + extra, moduleLocation, acceptNormalizing)?.let { steps.add(it) } ?: continue
-            break
+            val before = System.currentTimeMillis()
+            val step = StepBuilder.build(goal, currentProof, term, cost + SOLVER_EXTRA_COST + extra, moduleLocation, acceptNormalizing, limitMillis = StepBuilder.SOLVER_TYPECHECK_MILLIS)
+            if (step != null) { steps.add(step); break }
+            // A run abandoned at its limit: the solver is slow on this goal, further hint sets are not tried
+            if (System.currentTimeMillis() - before >= StepBuilder.SOLVER_TYPECHECK_MILLIS - 100) break
           }
         }
       }

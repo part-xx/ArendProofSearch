@@ -8,7 +8,7 @@
 \import Logic.Meta
 \import Paths.Meta
 
--- proved by proof search (final run (current code, 10 s per lemma), 50 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 46 ms)
 \lemma not-isInv {b : Bool} : not (not b) = b \elim b   | false => idp   | true => idp
 -- proved by proof search (final run (current code, 10 s per lemma), 1 ms)
 \lemma true/=false (p : true = false) : Empty => contradiction

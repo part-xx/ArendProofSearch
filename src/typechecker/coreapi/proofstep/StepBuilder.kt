@@ -47,6 +47,8 @@ object StepBuilder {
   const val SLOW_TYPECHECK_MILLIS = 5000
   /** A single term's typecheck is abandoned after this long. */
   const val MAX_TYPECHECK_MILLIS = 5000L
+  /** A solver run with one of many hint sets: a set that takes longer than this seldom succeeds, and there are a dozen of them per goal. */
+  const val SOLVER_TYPECHECK_MILLIS = 1500L
   private val typecheckExecutor: java.util.concurrent.ExecutorService = java.util.concurrent.Executors.newCachedThreadPool { runnable ->
     Thread(runnable, "step-typecheck").apply { isDaemon = true }
   }
@@ -84,7 +86,9 @@ object StepBuilder {
     goal: ArendGoal, currentProof: Proof<ArendGoal>?, term: ConcreteExpression, cost: Double, moduleLocation: ModuleLocation,
     /** A further condition on the typechecked term, e.g. that a recursive call decreases. */
     accept: ((Expression) -> Boolean)? = null,
-  ): ProofStep<ArendGoal>? = tryBuild(goal, currentProof, term, cost, moduleLocation, accept).step
+    /** The time the term's typecheck may take before it is abandoned: less for a solver tried with many hint sets. */
+    limitMillis: Long = MAX_TYPECHECK_MILLIS,
+  ): ProofStep<ArendGoal>? = tryBuild(goal, currentProof, term, cost, moduleLocation, accept, limitMillis).step
 
   /** [build], telling why the term was rejected when it was. */
   /** How many rejected terms are remembered before the memo is cleared. */
@@ -111,16 +115,17 @@ object StepBuilder {
   fun tryBuild(
     goal: ArendGoal, currentProof: Proof<ArendGoal>?, term: ConcreteExpression, cost: Double, moduleLocation: ModuleLocation,
     accept: ((Expression) -> Boolean)? = null,
+    limitMillis: Long = MAX_TYPECHECK_MILLIS,
   ): Outcome {
     if (pastDeadline()) { if (debug) println("Rejected $term : ${goal.expectedType} -- past the deadline"); return Outcome(null, Failure.OTHER) }
     val memo = if (accept == null && !noTermMemo) memoKey(goal, term) else null
     if (memo != null) synchronized(rejected) { rejected[memo] }?.let { remembered ->
       if (!verifyTermMemo) return Outcome(null, remembered)
-      val actual = typecheckStep(goal, currentProof, term, cost, moduleLocation, accept)
+      val actual = typecheckStep(goal, currentProof, term, cost, moduleLocation, accept, limitMillis)
       if (actual.step != null) println("MEMO MISMATCH: $term remembered as $remembered but typechecks for ${goal.problemText}")
       return actual
     }
-    val outcome = typecheckStep(goal, currentProof, term, cost, moduleLocation, accept)
+    val outcome = typecheckStep(goal, currentProof, term, cost, moduleLocation, accept, limitMillis)
     if (debug && outcome.step == null && outcome.failure == null) println("Rejected $term : ${goal.expectedType} -- the step could not be plugged into the proof")
     // Only a type mismatch is remembered: whether an argument can be inferred (`meet-left` against `x ∧ y <= x`) has turned
     // out to depend on the state, and an exception or an interrupted typecheck says nothing about the term
@@ -133,7 +138,7 @@ object StepBuilder {
 
   private fun typecheckStep(
     goal: ArendGoal, currentProof: Proof<ArendGoal>?, term: ConcreteExpression, cost: Double, moduleLocation: ModuleLocation,
-    accept: ((Expression) -> Boolean)?,
+    accept: ((Expression) -> Boolean)?, limitMillis: Long,
   ): Outcome {
     val collector = ArendProof.GoalCollector(goal)
     val branchTC = CheckTypeVisitor.loadTypecheckingContext(goal.typechecker.saveTypecheckingContext(), collector)
@@ -156,7 +161,7 @@ object StepBuilder {
       }
     }
     val typed = try {
-      future.get(max(1L, min(MAX_TYPECHECK_MILLIS, deadline - System.currentTimeMillis())), java.util.concurrent.TimeUnit.MILLISECONDS)
+      future.get(max(1L, min(limitMillis, deadline - System.currentTimeMillis())), java.util.concurrent.TimeUnit.MILLISECONDS)
     } catch (e: java.util.concurrent.TimeoutException) {
       println("Typecheck abandoned after ${System.currentTimeMillis() - before}ms: $term : ${goal.expectedType}")
       null

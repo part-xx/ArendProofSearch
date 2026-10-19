@@ -4,6 +4,7 @@
 \import Algebra.Meta
 \import Algebra.Monoid
 \import Algebra.Pointed
+\import Algebra.Ring
 \import Algebra.Ordered
 \import Order.Lattice
 \import Set
@@ -89,3 +90,6 @@
 
 -- Set.ard dec_decide: a class instance built field by field, `\cowith | decide => d`
 \lemma dec_decide' {E : \Prop} (d : Dec E) : Decide E => {?}
+
+-- Algebra/Ring.ard idempotent_LDiv: the equation field of a record hypothesis, `d.inv-right`, used with the hypothesis by the ring solver
+\lemma idempotent_LDiv' {A : Ring} {a b : A} (q : b * b = b) (d : Monoid.LDiv b a) : a = b * a => {?}

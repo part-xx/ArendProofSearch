@@ -22,5 +22,5 @@
 \import Logic.Meta
 \open Lattice
 
--- proved by proof search (final run (current code, 10 s per lemma), 5714 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 5518 ms)
 \lemma ldistr<= {A : Lattice} {x y z : A} : (x ∧ y) ∨ (x ∧ z) <= x ∧ (y ∨ z) => join-univ (MeetSemilattice.meet-monotone <=-refl join-left) (MeetSemilattice.meet-monotone <=-refl join-right)

@@ -50,6 +50,8 @@ class ClosingGenerator(
     const val DERIVED_HINT_COST = 0.2
     /** Added when the hints are lemma instances, `pow-comm1 (inv p)`. */
     const val LEMMA_HINT_COST = 0.2
+    /** All hinted solver runs on one goal together may take this long. */
+    const val SOLVER_BUDGET_MILLIS = 3000L
     /** At most this many elements of the carrier are tried in a section `(* x)` of a derived hint. */
     const val MAX_SECTION_ELEMENTS = 6
 
@@ -116,16 +118,28 @@ class ClosingGenerator(
     // binary operation at an element at hand (`pmap (* h) p`)
     val (solver, carrier) = solverFor(goal, solvers) ?: return emptyList()
     val solverCost = closingMetas.firstOrNull { it.first.refName == "equation" }?.second ?: cost
+    var slow = false
     if (equations.isNotEmpty()) {
       StepBuilder.build(goal, currentProof, hinted(factory, solver, equations), solverCost + HINTS_EXTRA_COST, moduleLocation)?.let { return listOf(it) }
     }
     // Lemmas applied to the hypotheses as further hints, each alone and then all together:
     // `equation.monoid {p, pow-comm1 p}` (`pow-comm1`), `equation {usingOnly (finv-right xi, finv-right x+1i, ...)}` (`finv-diff`)
     // The solver rewrites with its hints in order and fails when one no longer occurs, so each group is also tried without the hypotheses
+    // A solver that is slow on this goal (a run abandoned at its limit, or the goal's budget spent) is not tried with
+    // further hint sets: on some ring goals every hinted run hits the limit, a dozen times
+    val started = System.currentTimeMillis()
+    fun attempt(hints: List<ConcreteExpression>, cost: Double): ProofStep<ArendGoal>? {
+      if (System.currentTimeMillis() - started > SOLVER_BUDGET_MILLIS) return null
+      val before = System.currentTimeMillis()
+      val step = StepBuilder.build(goal, currentProof, hinted(factory, solver, hints), cost, moduleLocation, limitMillis = StepBuilder.SOLVER_TYPECHECK_MILLIS)
+      if (step == null && System.currentTimeMillis() - before >= StepBuilder.SOLVER_TYPECHECK_MILLIS - 100) slow = true
+      return step
+    }
     val instances = lemmaHints()
     for (group in LemmaHints.groups(instances)) {
       for (hints in listOf(equations + group, group).distinct()) {
-        StepBuilder.build(goal, currentProof, hinted(factory, solver, hints), solverCost + HINTS_EXTRA_COST + LEMMA_HINT_COST, moduleLocation)?.let { return listOf(it) }
+        if (slow) return emptyList()
+        attempt(hints, solverCost + HINTS_EXTRA_COST + LEMMA_HINT_COST)?.let { return listOf(it) }
       }
     }
     if (pmap == null || equations.isEmpty()) return emptyList()
@@ -145,8 +159,9 @@ class ClosingGenerator(
     }
     for (equation in equations) {
       for (function in functions) {
+        if (slow) return emptyList()
         val hint = factory.app(factory.ref(pmap), true, function, equation)
-        StepBuilder.build(goal, currentProof, hinted(factory, solver, listOf(hint)), solverCost + HINTS_EXTRA_COST + DERIVED_HINT_COST, moduleLocation)?.let { return listOf(it) }
+        attempt(listOf(hint), solverCost + HINTS_EXTRA_COST + DERIVED_HINT_COST)?.let { return listOf(it) }
       }
     }
     return emptyList()

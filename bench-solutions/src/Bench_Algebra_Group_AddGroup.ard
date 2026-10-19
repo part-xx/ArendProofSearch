@@ -20,24 +20,24 @@
 \import Algebra.Group
 \open AddGroup
 
--- proved by proof search (final run (current code, 10 s per lemma), 47 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 48 ms)
 \lemma cancel-left {A : AddGroup} (x : A) {y z : A} (p : x + y = x + z) : y = z => cancel_*-left {toGroup A} _ {_} {_} p
--- proved by proof search (final run (current code, 10 s per lemma), 46 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 48 ms)
 \lemma cancel-right {A : AddGroup} (z : A) {x y : A} (p : x + z = y + z) : x = y => cancel_*-right {toGroup A} _ {_} {_} p
--- proved by proof search (final run (current code, 10 s per lemma), 50 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 51 ms)
 \lemma negative-isInv {A : AddGroup} {x : A} : negative (negative x) = x => Group.inverse-isInv {toGroup A} {_}
 -- proved by proof search (final run (current code, 10 s per lemma), 85 ms)
 \lemma negative_+ {A : AddGroup} {x y : A} : negative (x + y) = negative y - x => Group.inverse_* {toGroup A} {_} {_}
--- proved by proof search (final run (current code, 10 s per lemma), 430 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 419 ms)
 \lemma negative_- {A : AddGroup} {x y : A} : negative (x - y) = y - x => rewrite AddGroup.negative_+ (rewrite AddGroup.negative-isInv idp)
--- proved by proof search (final run (current code, 10 s per lemma), 226 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 234 ms)
 \lemma minus_zro {A : AddGroup} {x : A} : x - zro = x => unfold (-) (rewrite negative_zro equation)
--- proved by proof search (final run (current code, 10 s per lemma), 3 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 2 ms)
 \lemma fromZero {A : AddGroup} {x y : A} (x-y=0 : x - y = zro) : x = y => equation.addGroup {pmap (\lam z => z + y) x-y=0}
 -- proved by proof search (final run (current code, 10 s per lemma), 71 ms)
 \lemma toZero {A : AddGroup} {x y : A} (x=y : x = y) : x - y = zro => unfold (-) (equation.addGroup {pmap (\lam z => z + negative {A} y) x=y})
 \lemma *i-rdistr {A : AddGroup} {x y : Int} {a : A} : (x Arith.Int.IntRing.+ y) *i a = x *i a + y *i a => {?}
--- proved by proof search (final run (current code, 10 s per lemma), 1629 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 1612 ms)
 \lemma diff_+ {A : AddGroup} {x y z : A} : (z - y) + (y - x) = z - x => inv +-assoc *> rewrite AddGroup.minus_+ idp
--- proved by proof search (final run (current code, 10 s per lemma), 572 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 577 ms)
 \lemma minus_+ {A : AddGroup} {x y : A} : (x - y) + y = x => +-assoc *> rewrite negative-left equation

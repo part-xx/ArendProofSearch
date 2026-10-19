@@ -1,6 +1,6 @@
 # Proof-search solutions for the arend-lib benchmark
 
-Best proof found for each of the 300 benchmark lemmas across the recorded runs: **221 proved (73%)**. Each `src/Bench_*.ard` module restates the lemmas of one arend-lib module (or class) with the found proof as its body; unproved lemmas keep `{?}`. The library typechecks against arend-lib (goals are not errors).
+Best proof found for each of the 300 benchmark lemmas across the recorded runs: **222 proved (74%)**. Each `src/Bench_*.ard` module restates the lemmas of one arend-lib module (or class) with the found proof as its body; unproved lemmas keep `{?}`. The library typechecks against arend-lib (goals are not errors).
 
 | module | proved |
 |---|---|
@@ -16,7 +16,7 @@ Best proof found for each of the 300 benchmark lemmas across the recorded runs: 
 | Bench_Algebra_Ordered_LatticeAbGroup | 8 / 13 |
 | Bench_Algebra_Ordered_PosetAddGroup | 1 / 4 |
 | Bench_Algebra_Ring_PseudoRing | 7 / 7 |
-| Bench_Algebra_Ring_Ring | 0 / 2 |
+| Bench_Algebra_Ring_Ring | 1 / 2 |
 | Bench_Algebra_Semiring_Semiring | 1 / 1 |
 | Bench_Arith_Int | 15 / 19 |
 | Bench_Arith_Nat | 49 / 71 |
@@ -112,6 +112,7 @@ Best proof found for each of the 300 benchmark lemmas across the recorded runs: 
 | Algebra_Ring_PseudoRing | `rdistr_-` | `=> unfold (-) (rewriteI PseudoRing.negative_*-left rdistr)` | final run (current code, 10 s per lemma) |
 | Algebra_Ring_PseudoRing | `*_sum_diff` | `=> rewrite rdistr (rewrite PseudoRing.ldistr_- (rewrite PseudoRing.ldistr_- (equation.abGroup {AddGroup.toZero (inv p)})))` | final run (current code, 10 s per lemma) |
 | Algebra_Ring_PseudoRing | `*_diff_sum` | `=> rewrite ldistr (rewrite PseudoRing.rdistr_- (rewrite PseudoRing.rdistr_- (equation.abGroup {p})))` | final run (current code, 10 s per lemma) |
+| Algebra_Ring_Ring | `idempotent_LDiv` | `=> \case Monoid.LDiv.inv-right {d} \with {   \| q' => rewriteI q' (inv PseudoRing.negative_* *> equation.ring {pmap (\lam z => z * negative {A} (Monoid.DivBase.inv {d})) q}) }` | final run (current code, 10 s per lemma) |
 | Algebra_Semiring_Semiring | `natCoef-comm` | `=> Algebra.Ring.RingHom.natComm _ _` | final run (current code, 10 s per lemma) |
 | Arith_Int | `iabs_*` | `\elim x, y   \| pos x, pos x' => idp   \| pos x, neg x'' => idp   \| neg zero, pos x => idp   \| neg zero, neg x' => idp   \| neg (suc x'), pos x => idp   \| neg (suc x'), neg x'' => idp` | final run (current code, 10 s per lemma) |
 | Arith_Int | `ldiv_iabs` | `=> Algebra.Domain.Euclidean.ldiv_int_nat _` | final run (current code, 10 s per lemma) |
@@ -207,7 +208,7 @@ Best proof found for each of the 300 benchmark lemmas across the recorded runs: 
 | Logic | `SetIm-con` | `=> Logic.SetIm-cone _ Pa` | final run (current code, 10 s per lemma) |
 | Logic | `SetIm-cone` | `=> Logic.SetIm-con Pa` | final run (current code, 10 s per lemma) |
 | Logic | `SetIm-elim` | `=> \case s \with {   \| inP (a, x) => \case \elim a, \elim x \with {     \| (a, x'), x => rewriteI x (c x')   } }` | final run (current code, 10 s per lemma) |
-| Logic | `SetIm_o` | `=> ext (\lam b   => Logic.propExt (\lam p => (\case p \with {  \| inP (a, x) => \case \elim a, \elim x \with {    \| (a, p'), x => rewriteI x (Logic.SetIm-con (Logic.SetIm-con p'))  }}))     (\lam p => (\case p \with {  \| inP (a, x) => \case \elim a, \elim x \with {    \| (a, p'), x => \case p' \with {         \| inP (a', x') => unfold SetIm (rewriteI x (rewriteI x' (Logic.TSetIm-con _)))    }  }})))` | final run (current code, 10 s per lemma) |
+| Logic | `SetIm_o` | `=> ext (\lam b => Logic.propExt (\lam p => (\case p \with {  \| inP (a, x) => rewriteI x (Logic.SetIm-con (unfold SetIm (Logic.TSetIm-con _)))}))   (\lam p => (\case p \with {  \| inP (a, x) => \case \elim a, \elim x \with {    \| (a, p'), x => \case p' \with {       \| inP (a', x') => unfold SetIm (rewriteI x (rewriteI x' (Logic.TSetIm-con _)))    }  }})))` | final run (current code, 10 s per lemma) |
 | Logic | `SetIm_TSetIm` | `=> ext (\lam b => Logic.propExt (\lam p => (\case p \with {  \| inP (a, x) => \case \elim a, \elim x \with {    \| (a, p'), x => \case p' \with {       \| inP (a', x') => rewriteI x (rewriteI x' (Logic.TSetIm-con _))    }  }}))   (\lam p => (\case p \with {  \| inP (a, x) => rewriteI x (Logic.SetIm-con (Logic.TSetIm-con _))})))` | final run (current code, 10 s per lemma) |
 | Logic | `propExt` | `=> ext (f, g)` | final run (current code, 10 s per lemma) |
 | Order_Lattice_BottomDistributiveLattice | `bottom-ldistr` | `=> MeetSemilattice.meet-comm *> BottomDistributiveLattice.bottom-rdistr` | final run (current code, 10 s per lemma) |

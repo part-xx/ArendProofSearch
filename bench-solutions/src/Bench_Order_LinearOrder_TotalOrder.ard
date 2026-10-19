@@ -21,15 +21,15 @@
 \open MeetSemilattice
 \open TotalOrder
 
--- proved by proof search (final run (current code, 10 s per lemma), 1547 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 1506 ms)
 \lemma meet-isMin {A : TotalOrder} (x y : A) : (x ∧ y = x) || (x ∧ y = y) => \case totality x y \with {   | byLeft p => byLeft (meet_<= p)   | byRight p' => byRight (meet-comm *> meet_<= p') }
--- proved by proof search (final run (current code, 10 s per lemma), 20 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 19 ms)
 \lemma meet-prop {A : TotalOrder} (P : A -> \Prop) {x y : A} (Px : P x) (Py : P y) : P (x ∧ y) => \case TotalOrder.meet-isMin x y \with {   | byLeft p => rewriteI p in Px   | byRight p' => rewriteI p' in Py }
 \lemma Big01_meet-isMin {A : TotalOrder} (l : Array A) (x : A) : (\Sigma (j : Fin l.len) (Big (∧) x l = l j)) || (Big (∧) x l = x) => {?}
 \lemma Big_meet-isMin {A : TotalOrder} {n : Nat} (l : Array A (suc n)) : ∃ (j : Fin (suc n)) (Big_∧ l = l j) => {?}
--- proved by proof search (final run (current code, 10 s per lemma), 1077 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 1056 ms)
 \lemma join-isMax {A : TotalOrder} (x y : A) : (x ∨ y = x) || (x ∨ y = y) => \case totality x y \with {   | byLeft p => byRight (join_<= p)   | byRight p' => byLeft (join-comm *> join_<= p') }
--- proved by proof search (final run (current code, 10 s per lemma), 16 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 17 ms)
 \lemma join-prop {A : TotalOrder} (P : A -> \Prop) {x y : A} (Px : P x) (Py : P y) : P (x ∨ y) => \case TotalOrder.join-isMax x y \with {   | byLeft p => rewriteI p in Px   | byRight p' => rewriteI p' in Py }
 \lemma Big01_join-isMax {A : TotalOrder} (l : Array A) (x : A) : (\Sigma (j : Fin l.len) (Big (∨) x l = l j)) || (Big (∨) x l = x) => {?}
 \lemma Big_join-isMax {A : TotalOrder} {n : Nat} (l : Array A (suc n)) : ∃ (j : Fin (suc n)) (Big_∨ l = l j) => {?}

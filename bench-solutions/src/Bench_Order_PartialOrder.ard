@@ -12,7 +12,7 @@
 \import Logic.Meta
 \import Meta
 
--- proved by proof search (final run (current code, 10 s per lemma), 32 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 34 ms)
 \lemma =_<= {P : Preorder} {x y : P} (p : x = y) : x <= y => rewrite p <=-refl
--- proved by proof search (final run (current code, 10 s per lemma), 25 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 26 ms)
 \lemma \infixr 9 =<= {E : Preorder} {x y z : E} (p : x = y) (q : y <= z) : x <= z => rewriteI p in q

@@ -211,4 +211,15 @@ class ChainsTest {
     val source = TestChains.assertProves(search("dec_decide'", solvers = false))
     assertTrue(source.contains("\\new Decide") && source.contains("decide => d"), source)
   }
+
+  @Test
+  fun `an equation field of a record hypothesis is brought into the context`() {
+    // `d : LDiv b a` has the equation field `inv-right : b * d.inv = a`; `q` is taken, so the field is bound as `q'`
+    val module = TestChains.module
+    val steps = TestChains.withGoal("idempotent_LDiv'") { goal -> ProjectionGenerator(module.location).generate(goal, null).map { it.proof.toString() } }
+    assertTrue(steps.size == 1 && steps[0].contains("inv-right {d}") && steps[0].contains("| q' =>"), steps.toString())
+    // A context without a record hypothesis gets no projection
+    val none = TestChains.withGoal("assoc3") { goal -> ProjectionGenerator(module.location).generate(goal, null) }
+    assertTrue(none.isEmpty(), none.toString())
+  }
 }

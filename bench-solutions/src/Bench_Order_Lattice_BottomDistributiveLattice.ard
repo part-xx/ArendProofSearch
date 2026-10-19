@@ -22,7 +22,7 @@
 \import Logic.Meta
 \open BottomDistributiveLattice
 
--- proved by proof search (final run (current code, 10 s per lemma), 82 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 72 ms)
 \lemma bottom-ldistr {A : BottomDistributiveLattice} {x : A} : x ∧ bottom = bottom => MeetSemilattice.meet-comm *> BottomDistributiveLattice.bottom-rdistr
--- proved by proof search (final run (current code, 10 s per lemma), 59 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 58 ms)
 \lemma bottom-rdistr {A : BottomDistributiveLattice} {x : A} : bottom ∧ x = bottom => MeetSemilattice.meet_<= bottom-univ

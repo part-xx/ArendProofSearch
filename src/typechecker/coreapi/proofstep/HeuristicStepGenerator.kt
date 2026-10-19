@@ -624,6 +624,7 @@ class HeuristicStepGenerator(
     }
     if (Heuristic.HYPOTHESIS in heuristics) {
       steps += timed("hypothesis", emptyList()) { HypothesisGenerator(moduleLocation, absurdRef).generate(goal, currentProof) }
+      steps += timed("projection", emptyList()) { ProjectionGenerator(moduleLocation).generate(goal, currentProof) }
     }
     if (Heuristic.INDUCTION in heuristics) {
       steps += timed("induction", emptyList()) { InductionGenerator(moduleLocation, rewriteMetas = rewriteMetas, chains = chainRefs, solvers = equationSolvers, lemmaHints = { hintInstances }).generate(goal, currentProof) }
