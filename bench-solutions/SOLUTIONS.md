@@ -1,6 +1,6 @@
 # Proof-search solutions for the arend-lib benchmark
 
-Best proof found for each of the 300 benchmark lemmas across the recorded runs: **219 proved (73%)**. Each `src/Bench_*.ard` module restates the lemmas of one arend-lib module (or class) with the found proof as its body; unproved lemmas keep `{?}`. The library typechecks against arend-lib (goals are not errors).
+Best proof found for each of the 300 benchmark lemmas across the recorded runs: **221 proved (73%)**. Each `src/Bench_*.ard` module restates the lemmas of one arend-lib module (or class) with the found proof as its body; unproved lemmas keep `{?}`. The library typechecks against arend-lib (goals are not errors).
 
 | module | proved |
 |---|---|
@@ -19,7 +19,7 @@ Best proof found for each of the 300 benchmark lemmas across the recorded runs: 
 | Bench_Algebra_Ring_Ring | 0 / 2 |
 | Bench_Algebra_Semiring_Semiring | 1 / 1 |
 | Bench_Arith_Int | 15 / 19 |
-| Bench_Arith_Nat | 48 / 71 |
+| Bench_Arith_Nat | 49 / 71 |
 | Bench_Data_Bool | 2 / 2 |
 | Bench_Data_Fin | 8 / 8 |
 | Bench_Data_List | 9 / 16 |
@@ -36,7 +36,7 @@ Best proof found for each of the 300 benchmark lemmas across the recorded runs: 
 | Bench_Order_LinearOrder_TotalOrder | 4 / 8 |
 | Bench_Order_PartialOrder | 2 / 2 |
 | Bench_Order_StrictOrder_StrictPoset | 2 / 2 |
-| Bench_Set | 9 / 12 |
+| Bench_Set | 10 / 12 |
 | Bench_Set_Set | 1 / 1 |
 
 ## Proofs
@@ -168,6 +168,7 @@ Best proof found for each of the 300 benchmark lemmas across the recorded runs: 
 | Arith_Nat | `mod_Fin_<` | `\elim n, p, q   \| zero, p, q => contradiction   \| suc n, p, q => Arith.Nat.mod_< q` | final run (current code, 10 s per lemma) |
 | Arith_Nat | `mod_Fin=id` | `\elim n, k, p   \| zero, k, p => contradiction   \| suc n, k, p => Arith.Nat.fin_mod_id _` | final run (current code, 10 s per lemma) |
 | Arith_Nat | `fin_mod_id` | `=> Data.Fin.nat_fin_= (Arith.Nat.mod_< (Arith.Nat.fin_< _))` | final run (current code, 10 s per lemma) |
+| Arith_Nat | `natUnit` | `=> Arith.Nat.natAssociates-areEqual    (\new LDiv {  \| M => NatSemiring  \| val => m  \| elem => 1  \| inv => n  \| inv-right => rewriteI p *-comm}) Monoid.LDiv.ide-div` | final run (current code, 10 s per lemma) |
 | Arith_Nat | `ldiv*div=id` | `=> rewrite (Arith.Nat.div_mod m\|n) idp *> {_} {_} {m * n div m + n mod m} {_} divModProp n m` | final run (current code, 10 s per lemma) |
 | Arith_Nat | `id_mod` | `=> Arith.Nat.div_mod Monoid.LDiv.id-div` | final run (current code, 10 s per lemma) |
 | Arith_Nat | `n*_+_mod_n` | `=> Arith.Nat.n*_+_mod_n=mod.nat *> Arith.Nat.mod_< r<n` | final run (current code, 10 s per lemma) |
@@ -206,7 +207,7 @@ Best proof found for each of the 300 benchmark lemmas across the recorded runs: 
 | Logic | `SetIm-con` | `=> Logic.SetIm-cone _ Pa` | final run (current code, 10 s per lemma) |
 | Logic | `SetIm-cone` | `=> Logic.SetIm-con Pa` | final run (current code, 10 s per lemma) |
 | Logic | `SetIm-elim` | `=> \case s \with {   \| inP (a, x) => \case \elim a, \elim x \with {     \| (a, x'), x => rewriteI x (c x')   } }` | final run (current code, 10 s per lemma) |
-| Logic | `SetIm_o` | `=> ext (\lam b => Logic.propExt (\lam p => (\case p \with {  \| inP (a, x) => rewriteI x (Logic.SetIm-con (unfold SetIm (Logic.TSetIm-con _)))}))   (\lam p => (\case p \with {  \| inP (a, x) => \case \elim a, \elim x \with {    \| (a, p'), x => \case p' \with {       \| inP (a', x') => unfold SetIm (rewriteI x (rewriteI x' (Logic.TSetIm-con _)))    }  }})))` | final run (current code, 10 s per lemma) |
+| Logic | `SetIm_o` | `=> ext (\lam b   => Logic.propExt (\lam p => (\case p \with {  \| inP (a, x) => \case \elim a, \elim x \with {    \| (a, p'), x => rewriteI x (Logic.SetIm-con (Logic.SetIm-con p'))  }}))     (\lam p => (\case p \with {  \| inP (a, x) => \case \elim a, \elim x \with {    \| (a, p'), x => \case p' \with {         \| inP (a', x') => unfold SetIm (rewriteI x (rewriteI x' (Logic.TSetIm-con _)))    }  }})))` | final run (current code, 10 s per lemma) |
 | Logic | `SetIm_TSetIm` | `=> ext (\lam b => Logic.propExt (\lam p => (\case p \with {  \| inP (a, x) => \case \elim a, \elim x \with {    \| (a, p'), x => \case p' \with {       \| inP (a', x') => rewriteI x (rewriteI x' (Logic.TSetIm-con _))    }  }}))   (\lam p => (\case p \with {  \| inP (a, x) => rewriteI x (Logic.SetIm-con (Logic.TSetIm-con _))})))` | final run (current code, 10 s per lemma) |
 | Logic | `propExt` | `=> ext (f, g)` | final run (current code, 10 s per lemma) |
 | Order_Lattice_BottomDistributiveLattice | `bottom-ldistr` | `=> MeetSemilattice.meet-comm *> BottomDistributiveLattice.bottom-rdistr` | final run (current code, 10 s per lemma) |
@@ -254,6 +255,7 @@ Best proof found for each of the 300 benchmark lemmas across the recorded runs: 
 | Order_StrictOrder_StrictPoset | `>_/=` | `=> contradiction` | final run (current code, 10 s per lemma) |
 | Set | `dec-separated` | `=> \case d \with {   \| yes p => p   \| no p' => contradiction }` | final run (current code, 10 s per lemma) |
 | Set | `negated-dec` | `=> isNegated (\lam p => p (f (no (\lam p' => p (f (yes p'))))))` | final run (current code, 10 s per lemma) |
+| Set | `dec_decide` | `=> \new Decide {   \| E => E   \| decide => d }` | final run (current code, 10 s per lemma) |
 | Set | `dec_yes_reduce` | `=> prop-pi` | final run (current code, 10 s per lemma) |
 | Set | `dec_no_reduce` | `=> prop-pi` | final run (current code, 10 s per lemma) |
 | Set | `Dec_\|\|` | `=> \case d \with {   \| yes p => yes (byLeft p)   \| no p' => \case e \with {     \| yes p => yes (byRight p)     \| no p'' => no contradiction   } }` | final run (current code, 10 s per lemma) |

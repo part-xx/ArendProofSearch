@@ -205,4 +205,10 @@ class ChainsTest {
     val source = TestChains.assertProves(TestChains.search("mod_<'", chaining, maxExpansions = 600, focusFirstGoal = true, openGoalCost = 1.0, maxDepth = 20))
     assertTrue(source.contains("rewrite (div_< n<m) idp") && source.contains("divModProp n m"), source)
   }
+
+  @Test
+  fun `a class-typed goal is built field by field`() {
+    val source = TestChains.assertProves(search("dec_decide'", solvers = false))
+    assertTrue(source.contains("\\new Decide") && source.contains("decide => d"), source)
+  }
 }

@@ -6,6 +6,7 @@
 \import Algebra.Pointed
 \import Algebra.Ordered
 \import Order.Lattice
+\import Set
 \import Set.Fin
 \import Arith.Nat
 \import Data.Or
@@ -85,3 +86,6 @@
 
 -- Arith/Nat.ard mod_<: a chain ending with a Prelude lemma instantiated from the context, `inv (pmap (m * __ + _) (div_< n<m)) *> divModProp n m`
 \lemma mod_<' {n m : Nat} (n<m : n < m) : n mod m = n => {?}
+
+-- Set.ard dec_decide: a class instance built field by field, `\cowith | decide => d`
+\lemma dec_decide' {E : \Prop} (d : Dec E) : Decide E => {?}

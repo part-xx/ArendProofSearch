@@ -15,31 +15,31 @@
 \lemma prop-pi {A : \Prop} {a a' : A} : a = a' => {?}
 -- proved by proof search (final run (current code, 10 s per lemma), 48 ms)
 \lemma prop-isProp {A : \Prop} : isProp A => \lam a => \lam a' => Logic.prop-pi
--- proved by proof search (final run (current code, 10 s per lemma), 44 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 45 ms)
 \lemma set-pi {A : \Set} {a b : A} {p q : a = b} : p = q => Logic.prop-pi
 \lemma prop-dpi (A : I -> \Prop) (a : A left) (a' : A right) : Path A a a' => {?}
 \lemma setPair-unext2 {A : \Set} {B : A -> \Set} {a : A} {b : B a} {b' : B a} (p : (a,b) = {\Sigma (a : A) (B a)} (a,b')) : b = b' => {?}
--- proved by proof search (final run (current code, 10 s per lemma), 132 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 98 ms)
 \lemma <->_= {P Q : \Prop} : (P <-> Q) <-> (P = Q) => (\lam p => ext p, \lam p => rewrite p Logic.<->refl)
--- proved by proof search (final run (current code, 10 s per lemma), 25 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 21 ms)
 \lemma <->refl {P : \Prop} : P <-> P => (\lam p => p, \lam p => p)
--- proved by proof search (final run (current code, 10 s per lemma), 103 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 93 ms)
 \lemma <->trans {P Q S : \Prop} (f : P <-> Q) (g : Q <-> S) : P <-> S => \case f \with {   | (p, p') => \case g \with {     | (p'', p''') => (\lam p'''' => p'' (p p''''), \lam p'''' => p' (p''' p''''))   } }
--- proved by proof search (final run (current code, 10 s per lemma), 29 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 28 ms)
 \lemma <->sym {P Q : \Prop} (f : P <-> Q) : Q <-> P => \case f \with {   | (p, p') => (p', p) }
 \lemma TSetIm-con {A B : \Cat} {f : A -> B} (a : A) : TSetIm f (f a) => {?}
 -- proved by proof search (final run (current code, 10 s per lemma), 6 ms)
 \lemma TSetIm-elim {A B : \Cat} {C : B -> \Prop} {f : A -> B} (c : \Pi (a : A) -> C (f a)) {b : B} (s : TSetIm f b) : C b => \case s \with {   | inP (a, x) => rewriteI x (c _) }
--- proved by proof search (final run (current code, 10 s per lemma), 7 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 6 ms)
 \lemma SetIm-con {A B : \Cat} {f : A -> B} {P : A -> \Cat} {a : A} (Pa : P a) : SetIm f P (f a) => Logic.SetIm-cone _ Pa
 -- proved by proof search (final run (current code, 10 s per lemma), 5 ms)
 \lemma SetIm-cone {A B : \Cat} {f : A -> B} {P : A -> \Cat} (a : A) (Pa : P a) : SetIm f P (f a) => Logic.SetIm-con Pa
--- proved by proof search (final run (current code, 10 s per lemma), 11 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 10 ms)
 \lemma SetIm-elim {A B : \Cat} {C : B -> \Prop} {f : A -> B} {P : A -> \Cat} (c : \Pi {a : A} -> P a -> C (f a)) {b : B} (s : SetIm f P b) : C b => \case s \with {   | inP (a, x) => \case \elim a, \elim x \with {     | (a, x'), x => rewriteI x (c x')   } }
 \lemma SetIm_id {A : \Cat} {P : A -> \Prop} : SetIm (\lam x => x) P = P => {?}
--- proved by proof search (final run (current code, 10 s per lemma), 1233 ms)
-\lemma SetIm_o {A B C : \Cat} {f : A -> B} {g : B -> C} {P : A -> \Prop} : SetIm (\lam x => g (f x)) P = SetIm g (SetIm f P) => ext (\lam b => Logic.propExt (\lam p => (\case p \with {  | inP (a, x) => rewriteI x (Logic.SetIm-con (unfold SetIm (Logic.TSetIm-con _)))}))   (\lam p => (\case p \with {  | inP (a, x) => \case \elim a, \elim x \with {    | (a, p'), x => \case p' \with {       | inP (a', x') => unfold SetIm (rewriteI x (rewriteI x' (Logic.TSetIm-con _)))    }  }})))
--- proved by proof search (final run (current code, 10 s per lemma), 112 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 1646 ms)
+\lemma SetIm_o {A B C : \Cat} {f : A -> B} {g : B -> C} {P : A -> \Prop} : SetIm (\lam x => g (f x)) P = SetIm g (SetIm f P) => ext (\lam b   => Logic.propExt (\lam p => (\case p \with {  | inP (a, x) => \case \elim a, \elim x \with {    | (a, p'), x => rewriteI x (Logic.SetIm-con (Logic.SetIm-con p'))  }}))     (\lam p => (\case p \with {  | inP (a, x) => \case \elim a, \elim x \with {    | (a, p'), x => \case p' \with {         | inP (a', x') => unfold SetIm (rewriteI x (rewriteI x' (Logic.TSetIm-con _)))    }  }})))
+-- proved by proof search (final run (current code, 10 s per lemma), 107 ms)
 \lemma SetIm_TSetIm {A B C : \Cat} {f : A -> B} {g : B -> C} : SetIm g (TSetIm f) = TSetIm (\lam a => g (f a)) => ext (\lam b => Logic.propExt (\lam p => (\case p \with {  | inP (a, x) => \case \elim a, \elim x \with {    | (a, p'), x => \case p' \with {       | inP (a', x') => rewriteI x (rewriteI x' (Logic.TSetIm-con _))    }  }}))   (\lam p => (\case p \with {  | inP (a, x) => rewriteI x (Logic.SetIm-con (Logic.TSetIm-con _))})))
--- proved by proof search (final run (current code, 10 s per lemma), 44 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 45 ms)
 \lemma propExt {A B : \Prop} (f : A -> B) (g : B -> A) : A = B => ext (f, g)

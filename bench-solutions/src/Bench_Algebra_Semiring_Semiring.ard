@@ -17,5 +17,5 @@
 \import Algebra.Ring.RingHom
 \open Semiring
 
--- proved by proof search (final run (current code, 10 s per lemma), 77 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 76 ms)
 \lemma natCoef-comm {A : Semiring} {n : Nat} {a : A} : natCoef n * a = a * natCoef n => Algebra.Ring.RingHom.natComm _ _

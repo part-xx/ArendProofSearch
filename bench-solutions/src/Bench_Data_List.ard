@@ -20,28 +20,28 @@
 \open Sort
 \open InList
 
--- proved by proof search (final run (current code, 10 s per lemma), 119 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 123 ms)
 \lemma length_++ {A : \Type} {l l' : List A} : length (l ++ l') = length l Nat.+ length l' \elim l   | nil => idp   | :: x l => pmap suc length_++
--- proved by proof search (final run (current code, 10 s per lemma), 70 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 69 ms)
 \lemma length_replicate {A : \Type} {n : Nat} {a : A} : length (replicate n a) = n \elim n   | zero => idp   | suc n => pmap suc length_replicate
 -- proved by proof search (final run (current code, 10 s per lemma), 22 ms)
 \lemma all-map {A B : \Type} (f : A -> B) {P : B -> \Prop} {l : List A} (a : All P (map f l)) : All (\lam a => P (f a)) l \elim l, a   | nil, a => all-nil   | :: x l, a => \case a \with {     | all-cons p x' => all-cons p (all-map _ x')   }
--- proved by proof search (final run (current code, 10 s per lemma), 52 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 42 ms)
 \lemma all-implies {A : \Type} {P Q : A -> \Prop} {l : List A} (a : All P l) (p : All (\lam a => P a -> Q a) l) : All Q l \elim l, a, p   | nil, a, p => all-nil   | :: x l, a, p => \case a \with {     | all-cons p' x' => \case p \with {       | all-cons p'' x'' => all-cons (p'' p') (all-implies x' x'')     }   }
 -- proved by proof search (final run (current code, 10 s per lemma), 6 ms)
 \lemma all-forall {A : \Type} {P : A -> \Prop} {l : List A} (p : \Pi (a : A) -> P a) : All P l \elim l   | nil => all-nil   | :: x l => all-cons (p _) (all-forall p)
 -- proved by proof search (final run (current code, 10 s per lemma), 5 ms)
 \lemma allC-tail {A : \Type} {a : A} {l : List A} {P : A -> A -> \Prop} (a : AllC P (a :: l)) : AllC P l => \case \elim l, \elim a \with {   | nil, a => allC-nil   | x :: l, a => \case a \with {     | allC-cons p x' => x'   } }
 \lemma count_perm {A : DecSet} {l l' : List A} (p : Perm l l') (a : A) : count l a = count l' a => {?}
--- proved by proof search (final run (current code, 10 s per lemma), 3498 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 3628 ms)
 \lemma count_++ {A : DecSet} {l l' : List A} {a : A} : count (l ++ l') a = count l a Nat.+ count l' a \elim l   | nil => idp   | :: x l => rewrite (count_++ {_} {l} {_} {_}) (\case \elim l' \with {  | nil => idp  | x' :: l' => mcases {1} () \with {  | yes p => idp  | no p => idp}})
 \lemma group-sorted {A : DecSet} {P : Preorder A} {l : List A} (s : Sorted l) : Sorted (map __.1 (group l)) => {?}
 \lemma group-diff {A : DecSet} {P : Poset A} {l : List A} (s : Sorted l) : All2 (__.1 /= __.1) (group l) => {?}
 \lemma group_count-lem {A : DecSet} {P : Poset A} {l : List A} (s : Sorted l) : All (\lam p => p.2 = count l p.1) (group l) => {?}
 \lemma InList_++ {A : \Type} {a : A} {l l' : List A} (p : InList a (l ++ l')) : InList a l || InList a l' => {?}
--- proved by proof search (final run (current code, 10 s per lemma), 63 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 55 ms)
 \lemma InList_++-left {A : \Type} {a : A} {l l' : List A} (p : InList a l) : InList a (l ++ l') \elim l, p   | nil, p => contradiction   | :: x l, p => InList.~_::.InList_:: InList_++-left p
--- proved by proof search (final run (current code, 10 s per lemma), 59 ms)
+-- proved by proof search (final run (current code, 10 s per lemma), 53 ms)
 \lemma InList_++-right {A : \Type} {a : A} {l l' : List A} (p : InList a l') : InList a (l ++ l') \elim l   | nil => p   | :: x l => there (InList_++-right p)
 \lemma contains_InList {A : DecSet} {a : A} {l : List A} : (contains l a = true) <-> InList a l => {?}
 \lemma union~++ {A : DecSet} {l l' : List A} : union l l' ~ l ++ l' => {?}

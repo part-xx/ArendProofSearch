@@ -614,6 +614,7 @@ class HeuristicStepGenerator(
     }
     if (Heuristic.TUPLE in heuristics) {
       steps += timed("tuple", emptyList()) { TupleGenerator(moduleLocation).generate(goal, currentProof) }
+      steps += timed("new", emptyList()) { NewGenerator(moduleLocation).generate(goal, currentProof) }
     }
     if (Heuristic.UNFOLD in heuristics) {
       unfoldRef?.let { steps += timed("unfold", emptyList()) { UnfoldGenerator(moduleLocation, it, rewriteLemmas = rewriteLemmas.keys.toList()).generate(goal, currentProof) } }
